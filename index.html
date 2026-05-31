@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verificacion por SMS</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="card" id="step-phone">
+    <div class="icon">📱</div>
+    <h2>Verificar numero</h2>
+    <p>Ingresa tu numero y te enviamos un codigo por SMS</p>
+
+    <div class="input-group">
+      <select id="country-code">
+        <option value="+51">🇵🇪 +51</option>
+        <option value="+1">🇺🇸 +1</option>
+        <option value="+52">🇲🇽 +52</option>
+        <option value="+54">🇦🇷 +54</option>
+        <option value="+57">🇨🇴 +57</option>
+        <option value="+56">🇨🇱 +56</option>
+        <option value="+34">🇪🇸 +34</option>
+      </select>
+      <input type="tel" id="phone-input" placeholder="987 654 321" maxlength="15" />
+    </div>
+
+    <div id="recaptcha-container"></div>
+
+    <button id="btn-send" onclick="sendOTP()">Enviar codigo</button>
+    <p class="error" id="error-phone"></p>
+  </div>
+
+  <div class="card hidden" id="step-otp">
+    <div class="icon">🔐</div>
+    <h2>Codigo enviado</h2>
+    <p>Ingresa el codigo de 6 digitos enviado a <strong id="phone-display"></strong></p>
+
+    <div class="otp-inputs">
+      <input type="number" class="otp-box" maxlength="1" />
+      <input type="number" class="otp-box" maxlength="1" />
+      <input type="number" class="otp-box" maxlength="1" />
+      <input type="number" class="otp-box" maxlength="1" />
+      <input type="number" class="otp-box" maxlength="1" />
+      <input type="number" class="otp-box" maxlength="1" />
+    </div>
+
+    <button id="btn-verify" onclick="verifyOTP()">Verificar</button>
+    <button class="btn-secondary" onclick="resendOTP()">Reenviar codigo <span id="resend-timer"></span></button>
+    <p class="error" id="error-otp"></p>
+  </div>
+
+  <div class="card hidden" id="step-success">
+    <div class="icon">✅</div>
+    <h2>Numero verificado</h2>
+    <p>Tu numero fue verificado exitosamente.</p>
+    <p class="uid-text">UID: <code id="user-uid"></code></p>
+    <button onclick="resetFlow()">Volver a empezar</button>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
