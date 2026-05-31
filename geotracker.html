@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeoTracker - Seguimiento en Tiempo Real</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; height: 100vh; display: flex; flex-direction: column; }
+  header { background: #161b22; border-bottom: 1px solid #30363d; padding: 10px 20px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 1.2rem; color: #58a6ff; }
+  .badge { background: #21262d; border: 1px solid #30363d; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; color: #8b949e; }
+  .badge.live { border-color: #3fb950; color: #3fb950; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .container { display: flex; flex: 1; overflow: hidden; }
+  #map { flex: 1; }
+  .panel { width: 320px; background: #161b22; border-left: 1px solid #30363d; overflow-y: auto; display: flex; flex-direction: column; }
+  .section { padding: 16px; border-bottom: 1px solid #30363d; }
+  .section h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #58a6ff; margin-bottom: 12px; }
+  .metric { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .metric label { font-size: 0.8rem; color: #8b949e; }
+  .metric value { font-size: 0.9rem; font-weight: 600; color: #e6edf3; font-family: monospace; }
+  .metric value.good { color: #3fb950; }
+  .metric value.warn { color: #d29922; }
+  .metric value.bad { color: #f85149; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.2s; }
+  .btn-start { background: #238636; color: #fff; }
+  .btn-start:hover { background: #2ea043; }
+  .btn-stop { background: #b62324; color: #fff; }
+  .btn-stop:hover { background: #da3633; }
+  .btn-once { background: #1f6feb; color: #fff; }
+  .btn-once:hover { background: #388bfd; }
+  .btn-clear { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+  .btn-clear:hover { background: #30363d; }
+  .quality-bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .quality-fill { height: 100%; border-radius: 3px; transition: width 0.5s, background 0.5s; }
+  .log { max-height: 180px; overflow-y: auto; background: #0d1117; border-radius: 6px; padding: 8px; font-family: monospace; font-size: 0.72rem; }
+  .log-entry { padding: 3px 0; border-bottom: 1px solid #21262d; color: #8b949e; }
+  .log-entry span { color: #3fb950; }
+  .payload { background: #0d1117; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 0.72rem; color: #79c0ff; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+  .status-bar { padding: 6px 16px; background: #161b22; border-top: 1px solid #30363d; font-size: 0.75rem; color: #8b949e; }
+  .error-msg { background: #2d1a1a; border: 1px solid #f85149; border-radius: 6px; padding: 10px; color: #f85149; font-size: 0.8rem; margin-top: 8px; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📍 GeoTracker</h1>
+  <span class="badge" id="statusBadge">Inactivo</span>
+  <span class="badge" id="pointsBadge">0 puntos</span>
+</header>
+
+<div class="container">
+  <div id="map"></div>
+  <div class="panel">
+
+    <div class="section">
+      <h3>Controles</h3>
+      <div class="controls">
+        <button class="btn-start" onclick="startTracking()">▶ Iniciar rastreo</button>
+        <button class="btn-stop" onclick="stopTracking()">⏹ Detener</button>
+        <button class="btn-once" onclick="getOnce()">📌 Una vez</button>
+        <button class="btn-clear" onclick="clearRoute()">🗑 Limpiar</button>
+      </div>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <div class="section">
+      <h3>Ubicación Actual</h3>
+      <div class="metric"><label>Latitud</label><value id="lat">—</value></div>
+      <div class="metric"><label>Longitud</label><value id="lng">—</value></div>
+      <div class="metric"><label>Precisión</label><value id="acc">—</value></div>
+      <div class="metric"><label>Altitud</label><value id="alt">—</value></div>
+      <div class="metric"><label>Velocidad</label><value id="spd">—</value></div>
+      <div class="metric"><label>Rumbo</label><value id="hdg">—</value></div>
+      <div class="metric"><label>Timestamp</label><value id="ts">—</value></div>
+      <div style="margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#8b949e;margin-bottom:4px">
+          <span>Calidad GPS</span><span id="qualityLabel">—</span>
+        </div>
+        <div class="quality-bar"><div class="quality-fill" id="qualityFill" style="width:0%;background:#3fb950"></div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Payload JSON → API</h3>
+      <div class="payload" id="payload">// Esperando ubicación...</div>
+    </div>
+
+    <div class="section">
+      <h3>Log de Puntos</h3>
+      <div class="log" id="logContainer">
+        <div class="log-entry" style="color:#8b949e">Esperando permisos de ubicación...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="status-bar" id="statusBar">Listo — Presiona "Iniciar rastreo" y acepta el permiso de ubicación</div>
+
+<script>
+const map = L.map('map', { zoomControl: true }).setView([0, 0], 2);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '©OpenStreetMap ©CartoDB', maxZoom: 19
+}).addTo(map);
+
+let watchId = null;
+let marker = null;
+let circle = null;
+let polyline = L.polyline([], { color: '#58a6ff', weight: 3, opacity: 0.8, dashArray: '6,4' }).addTo(map);
+let points = [];
+let pointCount = 0;
+let isTracking = false;
+
+const icon = L.divIcon({
+  html: `<div style="width:18px;height:18px;background:#58a6ff;border:3px solid #fff;border-radius:50%;box-shadow:0 0 10px #58a6ff88"></div>`,
+  iconSize: [18,18], iconAnchor: [9,9], className: ''
+});
+
+function updateMap(lat, lng, acc) {
+  const latlng = [lat, lng];
+  if (!marker) {
+    marker = L.marker(latlng, { icon }).addTo(map);
+  } else {
+    marker.setLatLng(latlng);
+  }
+  if (circle) map.removeLayer(circle);
+  circle = L.circle(latlng, { radius: acc, color: '#58a6ff', fillColor: '#58a6ff', fillOpacity: 0.1, weight: 1 }).addTo(map);
+  points.push(latlng);
+  polyline.setLatLngs(points);
+  if (pointCount <= 1) map.setView(latlng, 16);
+  else map.panTo(latlng);
+}
+
+function updatePanel(pos) {
+  const c = pos.coords;
+  const lat = c.latitude.toFixed(6);
+  const lng = c.longitude.toFixed(6);
+  const acc = c.accuracy ? c.accuracy.toFixed(1) + ' m' : '—';
+  const alt = c.altitude ? c.altitude.toFixed(1) + ' m' : '—';
+  const spd = c.speed != null ? (c.speed * 3.6).toFixed(1) + ' km/h' : '—';
+  const hdg = c.heading != null ? c.heading.toFixed(1) + '°' : '—';
+  const ts  = new Date(pos.timestamp).toLocaleTimeString('es');
+
+  document.getElementById('lat').textContent = lat;
+  document.getElementById('lng').textContent = lng;
+  document.getElementById('acc').textContent = acc;
+  document.getElementById('alt').textContent = alt;
+  document.getElementById('spd').textContent = spd;
+  document.getElementById('hdg').textContent = hdg;
+  document.getElementById('ts').textContent  = ts;
+
+  // Quality
+  const quality = Math.max(0, Math.min(100, 100 - (c.accuracy / 100 * 100)));
+  const fill = document.getElementById('qualityFill');
+  fill.style.width = quality + '%';
+  fill.style.background = quality > 70 ? '#3fb950' : quality > 40 ? '#d29922' : '#f85149';
+  document.getElementById('qualityLabel').textContent = quality > 70 ? 'Buena' : quality > 40 ? 'Regular' : 'Baja';
+
+  // Payload
+  const payload = {
+    device_id: "device_" + (navigator.userAgent.length % 9999),
+    timestamp: new Date(pos.timestamp).toISOString(),
+    location: {
+      latitude: parseFloat(lat),
+      longitude: parseFloat(lng),
+      accuracy_meters: parseFloat(c.accuracy?.toFixed(1) || 0),
+      altitude_meters: c.altitude ? parseFloat(c.altitude.toFixed(1)) : null,
+      speed_kmh: c.speed != null ? parseFloat((c.speed * 3.6).toFixed(1)) : null,
+      heading_degrees: c.heading != null ? parseFloat(c.heading.toFixed(1)) : null
+    },
+    metadata: { source: "browser_geolocation_api", user_agent: navigator.userAgent.substring(0,60) }
+  };
+  document.getElementById('payload').textContent = JSON.stringify(payload, null, 2);
+
+  // Log
+  pointCount++;
+  document.getElementById('pointsBadge').textContent = pointCount + ' puntos';
+  const log = document.getElementById('logContainer');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span>#${pointCount} ${ts}</span> ${lat}, ${lng} ±${c.accuracy?.toFixed(0)}m`;
+  log.insertBefore(entry, log.firstChild);
+  if (log.children.length > 30) log.removeChild(log.lastChild);
+}
+
+function onSuccess(pos) {
+  const c = pos.coords;
+  updateMap(c.latitude, c.longitude, c.accuracy || 50);
+  updatePanel(pos);
+  document.getElementById('statusBar').textContent = `Última actualización: ${new Date(pos.timestamp).toLocaleTimeString('es')} — Precisión: ${c.accuracy?.toFixed(0)}m`;
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+function onError(err) {
+  const msgs = {
+    1: 'Permiso denegado. Debes aceptar el permiso de ubicación en tu navegador. Haz clic en el candado (🔒) en la barra de direcciones y permite la ubicación.',
+    2: 'Posición no disponible. Asegúrate de tener GPS activo.',
+    3: 'Timeout — el GPS tardó demasiado. Intenta en exterior.'
+  };
+  const msg = msgs[err.code] || 'Error desconocido: ' + err.message;
+  document.getElementById('errorMsg').textContent = '⚠ ' + msg;
+  document.getElementById('errorMsg').style.display = 'block';
+  document.getElementById('statusBar').textContent = 'Error: ' + msg;
+  document.getElementById('statusBadge').textContent = 'Error';
+  document.getElementById('statusBadge').className = 'badge';
+}
+
+const GEO_OPTIONS = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
+function startTracking() {
+  if (!navigator.geolocation) { onError({code:2,message:'Geolocation no soportada'}); return; }
+  if (isTracking) return;
+  isTracking = true;
+  document.getElementById('statusBadge').textContent = 'EN VIVO';
+  document.getElementById('statusBadge').className = 'badge live';
+  document.getElementById('statusBar').textContent = 'Solicitando permiso de ubicación...';
+  watchId = navigator.geolocation.watchPosition(onSuccess, onError, GEO_OPTIONS);
+}
+
+function stopTracking() {
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  isTracking = false;
+  document.getElementById('statusBadge').textContent = 'Detenido';
+  document.getElementById('statusBadge').className = 'badge';
+  document.getElementById('statusBar').textContent = 'Rastreo detenido.';
+}
+
+function getOnce() {
+  if (!navigator.geolocation) { onError({code:2,message:'No soportado'}); return; }
+  document.getElementById('statusBadge').textContent = 'Capturando...';
+  document.getElementById('statusBar').textContent = 'Obteniendo posición única...';
+  navigator.geolocation.getCurrentPosition(onSuccess, onError, GEO_OPTIONS);
+}
+
+function clearRoute() {
+  points = []; pointCount = 0;
+  polyline.setLatLngs([]);
+  if (marker) { map.removeLayer(marker); marker = null; }
+  if (circle) { map.removeLayer(circle); circle = null; }
+  document.getElementById('logContainer').innerHTML = '<div class="log-entry" style="color:#8b949e">Log limpiado.</div>';
+  document.getElementById('pointsBadge').textContent = '0 puntos';
+  document.getElementById('payload').textContent = '// Esperando ubicación...';
+  ['lat','lng','acc','alt','spd','hdg','ts'].forEach(id => document.getElementById(id).textContent = '—');
+}
+</script>
+</body>
+</html>
