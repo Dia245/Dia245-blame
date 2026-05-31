@@ -43,9 +43,57 @@
   .payload { background: #0d1117; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 0.72rem; color: #79c0ff; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
   .status-bar { padding: 6px 16px; background: #161b22; border-top: 1px solid #30363d; font-size: 0.75rem; color: #8b949e; }
   .error-msg { background: #2d1a1a; border: 1px solid #f85149; border-radius: 6px; padding: 10px; color: #f85149; font-size: 0.8rem; margin-top: 8px; display: none; }
+
+  /* Overlay estilo Maps */
+  #permissionOverlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; backdrop-filter: blur(4px);
+  }
+  .permission-card {
+    background: #1c2128; border: 1px solid #30363d; border-radius: 16px;
+    padding: 32px 28px; max-width: 360px; width: 90%; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .permission-card .pin-icon {
+    font-size: 3.5rem; margin-bottom: 16px; display: block;
+    animation: bounce 1.5s infinite;
+  }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .permission-card h2 { font-size: 1.2rem; color: #e6edf3; margin-bottom: 8px; }
+  .permission-card p { font-size: 0.85rem; color: #8b949e; line-height: 1.5; margin-bottom: 24px; }
+  .permission-card .allow-btn {
+    width: 100%; padding: 12px; background: #1f6feb; color: #fff;
+    border: none; border-radius: 8px; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: background 0.2s; margin-bottom: 10px;
+  }
+  .permission-card .allow-btn:hover { background: #388bfd; }
+  .permission-card .deny-btn {
+    width: 100%; padding: 10px; background: transparent; color: #8b949e;
+    border: 1px solid #30363d; border-radius: 8px; font-size: 0.85rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .permission-card .deny-btn:hover { background: #21262d; color: #c9d1d9; }
+  .permission-card .note {
+    margin-top: 14px; font-size: 0.72rem; color: #484f58;
+  }
 </style>
 </head>
 <body>
+
+<!-- Overlay permiso estilo Google Maps -->
+<div id="permissionOverlay">
+  <div class="permission-card">
+    <span class="pin-icon">📍</span>
+    <h2>¿Permitir acceso a tu ubicación?</h2>
+    <p>GeoTracker quiere usar tu ubicación para mostrarte en el mapa y hacer seguimiento en tiempo real.</p>
+    <button class="allow-btn" onclick="allowLocation()">Permitir ubicación</button>
+    <button class="deny-btn" onclick="denyLocation()">No permitir</button>
+    <div class="note">El navegador mostrará su propio cuadro de confirmación.<br>Debes aceptar en ambos para continuar.</div>
+  </div>
+</div>
 
 <header>
   <h1>📍 GeoTracker</h1>
@@ -107,6 +155,18 @@ const map = L.map('map', { zoomControl: true }).setView([0, 0], 2);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '©OpenStreetMap ©CartoDB', maxZoom: 19
 }).addTo(map);
+
+function allowLocation() {
+  document.getElementById('permissionOverlay').style.display = 'none';
+  startTracking(); // dispara el popup real del navegador
+}
+
+function denyLocation() {
+  document.getElementById('permissionOverlay').style.display = 'none';
+  document.getElementById('errorMsg').textContent = '⚠ Ubicación no permitida. Recarga la página para intentarlo de nuevo.';
+  document.getElementById('errorMsg').style.display = 'block';
+  document.getElementById('statusBar').textContent = 'Acceso a ubicación denegado por el usuario.';
+}
 
 let watchId = null;
 let marker = null;
