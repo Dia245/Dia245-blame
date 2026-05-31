@@ -8,25 +8,34 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; height: 100vh; display: flex; flex-direction: column; }
-  header { background: #161b22; border-bottom: 1px solid #30363d; padding: 10px 20px; display: flex; align-items: center; gap: 12px; }
-  header h1 { font-size: 1.2rem; color: #58a6ff; }
-  .badge { background: #21262d; border: 1px solid #30363d; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; color: #8b949e; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* HEADER */
+  header { background: #161b22; border-bottom: 1px solid #30363d; padding: 8px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  header h1 { font-size: 1.1rem; color: #58a6ff; }
+  .badge { background: #21262d; border: 1px solid #30363d; padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; color: #8b949e; }
   .badge.live { border-color: #3fb950; color: #3fb950; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  .container { display: flex; flex: 1; overflow: hidden; }
-  #map { flex: 1; }
-  .panel { width: 320px; background: #161b22; border-left: 1px solid #30363d; overflow-y: auto; display: flex; flex-direction: column; }
-  .section { padding: 16px; border-bottom: 1px solid #30363d; }
-  .section h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #58a6ff; margin-bottom: 12px; }
-  .metric { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .metric label { font-size: 0.8rem; color: #8b949e; }
-  .metric value { font-size: 0.9rem; font-weight: 600; color: #e6edf3; font-family: monospace; }
-  .metric value.good { color: #3fb950; }
-  .metric value.warn { color: #d29922; }
-  .metric value.bad { color: #f85149; }
-  .controls { display: flex; flex-wrap: wrap; gap: 8px; }
-  button { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.2s; }
+  .header-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .toggle-console { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; }
+  .toggle-console:hover { background: #30363d; }
+  .toggle-console.active { border-color: #58a6ff; color: #58a6ff; }
+
+  /* MAIN LAYOUT */
+  .workspace { display: flex; flex: 1; overflow: hidden; }
+
+  /* MAP */
+  #map { flex: 1; min-width: 0; }
+
+  /* METRICS PANEL */
+  .panel { width: 300px; flex-shrink: 0; background: #161b22; border-left: 1px solid #30363d; overflow-y: auto; display: flex; flex-direction: column; }
+  .section { padding: 12px 14px; border-bottom: 1px solid #30363d; }
+  .section h3 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #58a6ff; margin-bottom: 10px; }
+  .metric { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .metric label { font-size: 0.78rem; color: #8b949e; }
+  .metric value { font-size: 0.85rem; font-weight: 600; color: #e6edf3; font-family: monospace; }
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 600; transition: all 0.2s; }
   .btn-start { background: #238636; color: #fff; }
   .btn-start:hover { background: #2ea043; }
   .btn-stop { background: #b62324; color: #fff; }
@@ -35,16 +44,51 @@
   .btn-once:hover { background: #388bfd; }
   .btn-clear { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
   .btn-clear:hover { background: #30363d; }
-  .quality-bar { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .quality-bar { height: 5px; background: #21262d; border-radius: 3px; overflow: hidden; margin-top: 4px; }
   .quality-fill { height: 100%; border-radius: 3px; transition: width 0.5s, background 0.5s; }
-  .log { max-height: 180px; overflow-y: auto; background: #0d1117; border-radius: 6px; padding: 8px; font-family: monospace; font-size: 0.72rem; }
-  .log-entry { padding: 3px 0; border-bottom: 1px solid #21262d; color: #8b949e; }
+  .log { max-height: 150px; overflow-y: auto; background: #0d1117; border-radius: 6px; padding: 6px; font-family: monospace; font-size: 0.68rem; }
+  .log-entry { padding: 2px 0; border-bottom: 1px solid #21262d; color: #8b949e; }
   .log-entry span { color: #3fb950; }
-  .payload { background: #0d1117; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 0.72rem; color: #79c0ff; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
-  .status-bar { padding: 6px 16px; background: #161b22; border-top: 1px solid #30363d; font-size: 0.75rem; color: #8b949e; }
-  .error-msg { background: #2d1a1a; border: 1px solid #f85149; border-radius: 6px; padding: 10px; color: #f85149; font-size: 0.8rem; margin-top: 8px; display: none; }
+  .payload { background: #0d1117; border-radius: 6px; padding: 8px; font-family: monospace; font-size: 0.68rem; color: #79c0ff; white-space: pre-wrap; max-height: 180px; overflow-y: auto; }
+  .error-msg { background: #2d1a1a; border: 1px solid #f85149; border-radius: 6px; padding: 8px; color: #f85149; font-size: 0.75rem; margin-top: 8px; display: none; line-height: 1.4; }
 
-  /* Overlay estilo Maps */
+  /* RESIZER */
+  .resizer { width: 4px; background: #30363d; cursor: col-resize; flex-shrink: 0; transition: background 0.2s; }
+  .resizer:hover, .resizer.dragging { background: #58a6ff; }
+
+  /* CODE CONSOLE */
+  .code-console { width: 420px; flex-shrink: 0; background: #0d1117; border-left: 1px solid #30363d; display: flex; flex-direction: column; transition: width 0.25s ease; overflow: hidden; }
+  .code-console.hidden { width: 0; border: none; }
+  .console-header { background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center; flex-shrink: 0; }
+  .console-tabs { display: flex; flex: 1; }
+  .console-tab { padding: 8px 16px; font-size: 0.78rem; cursor: pointer; color: #8b949e; border-right: 1px solid #30363d; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+  .console-tab:hover { color: #c9d1d9; background: #21262d; }
+  .console-tab.active { color: #e6edf3; border-bottom-color: #58a6ff; background: #0d1117; }
+  .console-actions { padding: 0 10px; display: flex; gap: 6px; }
+  .console-actions button { padding: 4px 10px; font-size: 0.72rem; background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+  .console-actions button:hover { background: #30363d; }
+  .code-body { flex: 1; overflow: auto; padding: 0; }
+  .code-block { display: none; padding: 16px; }
+  .code-block.active { display: block; }
+  pre { margin: 0; font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace; font-size: 0.75rem; line-height: 1.6; white-space: pre; tab-size: 2; }
+
+  /* Syntax highlight colors */
+  .kw  { color: #ff7b72; }   /* keywords */
+  .fn  { color: #d2a8ff; }   /* functions */
+  .str { color: #a5d6ff; }   /* strings */
+  .num { color: #79c0ff; }   /* numbers */
+  .cmt { color: #8b949e; font-style: italic; } /* comments */
+  .tag { color: #7ee787; }   /* html tags */
+  .atr { color: #79c0ff; }   /* attributes */
+  .val { color: #a5d6ff; }   /* values */
+  .prop{ color: #d2a8ff; }   /* css props */
+  .sel { color: #7ee787; }   /* css selectors */
+  .pun { color: #c9d1d9; }   /* punctuation */
+
+  /* STATUS BAR */
+  .status-bar { padding: 5px 16px; background: #161b22; border-top: 1px solid #30363d; font-size: 0.72rem; color: #8b949e; flex-shrink: 0; }
+
+  /* OVERLAY */
   #permissionOverlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.75);
     display: flex; align-items: center; justify-content: center;
@@ -53,37 +97,22 @@
   .permission-card {
     background: #1c2128; border: 1px solid #30363d; border-radius: 16px;
     padding: 32px 28px; max-width: 360px; width: 90%; text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    animation: slideUp 0.3s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6); animation: slideUp 0.3s ease;
   }
   @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
-  .permission-card .pin-icon {
-    font-size: 3.5rem; margin-bottom: 16px; display: block;
-    animation: bounce 1.5s infinite;
-  }
+  .permission-card .pin-icon { font-size: 3.5rem; margin-bottom: 16px; display: block; animation: bounce 1.5s infinite; }
   @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
   .permission-card h2 { font-size: 1.2rem; color: #e6edf3; margin-bottom: 8px; }
   .permission-card p { font-size: 0.85rem; color: #8b949e; line-height: 1.5; margin-bottom: 24px; }
-  .permission-card .allow-btn {
-    width: 100%; padding: 12px; background: #1f6feb; color: #fff;
-    border: none; border-radius: 8px; font-size: 1rem; font-weight: 700;
-    cursor: pointer; transition: background 0.2s; margin-bottom: 10px;
-  }
+  .permission-card .allow-btn { width:100%; padding:12px; background:#1f6feb; color:#fff; border:none; border-radius:8px; font-size:1rem; font-weight:700; cursor:pointer; margin-bottom:10px; }
   .permission-card .allow-btn:hover { background: #388bfd; }
-  .permission-card .deny-btn {
-    width: 100%; padding: 10px; background: transparent; color: #8b949e;
-    border: 1px solid #30363d; border-radius: 8px; font-size: 0.85rem;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .permission-card .deny-btn:hover { background: #21262d; color: #c9d1d9; }
-  .permission-card .note {
-    margin-top: 14px; font-size: 0.72rem; color: #484f58;
-  }
+  .permission-card .deny-btn { width:100%; padding:10px; background:transparent; color:#8b949e; border:1px solid #30363d; border-radius:8px; font-size:0.85rem; cursor:pointer; }
+  .permission-card .deny-btn:hover { background: #21262d; }
+  .permission-card .note { margin-top:14px; font-size:0.72rem; color:#484f58; }
 </style>
 </head>
 <body>
 
-<!-- Overlay permiso estilo Google Maps -->
 <div id="permissionOverlay">
   <div class="permission-card">
     <span class="pin-icon">📍</span>
@@ -91,7 +120,7 @@
     <p>GeoTracker quiere usar tu ubicación para mostrarte en el mapa y hacer seguimiento en tiempo real.</p>
     <button class="allow-btn" onclick="allowLocation()">Permitir ubicación</button>
     <button class="deny-btn" onclick="denyLocation()">No permitir</button>
-    <div class="note">El navegador mostrará su propio cuadro de confirmación.<br>Debes aceptar en ambos para continuar.</div>
+    <div class="note">El navegador mostrará su propio cuadro de confirmación.</div>
   </div>
 </div>
 
@@ -99,16 +128,20 @@
   <h1>📍 GeoTracker</h1>
   <span class="badge" id="statusBadge">Inactivo</span>
   <span class="badge" id="pointsBadge">0 puntos</span>
+  <div class="header-right">
+    <button class="toggle-console active" id="consoleToggleBtn" onclick="toggleConsole()">⌨ Código</button>
+  </div>
 </header>
 
-<div class="container">
+<div class="workspace">
   <div id="map"></div>
-  <div class="panel">
 
+  <!-- Panel métricas -->
+  <div class="panel">
     <div class="section">
       <h3>Controles</h3>
       <div class="controls">
-        <button class="btn-start" onclick="startTracking()">▶ Iniciar rastreo</button>
+        <button class="btn-start" onclick="startTracking()">▶ Iniciar</button>
         <button class="btn-stop" onclick="stopTracking()">⏹ Detener</button>
         <button class="btn-once" onclick="getOnce()">📌 Una vez</button>
         <button class="btn-clear" onclick="clearRoute()">🗑 Limpiar</button>
@@ -126,7 +159,7 @@
       <div class="metric"><label>Rumbo</label><value id="hdg">—</value></div>
       <div class="metric"><label>Timestamp</label><value id="ts">—</value></div>
       <div style="margin-top:8px">
-        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#8b949e;margin-bottom:4px">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:#8b949e;margin-bottom:4px">
           <span>Calidad GPS</span><span id="qualityLabel">—</span>
         </div>
         <div class="quality-bar"><div class="quality-fill" id="qualityFill" style="width:0%;background:#3fb950"></div></div>
@@ -141,103 +174,394 @@
     <div class="section">
       <h3>Log de Puntos</h3>
       <div class="log" id="logContainer">
-        <div class="log-entry" style="color:#8b949e">Esperando permisos de ubicación...</div>
+        <div class="log-entry" style="color:#8b949e">Esperando permisos...</div>
       </div>
     </div>
+  </div>
 
+  <!-- Resizer -->
+  <div class="resizer" id="resizer"></div>
+
+  <!-- Consola de código -->
+  <div class="code-console" id="codeConsole">
+    <div class="console-header">
+      <div class="console-tabs">
+        <div class="console-tab active" onclick="switchTab('html')">HTML</div>
+        <div class="console-tab" onclick="switchTab('css')">CSS</div>
+        <div class="console-tab" onclick="switchTab('js')">JavaScript</div>
+        <div class="console-tab" onclick="switchTab('api')">API Endpoint</div>
+        <div class="console-tab" onclick="switchTab('db')">DB Schema</div>
+      </div>
+      <div class="console-actions">
+        <button onclick="copyCode()">⎘ Copiar</button>
+      </div>
+    </div>
+    <div class="code-body" id="codeBody">
+
+      <!-- HTML TAB -->
+      <div class="code-block active" id="tab-html">
+<pre><span class="cmt">&lt;!-- GeoTracker — estructura principal --&gt;</span>
+<span class="pun">&lt;!</span><span class="tag">DOCTYPE</span> <span class="atr">html</span><span class="pun">&gt;</span>
+<span class="pun">&lt;</span><span class="tag">html</span> <span class="atr">lang</span><span class="pun">="</span><span class="val">es</span><span class="pun">"&gt;</span>
+<span class="pun">&lt;</span><span class="tag">head</span><span class="pun">&gt;</span>
+  <span class="pun">&lt;</span><span class="tag">meta</span> <span class="atr">charset</span><span class="pun">="</span><span class="val">UTF-8</span><span class="pun">"&gt;</span>
+  <span class="pun">&lt;</span><span class="tag">title</span><span class="pun">&gt;</span>GeoTracker<span class="pun">&lt;/</span><span class="tag">title</span><span class="pun">&gt;</span>
+  <span class="cmt">&lt;!-- Leaflet CSS (mapa OpenStreetMap) --&gt;</span>
+  <span class="pun">&lt;</span><span class="tag">link</span> <span class="atr">rel</span><span class="pun">="</span><span class="val">stylesheet</span><span class="pun">"</span>
+    <span class="atr">href</span><span class="pun">="</span><span class="val">https://unpkg.com/leaflet@1.9.4/dist/leaflet.css</span><span class="pun">"&gt;</span>
+  <span class="pun">&lt;</span><span class="tag">script</span> <span class="atr">src</span><span class="pun">="</span><span class="val">https://unpkg.com/leaflet@1.9.4/dist/leaflet.js</span><span class="pun">"&gt;&lt;/</span><span class="tag">script</span><span class="pun">&gt;</span>
+<span class="pun">&lt;/</span><span class="tag">head</span><span class="pun">&gt;</span>
+<span class="pun">&lt;</span><span class="tag">body</span><span class="pun">&gt;</span>
+
+  <span class="cmt">&lt;!-- Contenedor del mapa --&gt;</span>
+  <span class="pun">&lt;</span><span class="tag">div</span> <span class="atr">id</span><span class="pun">="</span><span class="val">map</span><span class="pun">"</span> <span class="atr">style</span><span class="pun">="</span><span class="val">height:100vh</span><span class="pun">"&gt;&lt;/</span><span class="tag">div</span><span class="pun">&gt;</span>
+
+  <span class="cmt">&lt;!-- Panel de métricas --&gt;</span>
+  <span class="pun">&lt;</span><span class="tag">div</span> <span class="atr">class</span><span class="pun">="</span><span class="val">panel</span><span class="pun">"&gt;</span>
+    <span class="pun">&lt;</span><span class="tag">p</span><span class="pun">&gt;</span>Lat: <span class="pun">&lt;</span><span class="tag">span</span> <span class="atr">id</span><span class="pun">="</span><span class="val">lat</span><span class="pun">"&gt;</span>—<span class="pun">&lt;/</span><span class="tag">span</span><span class="pun">&gt;&lt;/</span><span class="tag">p</span><span class="pun">&gt;</span>
+    <span class="pun">&lt;</span><span class="tag">p</span><span class="pun">&gt;</span>Lng: <span class="pun">&lt;</span><span class="tag">span</span> <span class="atr">id</span><span class="pun">="</span><span class="val">lng</span><span class="pun">"&gt;</span>—<span class="pun">&lt;/</span><span class="tag">span</span><span class="pun">&gt;&lt;/</span><span class="tag">p</span><span class="pun">&gt;</span>
+    <span class="pun">&lt;</span><span class="tag">button</span> <span class="atr">onclick</span><span class="pun">="</span><span class="val">startTracking()</span><span class="pun">"&gt;</span>
+      Iniciar rastreo
+    <span class="pun">&lt;/</span><span class="tag">button</span><span class="pun">&gt;</span>
+  <span class="pun">&lt;/</span><span class="tag">div</span><span class="pun">&gt;</span>
+
+<span class="pun">&lt;/</span><span class="tag">body</span><span class="pun">&gt;</span>
+<span class="pun">&lt;/</span><span class="tag">html</span><span class="pun">&gt;</span></pre>
+      </div>
+
+      <!-- CSS TAB -->
+      <div class="code-block" id="tab-css">
+<pre><span class="cmt">/* Reset y base */</span>
+<span class="sel">* </span><span class="pun">{</span>
+  <span class="prop">margin</span><span class="pun">:</span> <span class="num">0</span><span class="pun">;</span>
+  <span class="prop">padding</span><span class="pun">:</span> <span class="num">0</span><span class="pun">;</span>
+  <span class="prop">box-sizing</span><span class="pun">:</span> <span class="val">border-box</span><span class="pun">;</span>
+<span class="pun">}</span>
+
+<span class="sel">body </span><span class="pun">{</span>
+  <span class="prop">font-family</span><span class="pun">:</span> <span class="str">'Segoe UI'</span><span class="pun">,</span> <span class="val">sans-serif</span><span class="pun">;</span>
+  <span class="prop">background</span><span class="pun">:</span> <span class="num">#0d1117</span><span class="pun">;</span>
+  <span class="prop">color</span><span class="pun">:</span> <span class="num">#c9d1d9</span><span class="pun">;</span>
+  <span class="prop">height</span><span class="pun">:</span> <span class="num">100vh</span><span class="pun">;</span>
+  <span class="prop">display</span><span class="pun">:</span> <span class="val">flex</span><span class="pun">;</span>
+<span class="pun">}</span>
+
+<span class="cmt">/* Mapa ocupa todo el espacio restante */</span>
+<span class="sel">#map </span><span class="pun">{</span>
+  <span class="prop">flex</span><span class="pun">:</span> <span class="num">1</span><span class="pun">;</span>
+<span class="pun">}</span>
+
+<span class="cmt">/* Panel lateral */</span>
+<span class="sel">.panel </span><span class="pun">{</span>
+  <span class="prop">width</span><span class="pun">:</span> <span class="num">300px</span><span class="pun">;</span>
+  <span class="prop">background</span><span class="pun">:</span> <span class="num">#161b22</span><span class="pun">;</span>
+  <span class="prop">border-left</span><span class="pun">:</span> <span class="num">1</span><span class="val">px solid</span> <span class="num">#30363d</span><span class="pun">;</span>
+  <span class="prop">overflow-y</span><span class="pun">:</span> <span class="val">auto</span><span class="pun">;</span>
+<span class="pun">}</span>
+
+<span class="cmt">/* Animación badge en vivo */</span>
+<span class="sel">@keyframes pulse </span><span class="pun">{</span>
+  <span class="sel">0%,100%</span> <span class="pun">{</span> <span class="prop">opacity</span><span class="pun">:</span><span class="num">1</span> <span class="pun">}</span>
+  <span class="sel">50%</span>      <span class="pun">{</span> <span class="prop">opacity</span><span class="pun">:</span><span class="num">0.4</span> <span class="pun">}</span>
+<span class="pun">}</span>
+
+<span class="sel">.badge.live </span><span class="pun">{</span>
+  <span class="prop">color</span><span class="pun">:</span> <span class="num">#3fb950</span><span class="pun">;</span>
+  <span class="prop">animation</span><span class="pun">:</span> <span class="val">pulse 2s infinite</span><span class="pun">;</span>
+<span class="pun">}</span>
+
+<span class="cmt">/* Barra de calidad GPS */</span>
+<span class="sel">.quality-bar </span><span class="pun">{</span>
+  <span class="prop">height</span><span class="pun">:</span> <span class="num">6px</span><span class="pun">;</span>
+  <span class="prop">background</span><span class="pun">:</span> <span class="num">#21262d</span><span class="pun">;</span>
+  <span class="prop">border-radius</span><span class="pun">:</span> <span class="num">3px</span><span class="pun">;</span>
+  <span class="prop">overflow</span><span class="pun">:</span> <span class="val">hidden</span><span class="pun">;</span>
+<span class="pun">}</span></pre>
+      </div>
+
+      <!-- JS TAB -->
+      <div class="code-block" id="tab-js">
+<pre><span class="cmt">// Inicializar mapa Leaflet (tile oscuro CartoDB)</span>
+<span class="kw">const</span> <span class="fn">map</span> <span class="pun">=</span> L<span class="pun">.</span><span class="fn">map</span><span class="pun">(</span><span class="str">'map'</span><span class="pun">).</span><span class="fn">setView</span><span class="pun">([</span><span class="num">0</span><span class="pun">,</span><span class="num">0</span><span class="pun">],</span> <span class="num">2</span><span class="pun">);</span>
+L<span class="pun">.</span><span class="fn">tileLayer</span><span class="pun">(</span>
+  <span class="str">'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'</span>
+<span class="pun">).</span><span class="fn">addTo</span><span class="pun">(</span><span class="fn">map</span><span class="pun">);</span>
+
+<span class="cmt">// Opciones de geolocalización</span>
+<span class="kw">const</span> GEO_OPTIONS <span class="pun">= {</span>
+  enableHighAccuracy<span class="pun">:</span> <span class="kw">true</span><span class="pun">,</span>
+  timeout<span class="pun">:</span> <span class="num">15000</span><span class="pun">,</span>
+  maximumAge<span class="pun">:</span> <span class="num">0</span>
+<span class="pun">};</span>
+
+<span class="cmt">// Iniciar rastreo continuo</span>
+<span class="kw">function</span> <span class="fn">startTracking</span><span class="pun">() {</span>
+  <span class="kw">if</span> <span class="pun">(!</span>navigator<span class="pun">.</span>geolocation<span class="pun">)</span> <span class="kw">return</span><span class="pun">;</span>
+
+  watchId <span class="pun">=</span> navigator<span class="pun">.</span>geolocation
+    <span class="pun">.</span><span class="fn">watchPosition</span><span class="pun">(</span>onSuccess<span class="pun">,</span> onError<span class="pun">,</span> GEO_OPTIONS<span class="pun">);</span>
+<span class="pun">}</span>
+
+<span class="cmt">// Callback con datos de posición</span>
+<span class="kw">function</span> <span class="fn">onSuccess</span><span class="pun">(</span>pos<span class="pun">) {</span>
+  <span class="kw">const</span> <span class="pun">{</span>
+    latitude<span class="pun">,</span> longitude<span class="pun">,</span>
+    accuracy<span class="pun">,</span> altitude<span class="pun">,</span>
+    speed<span class="pun">,</span> heading
+  <span class="pun">} =</span> pos<span class="pun">.</span>coords<span class="pun">;</span>
+
+  <span class="cmt">// Mover marcador en el mapa</span>
+  marker<span class="pun">.</span><span class="fn">setLatLng</span><span class="pun">([</span>latitude<span class="pun">,</span> longitude<span class="pun">]);</span>
+
+  <span class="cmt">// Construir payload para la API</span>
+  <span class="kw">const</span> payload <span class="pun">= {</span>
+    device_id<span class="pun">:</span> <span class="str">"device_001"</span><span class="pun">,</span>
+    timestamp<span class="pun">:</span> <span class="kw">new</span> <span class="fn">Date</span><span class="pun">(</span>pos<span class="pun">.</span>timestamp<span class="pun">).</span><span class="fn">toISOString</span><span class="pun">(),</span>
+    location<span class="pun">: {</span>
+      latitude<span class="pun">,</span>
+      longitude<span class="pun">,</span>
+      accuracy_meters<span class="pun">:</span> accuracy<span class="pun">,</span>
+      altitude_meters<span class="pun">:</span> altitude<span class="pun">,</span>
+      speed_kmh<span class="pun">:</span> speed <span class="pun">?</span> speed <span class="pun">*</span> <span class="num">3.6</span> <span class="pun">:</span> <span class="kw">null</span><span class="pun">,</span>
+      heading_degrees<span class="pun">:</span> heading
+    <span class="pun">}</span>
+  <span class="pun">};</span>
+
+  <span class="cmt">// Enviar a la API REST</span>
+  <span class="fn">sendToAPI</span><span class="pun">(</span>payload<span class="pun">);</span>
+<span class="pun">}</span>
+
+<span class="cmt">// Envío a API propia</span>
+<span class="kw">async function</span> <span class="fn">sendToAPI</span><span class="pun">(</span>payload<span class="pun">) {</span>
+  <span class="kw">await</span> <span class="fn">fetch</span><span class="pun">(</span><span class="str">'/api/v1/locations'</span><span class="pun">, {</span>
+    method<span class="pun">:</span> <span class="str">'POST'</span><span class="pun">,</span>
+    headers<span class="pun">: {</span>
+      <span class="str">'Content-Type'</span><span class="pun">:</span> <span class="str">'application/json'</span><span class="pun">,</span>
+      <span class="str">'Authorization'</span><span class="pun">:</span> <span class="str">`Bearer ${TOKEN}`</span>
+    <span class="pun">},</span>
+    body<span class="pun">:</span> JSON<span class="pun">.</span><span class="fn">stringify</span><span class="pun">(</span>payload<span class="pun">)</span>
+  <span class="pun">});</span>
+<span class="pun">}</span>
+
+<span class="cmt">// Detener rastreo</span>
+<span class="kw">function</span> <span class="fn">stopTracking</span><span class="pun">() {</span>
+  navigator<span class="pun">.</span>geolocation
+    <span class="pun">.</span><span class="fn">clearWatch</span><span class="pun">(</span>watchId<span class="pun">);</span>
+<span class="pun">}</span></pre>
+      </div>
+
+      <!-- API TAB -->
+      <div class="code-block" id="tab-api">
+<pre><span class="cmt"># Endpoint REST — Node.js / Express</span>
+
+<span class="kw">const</span> express <span class="pun">=</span> <span class="fn">require</span><span class="pun">(</span><span class="str">'express'</span><span class="pun">);</span>
+<span class="kw">const</span> app <span class="pun">=</span> <span class="fn">express</span><span class="pun">();</span>
+app<span class="pun">.</span><span class="fn">use</span><span class="pun">(</span>express<span class="pun">.</span><span class="fn">json</span><span class="pun">());</span>
+
+<span class="cmt">// POST /api/v1/locations</span>
+app<span class="pun">.</span><span class="fn">post</span><span class="pun">(</span><span class="str">'/api/v1/locations'</span><span class="pun">,</span>
+  <span class="fn">authMiddleware</span><span class="pun">,</span>
+  <span class="kw">async</span> <span class="pun">(</span>req<span class="pun">,</span> res<span class="pun">) => {</span>
+
+  <span class="kw">const</span> <span class="pun">{</span>
+    device_id<span class="pun">,</span> timestamp<span class="pun">,</span> location
+  <span class="pun">} =</span> req<span class="pun">.</span>body<span class="pun">;</span>
+
+  <span class="cmt">// Validar campos requeridos</span>
+  <span class="kw">if</span> <span class="pun">(!</span>device_id <span class="pun">|| !</span>location<span class="pun">?.</span>latitude<span class="pun">)</span> <span class="pun">{</span>
+    <span class="kw">return</span> res<span class="pun">.</span><span class="fn">status</span><span class="pun">(</span><span class="num">400</span><span class="pun">).</span><span class="fn">json</span><span class="pun">({</span>
+      error<span class="pun">:</span> <span class="str">'device_id y location requeridos'</span>
+    <span class="pun">});</span>
+  <span class="pun">}</span>
+
+  <span class="cmt">// Guardar en base de datos</span>
+  <span class="kw">await</span> db<span class="pun">.</span><span class="fn">query</span><span class="pun">(</span>
+    <span class="str">`INSERT INTO locations
+     (device_id, latitude, longitude,
+      accuracy, altitude, speed,
+      heading, recorded_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`</span><span class="pun">,</span>
+    <span class="pun">[</span>
+      device_id<span class="pun">,</span>
+      location<span class="pun">.</span>latitude<span class="pun">,</span>
+      location<span class="pun">.</span>longitude<span class="pun">,</span>
+      location<span class="pun">.</span>accuracy_meters<span class="pun">,</span>
+      location<span class="pun">.</span>altitude_meters<span class="pun">,</span>
+      location<span class="pun">.</span>speed_kmh<span class="pun">,</span>
+      location<span class="pun">.</span>heading_degrees<span class="pun">,</span>
+      timestamp <span class="pun">||</span> <span class="kw">new</span> <span class="fn">Date</span><span class="pun">()</span>
+    <span class="pun">]</span>
+  <span class="pun">);</span>
+
+  res<span class="pun">.</span><span class="fn">json</span><span class="pun">({</span>
+    status<span class="pun">:</span> <span class="str">'ok'</span><span class="pun">,</span>
+    received_at<span class="pun">:</span> <span class="kw">new</span> <span class="fn">Date</span><span class="pun">().</span><span class="fn">toISOString</span><span class="pun">()</span>
+  <span class="pun">});</span>
+<span class="pun">});</span>
+
+<span class="cmt">// GET — historial por device_id</span>
+app<span class="pun">.</span><span class="fn">get</span><span class="pun">(</span><span class="str">'/api/v1/locations/:device_id'</span><span class="pun">,</span>
+  <span class="kw">async</span> <span class="pun">(</span>req<span class="pun">,</span> res<span class="pun">) => {</span>
+  <span class="kw">const</span> rows <span class="pun">=</span> <span class="kw">await</span> db<span class="pun">.</span><span class="fn">query</span><span class="pun">(</span>
+    <span class="str">`SELECT * FROM locations
+     WHERE device_id = $1
+     ORDER BY recorded_at DESC
+     LIMIT 1000`</span><span class="pun">,</span>
+    <span class="pun">[</span>req<span class="pun">.</span>params<span class="pun">.</span>device_id<span class="pun">]</span>
+  <span class="pun">);</span>
+  res<span class="pun">.</span><span class="fn">json</span><span class="pun">(</span>rows<span class="pun">.</span>rows<span class="pun">);</span>
+<span class="pun">});</span>
+
+app<span class="pun">.</span><span class="fn">listen</span><span class="pun">(</span><span class="num">3000</span><span class="pun">);</span></pre>
+      </div>
+
+      <!-- DB TAB -->
+      <div class="code-block" id="tab-db">
+<pre><span class="cmt">-- PostgreSQL + PostGIS Schema</span>
+
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> postgis<span class="pun">;</span>
+
+<span class="cmt">-- Dispositivos registrados</span>
+<span class="kw">CREATE TABLE</span> devices <span class="pun">(</span>
+  id         UUID <span class="kw">PRIMARY KEY DEFAULT</span> <span class="fn">gen_random_uuid</span><span class="pun">(),</span>
+  name       TEXT <span class="kw">NOT NULL</span><span class="pun">,</span>
+  user_id    UUID <span class="kw">REFERENCES</span> users<span class="pun">(</span>id<span class="pun">),</span>
+  created_at TIMESTAMPTZ <span class="kw">DEFAULT NOW</span><span class="pun">()</span>
+<span class="pun">);</span>
+
+<span class="cmt">-- Tabla principal de ubicaciones</span>
+<span class="kw">CREATE TABLE</span> locations <span class="pun">(</span>
+  id          BIGSERIAL <span class="kw">PRIMARY KEY</span><span class="pun">,</span>
+  device_id   UUID <span class="kw">REFERENCES</span> devices<span class="pun">(</span>id<span class="pun">),</span>
+
+  <span class="cmt">-- Coordenadas</span>
+  latitude    DOUBLE PRECISION <span class="kw">NOT NULL</span><span class="pun">,</span>
+  longitude   DOUBLE PRECISION <span class="kw">NOT NULL</span><span class="pun">,</span>
+  geom        GEOMETRY<span class="pun">(</span>Point<span class="pun">,</span> <span class="num">4326</span><span class="pun">),</span>
+
+  <span class="cmt">-- Datos del sensor</span>
+  accuracy    FLOAT<span class="pun">,</span>
+  altitude    FLOAT<span class="pun">,</span>
+  speed       FLOAT<span class="pun">,</span>
+  heading     FLOAT<span class="pun">,</span>
+
+  <span class="cmt">-- Timestamps</span>
+  recorded_at TIMESTAMPTZ <span class="kw">NOT NULL</span><span class="pun">,</span>
+  created_at  TIMESTAMPTZ <span class="kw">DEFAULT NOW</span><span class="pun">()</span>
+<span class="pun">);</span>
+
+<span class="cmt">-- Auto-calcular columna geom desde lat/lng</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">set_geom</span><span class="pun">()</span>
+<span class="kw">RETURNS TRIGGER AS</span> <span class="pun">$$</span>
+<span class="kw">BEGIN</span>
+  <span class="kw">NEW</span><span class="pun">.</span>geom <span class="pun">:=</span> ST_SetSRID<span class="pun">(</span>
+    ST_MakePoint<span class="pun">(</span><span class="kw">NEW</span><span class="pun">.</span>longitude<span class="pun">,</span> <span class="kw">NEW</span><span class="pun">.</span>latitude<span class="pun">),</span>
+    <span class="num">4326</span>
+  <span class="pun">);</span>
+  <span class="kw">RETURN NEW</span><span class="pun">;</span>
+<span class="kw">END;</span>
+<span class="pun">$$</span> <span class="kw">LANGUAGE</span> plpgsql<span class="pun">;</span>
+
+<span class="kw">CREATE TRIGGER</span> trg_geom
+  <span class="kw">BEFORE INSERT OR UPDATE ON</span> locations
+  <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> <span class="fn">set_geom</span><span class="pun">();</span>
+
+<span class="cmt">-- Índices para consultas rápidas</span>
+<span class="kw">CREATE INDEX</span> idx_loc_device
+  <span class="kw">ON</span> locations<span class="pun">(</span>device_id<span class="pun">,</span> recorded_at <span class="kw">DESC</span><span class="pun">);</span>
+<span class="kw">CREATE INDEX</span> idx_loc_geom
+  <span class="kw">ON</span> locations <span class="kw">USING</span> GIST<span class="pun">(</span>geom<span class="pun">);</span>
+
+<span class="cmt">-- Consulta: ruta de un device hoy</span>
+<span class="kw">SELECT</span> latitude<span class="pun">,</span> longitude<span class="pun">,</span>
+       speed<span class="pun">,</span> recorded_at
+<span class="kw">FROM</span>   locations
+<span class="kw">WHERE</span>  device_id <span class="pun">=</span> <span class="str">'uuid-aqui'</span>
+  <span class="kw">AND</span>  recorded_at <span class="pun">&gt;=</span> <span class="fn">NOW</span><span class="pun">() -</span> <span class="kw">INTERVAL</span> <span class="str">'1 day'</span>
+<span class="kw">ORDER BY</span> recorded_at<span class="pun">;</span></pre>
+      </div>
+
+    </div>
   </div>
 </div>
 
 <div class="status-bar" id="statusBar">Listo — Presiona "Iniciar rastreo" y acepta el permiso de ubicación</div>
 
 <script>
+// ── MAPA ─────────────────────────────────────────────────────
 const map = L.map('map', { zoomControl: true }).setView([0, 0], 2);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '©OpenStreetMap ©CartoDB', maxZoom: 19
 }).addTo(map);
 
+// ── PERMISO OVERLAY ──────────────────────────────────────────
 function allowLocation() {
   document.getElementById('permissionOverlay').style.display = 'none';
-  startTracking(); // dispara el popup real del navegador
+  startTracking();
 }
-
 function denyLocation() {
   document.getElementById('permissionOverlay').style.display = 'none';
-  document.getElementById('errorMsg').textContent = '⚠ Ubicación no permitida. Recarga la página para intentarlo de nuevo.';
-  document.getElementById('errorMsg').style.display = 'block';
-  document.getElementById('statusBar').textContent = 'Acceso a ubicación denegado por el usuario.';
+  showError('Ubicación no permitida. Recarga la página para intentarlo de nuevo.');
 }
 
-let watchId = null;
-let marker = null;
-let circle = null;
+// ── ESTADO ───────────────────────────────────────────────────
+let watchId = null, marker = null, circle = null;
 let polyline = L.polyline([], { color: '#58a6ff', weight: 3, opacity: 0.8, dashArray: '6,4' }).addTo(map);
-let points = [];
-let pointCount = 0;
-let isTracking = false;
+let points = [], pointCount = 0, isTracking = false;
 
 const icon = L.divIcon({
-  html: `<div style="width:18px;height:18px;background:#58a6ff;border:3px solid #fff;border-radius:50%;box-shadow:0 0 10px #58a6ff88"></div>`,
-  iconSize: [18,18], iconAnchor: [9,9], className: ''
+  html: `<div style="width:16px;height:16px;background:#58a6ff;border:3px solid #fff;border-radius:50%;box-shadow:0 0 10px #58a6ff88"></div>`,
+  iconSize: [16,16], iconAnchor: [8,8], className: ''
 });
 
+// ── MAPA UPDATE ──────────────────────────────────────────────
 function updateMap(lat, lng, acc) {
-  const latlng = [lat, lng];
-  if (!marker) {
-    marker = L.marker(latlng, { icon }).addTo(map);
-  } else {
-    marker.setLatLng(latlng);
-  }
+  const ll = [lat, lng];
+  if (!marker) marker = L.marker(ll, { icon }).addTo(map);
+  else marker.setLatLng(ll);
   if (circle) map.removeLayer(circle);
-  circle = L.circle(latlng, { radius: acc, color: '#58a6ff', fillColor: '#58a6ff', fillOpacity: 0.1, weight: 1 }).addTo(map);
-  points.push(latlng);
+  circle = L.circle(ll, { radius: acc, color: '#58a6ff', fillColor: '#58a6ff', fillOpacity: 0.1, weight: 1 }).addTo(map);
+  points.push(ll);
   polyline.setLatLngs(points);
-  if (pointCount <= 1) map.setView(latlng, 16);
-  else map.panTo(latlng);
+  if (pointCount <= 1) map.setView(ll, 16);
+  else map.panTo(ll);
 }
 
+// ── PANEL UPDATE ─────────────────────────────────────────────
 function updatePanel(pos) {
   const c = pos.coords;
   const lat = c.latitude.toFixed(6);
   const lng = c.longitude.toFixed(6);
-  const acc = c.accuracy ? c.accuracy.toFixed(1) + ' m' : '—';
-  const alt = c.altitude ? c.altitude.toFixed(1) + ' m' : '—';
-  const spd = c.speed != null ? (c.speed * 3.6).toFixed(1) + ' km/h' : '—';
-  const hdg = c.heading != null ? c.heading.toFixed(1) + '°' : '—';
   const ts  = new Date(pos.timestamp).toLocaleTimeString('es');
 
   document.getElementById('lat').textContent = lat;
   document.getElementById('lng').textContent = lng;
-  document.getElementById('acc').textContent = acc;
-  document.getElementById('alt').textContent = alt;
-  document.getElementById('spd').textContent = spd;
-  document.getElementById('hdg').textContent = hdg;
+  document.getElementById('acc').textContent = c.accuracy ? c.accuracy.toFixed(1) + ' m' : '—';
+  document.getElementById('alt').textContent = c.altitude ? c.altitude.toFixed(1) + ' m' : '—';
+  document.getElementById('spd').textContent = c.speed != null ? (c.speed * 3.6).toFixed(1) + ' km/h' : '—';
+  document.getElementById('hdg').textContent = c.heading != null ? c.heading.toFixed(1) + '°' : '—';
   document.getElementById('ts').textContent  = ts;
 
-  // Quality
   const quality = Math.max(0, Math.min(100, 100 - (c.accuracy / 100 * 100)));
   const fill = document.getElementById('qualityFill');
   fill.style.width = quality + '%';
   fill.style.background = quality > 70 ? '#3fb950' : quality > 40 ? '#d29922' : '#f85149';
   document.getElementById('qualityLabel').textContent = quality > 70 ? 'Buena' : quality > 40 ? 'Regular' : 'Baja';
 
-  // Payload
   const payload = {
     device_id: "device_" + (navigator.userAgent.length % 9999),
     timestamp: new Date(pos.timestamp).toISOString(),
     location: {
-      latitude: parseFloat(lat),
-      longitude: parseFloat(lng),
+      latitude: parseFloat(lat), longitude: parseFloat(lng),
       accuracy_meters: parseFloat(c.accuracy?.toFixed(1) || 0),
       altitude_meters: c.altitude ? parseFloat(c.altitude.toFixed(1)) : null,
       speed_kmh: c.speed != null ? parseFloat((c.speed * 3.6).toFixed(1)) : null,
       heading_degrees: c.heading != null ? parseFloat(c.heading.toFixed(1)) : null
     },
-    metadata: { source: "browser_geolocation_api", user_agent: navigator.userAgent.substring(0,60) }
+    metadata: { source: "browser_geolocation_api" }
   };
   document.getElementById('payload').textContent = JSON.stringify(payload, null, 2);
 
-  // Log
   pointCount++;
   document.getElementById('pointsBadge').textContent = pointCount + ' puntos';
   const log = document.getElementById('logContainer');
@@ -256,18 +580,7 @@ function onSuccess(pos) {
   document.getElementById('errorMsg').style.display = 'none';
 }
 
-function onError(err) {
-  const isFileProtocol = location.protocol === 'file:';
-  const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
-  const chromeFileNote = (isFileProtocol && isChrome)
-    ? ' ⚠ Chrome bloquea GPS en archivos locales. Haz doble clic en "iniciar-geotracker.bat" para abrir con servidor local, o usa Firefox.'
-    : '';
-  const msgs = {
-    1: 'Permiso denegado.' + chromeFileNote,
-    2: 'Posición no disponible. Asegúrate de tener GPS activo.',
-    3: 'Timeout — el GPS tardó demasiado. Intenta en exterior.'
-  };
-  const msg = (msgs[err.code] || 'Error: ' + err.message);
+function showError(msg) {
   document.getElementById('errorMsg').textContent = '⚠ ' + msg;
   document.getElementById('errorMsg').style.display = 'block';
   document.getElementById('statusBar').textContent = 'Error: ' + msg;
@@ -275,10 +588,20 @@ function onError(err) {
   document.getElementById('statusBadge').className = 'badge';
 }
 
+function onError(err) {
+  const isFileProtocol = location.protocol === 'file:';
+  const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+  const extra = (isFileProtocol && isChrome)
+    ? ' Chrome bloquea GPS en archivos locales — usa iniciar-geotracker.bat o Firefox.'
+    : '';
+  const msgs = { 1: 'Permiso denegado.' + extra, 2: 'Posición no disponible.', 3: 'Timeout GPS.' };
+  showError(msgs[err.code] || err.message);
+}
+
 const GEO_OPTIONS = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
 
 function startTracking() {
-  if (!navigator.geolocation) { onError({code:2,message:'Geolocation no soportada'}); return; }
+  if (!navigator.geolocation) { showError('Geolocalización no soportada.'); return; }
   if (isTracking) return;
   isTracking = true;
   document.getElementById('statusBadge').textContent = 'EN VIVO';
@@ -296,9 +619,8 @@ function stopTracking() {
 }
 
 function getOnce() {
-  if (!navigator.geolocation) { onError({code:2,message:'No soportado'}); return; }
+  if (!navigator.geolocation) { showError('No soportado'); return; }
   document.getElementById('statusBadge').textContent = 'Capturando...';
-  document.getElementById('statusBar').textContent = 'Obteniendo posición única...';
   navigator.geolocation.getCurrentPosition(onSuccess, onError, GEO_OPTIONS);
 }
 
@@ -312,6 +634,64 @@ function clearRoute() {
   document.getElementById('payload').textContent = '// Esperando ubicación...';
   ['lat','lng','acc','alt','spd','hdg','ts'].forEach(id => document.getElementById(id).textContent = '—');
 }
+
+// ── CONSOLA DE CÓDIGO ────────────────────────────────────────
+let consoleVisible = true;
+
+function toggleConsole() {
+  const console_ = document.getElementById('codeConsole');
+  const btn = document.getElementById('consoleToggleBtn');
+  consoleVisible = !consoleVisible;
+  console_.classList.toggle('hidden', !consoleVisible);
+  btn.classList.toggle('active', consoleVisible);
+  setTimeout(() => map.invalidateSize(), 300);
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.console-tab').forEach((t, i) => {
+    const names = ['html','css','js','api','db'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.code-block').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function copyCode() {
+  const active = document.querySelector('.code-block.active');
+  const text = active ? active.innerText : '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.console-actions button');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+// ── RESIZER (drag para redimensionar consola) ─────────────────
+const resizer = document.getElementById('resizer');
+const codeConsole = document.getElementById('codeConsole');
+let isResizing = false;
+
+resizer.addEventListener('mousedown', e => {
+  isResizing = true;
+  resizer.classList.add('dragging');
+  document.body.style.userSelect = 'none';
+});
+document.addEventListener('mousemove', e => {
+  if (!isResizing) return;
+  const rect = codeConsole.getBoundingClientRect();
+  const newWidth = Math.max(250, Math.min(800, rect.right - e.clientX));
+  codeConsole.style.width = newWidth + 'px';
+  codeConsole.style.transition = 'none';
+});
+document.addEventListener('mouseup', () => {
+  if (!isResizing) return;
+  isResizing = false;
+  resizer.classList.remove('dragging');
+  document.body.style.userSelect = '';
+  codeConsole.style.transition = '';
+  map.invalidateSize();
+});
 </script>
 </body>
 </html>
