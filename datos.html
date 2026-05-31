@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FF4E00">
+<title>Chispa Go – Datos</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--orange:#FF4E00;--orange-dark:#e04300;--orange-light:#fff3ee;--green:#22c55e;--green-light:#dcfce7;--gray:#f5f5f5;--text:#1a1a1a;--sub:#6b7280;--border:#e5e7eb;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#fff;}
+
+/* APP SHELL */
+#app{height:100%;display:flex;flex-direction:column;}
+
+/* STATUS BAR */
+.status-bar{height:44px;background:var(--orange);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;}
+.sb-time{color:#fff;font-size:0.85rem;font-weight:700;}
+
+/* TOP BAR */
+.topbar{background:var(--orange);padding:0 16px 16px;flex-shrink:0;}
+.topbar-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.back-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;flex-shrink:0;}
+.back-btn svg{width:20px;height:20px;fill:#fff;}
+.topbar-title{color:#fff;font-size:1rem;font-weight:700;flex:1;}
+.topbar-greeting{color:rgba(255,255,255,.85);font-size:0.85rem;font-weight:500;}
+.steps{display:flex;gap:6px;align-items:center;}
+.step-dot{height:4px;border-radius:2px;background:rgba(255,255,255,.35);transition:all .3s;flex:1;}
+.step-dot.done{background:#fff;}
+.step-dot.active{background:#fff;flex:2;}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;}
+.content-inner{padding:20px 16px 32px;}
+.step-label{font-size:0.75rem;color:var(--orange);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;}
+.step-title{font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.step-desc{font-size:0.85rem;color:var(--sub);line-height:1.5;margin-bottom:20px;}
+
+/* DOCUMENT TYPE TOGGLE */
+.doc-toggle{display:flex;background:var(--gray);border-radius:14px;padding:4px;margin-bottom:20px;}
+.doc-option{flex:1;padding:11px 8px;border:none;background:transparent;border-radius:11px;font-size:0.88rem;font-weight:600;color:var(--sub);cursor:pointer;transition:all .25s;}
+.doc-option.active{background:#fff;color:var(--orange);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+
+/* FORM FIELDS */
+.field-row{display:flex;gap:10px;margin-bottom:14px;align-items:stretch;}
+.field-wrap{flex:1;display:flex;flex-direction:column;gap:5px;}
+.field-label{font-size:0.75rem;font-weight:600;color:var(--sub);padding-left:2px;}
+Input.field, textarea.field{
+  width:100%;border:1.5px solid var(--border);border-radius:12px;
+  padding:13px 14px;font-size:0.93rem;color:var(--text);outline:none;
+  transition:border .2s,box-shadow .2s;background:#fafafa;font-family:inherit;
+}
+Input.field:focus, textarea.field:focus{border-color:var(--orange);background:#fff;box-shadow:0 0 0 3px rgba(255,78,0,.08);}
+Input.field::placeholder{color:#9ca3af;}
+Input.field:disabled{background:#f5f5f5;color:var(--sub);cursor:not-allowed;}
+Input.field.verified{border-color:var(--green);background:#f0fdf4;}
+
+/* VALIDAR BTN (DNI) */
+.btn-validar{
+  padding:0 20px;background:var(--orange);color:#fff;border:none;
+  border-radius:12px;font-size:0.9rem;font-weight:700;cursor:pointer;
+  white-space:nowrap;min-height:48px;transition:all .2s;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.btn-validar:active{transform:scale(.97);}
+.btn-validar:disabled{background:#d1d5db;cursor:not-allowed;}
+
+/* PHONE VERIFY BADGE */
+.phone-wrap{position:relative;}
+.btn-verificar-sms{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:var(--orange);color:#fff;border:none;border-radius:8px;
+  font-size:0.75rem;font-weight:700;padding:6px 12px;cursor:pointer;
+  transition:all .2s;white-space:nowrap;
+}
+.btn-verificar-sms:disabled{background:#d1d5db;cursor:not-allowed;}
+.phone-verified-badge{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:var(--green-light);color:var(--green);border-radius:8px;
+  font-size:0.75rem;font-weight:700;padding:6px 10px;display:none;
+  align-items:center;gap:4px;
+}
+.phone-verified-badge.show{display:flex;}
+
+/* ESTADO CIVIL */
+.section-label{font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:10px;}
+.civil-options{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.civil-btn{
+  padding:9px 16px;border:1.5px solid var(--border);border-radius:24px;
+  background:#fff;font-size:0.83rem;font-weight:600;color:var(--sub);
+  cursor:pointer;transition:all .2s;
+}
+.civil-btn.active{background:var(--text);color:#fff;border-color:var(--text);}
+
+/* CONTINUE BTN */
+.continue-btn{
+  width:100%;padding:17px;background:linear-gradient(135deg,#FF4E00,#ff7a40);
+  color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 20px rgba(255,78,0,.35);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-top:8px;transition:all .2s;
+}
+.continue-btn:active{transform:scale(.98);}
+.continue-btn.disabled{background:#d1d5db;box-shadow:none;cursor:not-allowed;}
+.continue-btn svg{width:20px;height:20px;fill:#fff;}
+
+/* DNI SUCCESS CARD */
+.dni-card{
+  background:var(--orange-light);border:1.5px solid #ffd4c0;
+  border-radius:14px;padding:14px 16px;margin-bottom:14px;
+  display:none;animation:fadeSlide .3s ease;
+}
+.dni-card.show{display:block;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.dni-card-name{font-size:1rem;font-weight:700;color:var(--orange-dark);margin-bottom:2px;}
+.dni-card-sub{font-size:0.78rem;color:var(--sub);}
+
+/* SMS MODAL */
+#smsModal{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
+  display:none;align-items:flex-end;justify-content:center;
+}
+#smsModal.show{display:flex;}
+.sms-sheet{
+  background:#fff;border-radius:24px 24px 0 0;
+  padding:28px 24px 40px;width:100%;max-width:480px;
+  animation:slideUp .35s cubic-bezier(.25,.8,.25,1);
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sms-handle{width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 24px;}
+.sms-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#FF4E00,#ff7a40);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:28px;box-shadow:0 6px 20px rgba(255,78,0,.3);}
+.sms-sheet h2{text-align:center;font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.sms-sheet p{text-align:center;font-size:0.84rem;color:var(--sub);line-height:1.5;margin-bottom:24px;}
+.sms-phone-display{font-weight:700;color:var(--orange);}
+
+/* OTP INPUTS */
+.otp-row{display:flex;gap:10px;justify-content:center;margin-bottom:24px;}
+.otp-box{
+  width:46px;height:54px;border:2px solid var(--border);border-radius:12px;
+  text-align:center;font-size:22px;font-weight:700;color:var(--text);
+  outline:none;transition:border .2s,box-shadow .2s;
+  -moz-appearance:textfield;background:#fafafa;
+}
+.otp-box::-webkit-outer-spin-button,.otp-box::-webkit-inner-spin-button{-webkit-appearance:none;}
+.otp-box:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,78,0,.12);background:#fff;}
+.otp-box.filled{border-color:var(--orange);background:#fff3ee;}
+
+.btn-confirm-otp{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,#FF4E00,#ff7a40);
+  color:#fff;border:none;border-radius:14px;font-size:1rem;font-weight:700;
+  cursor:pointer;margin-bottom:12px;transition:all .2s;
+  box-shadow:0 4px 14px rgba(255,78,0,.35);
+}
+.btn-confirm-otp:disabled{background:#d1d5db;box-shadow:none;cursor:not-allowed;}
+.btn-resend{
+  width:100%;padding:12px;background:transparent;
+  color:var(--orange);border:1.5px solid var(--orange);
+  border-radius:12px;font-size:0.88rem;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.btn-resend:disabled{opacity:.4;cursor:not-allowed;}
+.sms-error{text-align:center;color:#e53935;font-size:0.8rem;min-height:18px;margin-top:-10px;margin-bottom:8px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:24px;font-size:0.82rem;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:8000;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* SPINNER */
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spinA .7s linear infinite;vertical-align:middle;margin-left:6px;}
+@keyframes spinA{to{transform:rotate(360deg)}}
+
+#recaptcha-container{margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<!-- SMS VERIFICATION MODAL -->
+<div id="smsModal">
+  <div class="sms-sheet">
+    <div class="sms-handle"></div>
+    <div class="sms-icon">💬</div>
+    <h2>Verificar número</h2>
+    <p>Enviamos un código de 6 dígitos a<br><span class="sms-phone-display" id="smsPhoneDisplay"></span></p>
+    <div id="recaptcha-container"></div>
+    <div class="otp-row" id="otpRow">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+    </div>
+    <p class="sms-error" id="smsError"></p>
+    <button class="btn-confirm-otp" id="btnConfirmOtp" onclick="verifyOTP()">Confirmar código</button>
+    <button class="btn-resend" id="btnResend" onclick="resendCode()" disabled>
+      Reenviar código <span id="resendTimer"></span>
+    </button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span class="sb-time" id="sbTime">00:00</span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+    </div>
+  </div>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back-btn" onclick="history.back()">
+        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      </button>
+      <span class="topbar-title">CHISPA GO</span>
+      <span class="topbar-greeting" id="greeting">¡Hola!</span>
+    </div>
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:5px">
+      <span style="color:rgba(255,255,255,.75);font-size:0.72rem;">Paso 2 de 5</span>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="content-inner">
+
+      <div class="step-label">Paso 2 de 5</div>
+      <div class="step-title">Ingresa tus datos</div>
+      <div class="step-desc">Por favor selecciona tu tipo de documento e ingresa tu número para consultar tus datos oficiales.</div>
+
+      <!-- DOCUMENT TYPE -->
+      <div class="doc-toggle">
+        <button class="doc-option active" id="optDni" onclick="setDocType('dni')">DNI</button>
+        <button class="doc-option" id="optCe" onclick="setDocType('ce')">Carnet Extranjería (C.E.)</button>
+      </div>
+
+      <!-- DNI / CE INPUT -->
+      <div class="field-row">
+        <div class="field-wrap">
+          <input class="field" type="tel" id="docInput"
+            placeholder="Número de DNI 🪪"
+            maxlength="8" oninput="onDocInput()">
+        </div>
+        <button class="btn-validar" id="btnValidar" onclick="validarDoc()" disabled>Validar</button>
+      </div>
+
+      <!-- DNI RESULT CARD -->
+      <div class="dni-card" id="dniCard">
+        <div class="dni-card-name" id="dniName">—</div>
+        <div class="dni-card-sub" id="dniSub">Datos verificados ✅</div>
+      </div>
+
+      <!-- FULL NAME -->
+      <div class="field-wrap" style="margin-bottom:14px">
+        <input class="field" type="text" id="fullName"
+          placeholder="Nombres y Apellidos Completos"
+          autocomplete="name">
+      </div>
+
+      <!-- PHONE -->
+      <div class="field-wrap" style="margin-bottom:14px">
+        <div class="phone-wrap">
+          <input class="field" type="tel" id="phoneInput"
+            placeholder="Número de Celular / WhatsApp"
+            maxlength="9" style="padding-right:110px"
+            oninput="onPhoneInput()">
+          <button class="btn-verificar-sms" id="btnVerificarSms"
+            onclick="iniciarVerificacionSMS()" disabled>Verificar SMS</button>
+          <div class="phone-verified-badge" id="phoneVerifiedBadge">
+            ✅ Verificado
+          </div>
+        </div>
+      </div>
+
+      <!-- EMAIL -->
+      <div class="field-wrap" style="margin-bottom:20px">
+        <input class="field" type="email" id="emailInput"
+          placeholder="Correo Electrónico"
+          autocomplete="email">
+      </div>
+
+      <!-- ESTADO CIVIL -->
+      <div class="section-label">Estado Civil</div>
+      <div class="civil-options">
+        <button class="civil-btn active" onclick="setCivil(this)">Soltero</button>
+        <button class="civil-btn" onclick="setCivil(this)">Casado</button>
+        <button class="civil-btn" onclick="setCivil(this)">Viudo</button>
+        <button class="civil-btn" onclick="setCivil(this)">Divorciado</button>
+      </div>
+
+      <!-- CONTINUE -->
+      <button class="continue-btn disabled" id="btnContinue" onclick="continuar()">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        Continuar a Documentos
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE (reemplaza con tu config) -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+// ─── CONFIGURACION FIREBASE ──────────────────────────────────
+// 1. Ve a https://console.firebase.google.com
+// 2. Crea proyecto → Authentication → Sign-in method → Phone → Habilitar
+// 3. Project Settings → copia firebaseConfig aquí
+const firebaseConfig = {
+  apiKey:            'TU_API_KEY',
+  authDomain:        'TU_PROJECT.firebaseapp.com',
+  projectId:         'TU_PROJECT_ID',
+  storageBucket:     'TU_PROJECT.appspot.com',
+  messagingSenderId: 'TU_SENDER_ID',
+  appId:             'TU_APP_ID',
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+auth.languageCode = 'es';
+
+// ─── ESTADO ──────────────────────────────────────────────────
+let confirmationResult = null;
+let resendInterval     = null;
+let phoneVerified      = false;
+
+// ─── CLOCK ───────────────────────────────────────────────────
+function updateClock(){
+  const n = new Date();
+  document.getElementById('sbTime').textContent =
+    n.getHours().toString().padStart(2,'0') + ':' +
+    n.getMinutes().toString().padStart(2,'0');
+}
+updateClock(); setInterval(updateClock, 10000);
+
+// ─── GREETING ────────────────────────────────────────────────
+const h = new Date().getHours();
+document.getElementById('greeting').textContent =
+  h < 12 ? '¡Buenos días!' : h < 19 ? '¡Buenas tardes!' : '¡Buenas noches!';
+
+// ─── DOC TYPE ────────────────────────────────────────────────
+window.setDocType = function(type){
+  document.getElementById('optDni').classList.toggle('active', type==='dni');
+  document.getElementById('optCe').classList.toggle('active', type==='ce');
+  const inp = document.getElementById('docInput');
+  inp.placeholder = type === 'dni' ? 'Número de DNI 🪪' : 'Número de C.E. 🪪';
+  inp.maxLength   = type === 'dni' ? 8 : 12;
+  inp.value = '';
+  hideDniCard();
+  document.getElementById('btnValidar').disabled = true;
+};
+
+// ─── DOC INPUT ───────────────────────────────────────────────
+window.onDocInput = function(){
+  const v = document.getElementById('docInput').value.replace(/\D/g,'');
+  document.getElementById('docInput').value = v;
+  const isDni = document.getElementById('optDni').classList.contains('active');
+  const minLen = isDni ? 8 : 6;
+  document.getElementById('btnValidar').disabled = v.length < minLen;
+  hideDniCard();
+};
+
+function hideDniCard(){
+  document.getElementById('dniCard').classList.remove('show');
+  document.getElementById('fullName').value = '';
+}
+
+// ─── VALIDAR DNI (simulado — conecta con tu API real) ─────────
+window.validarDoc = async function(){
+  const num = document.getElementById('docInput').value.trim();
+  const btn = document.getElementById('btnValidar');
+  btn.disabled = true;
+  btn.innerHTML = 'Validando<span class="spin"></span>';
+
+  try {
+    // ── Reemplaza esta simulación con tu llamada a la API real ──
+    // Ejemplo real: const res = await fetch(`https://tu-api.com/dni/${num}`);
+    await new Promise(r => setTimeout(r, 1400)); // simulación
+    const nombre = 'JUAN CARLOS PÉREZ QUISPE';   // ← respuesta simulada
+
+    document.getElementById('fullName').value = nombre;
+    document.getElementById('dniName').textContent = nombre;
+    document.getElementById('dniSub').textContent  = `DNI ${num} • Datos verificados ✅`;
+    document.getElementById('dniCard').classList.add('show');
+    showToast('✅ Datos encontrados correctamente');
+  } catch(e) {
+    showToast('❌ No se pudo validar el documento');
+  } finally {
+    btn.textContent = 'Validar';
+    btn.disabled = false;
+  }
+};
+
+// ─── PHONE INPUT ─────────────────────────────────────────────
+window.onPhoneInput = function(){
+  const v = document.getElementById('phoneInput').value.replace(/\D/g,'');
+  document.getElementById('phoneInput').value = v;
+  document.getElementById('btnVerificarSms').disabled = v.length < 9;
+  if(phoneVerified){
+    // Si cambia el número luego de verificar, resetear
+    phoneVerified = false;
+    document.getElementById('phoneVerifiedBadge').classList.remove('show');
+    document.getElementById('btnVerificarSms').style.display = 'block';
+    document.getElementById('phoneInput').classList.remove('verified');
+    checkFormReady();
+  }
+};
+
+// ─── SETUP RECAPTCHA ─────────────────────────────────────────
+function setupRecaptcha(){
+  if(window.recaptchaVerifier) return;
+  window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    size: 'invisible',
+    callback: ()=>{},
+    'expired-callback': ()=>{ window.recaptchaVerifier = null; }
+  });
+}
+
+// ─── INICIAR VERIFICACION SMS ─────────────────────────────────
+window.iniciarVerificacionSMS = async function(){
+  const raw  = document.getElementById('phoneInput').value.trim();
+  const phone = '+51' + raw;
+  const btn   = document.getElementById('btnVerificarSms');
+
+  btn.disabled = true;
+  btn.innerHTML = 'Enviando<span class="spin"></span>';
+
+  try {
+    setupRecaptcha();
+    confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+    document.getElementById('smsPhoneDisplay').textContent = phone;
+    openSmsModal();
+    setupOtpInputs();
+    startResendTimer(60);
+    showToast('📲 Código enviado por SMS');
+  } catch(err){
+    showToast(friendlyError(err.code));
+    window.recaptchaVerifier = null;
+  } finally {
+    btn.innerHTML = 'Verificar SMS';
+    btn.disabled  = false;
+  }
+};
+
+// ─── VERIFICAR OTP ────────────────────────────────────────────
+window.verifyOTP = async function(){
+  const boxes = document.querySelectorAll('.otp-box');
+  const code  = Array.from(boxes).map(b=>b.value).join('');
+  const errEl = document.getElementById('smsError');
+  const btn   = document.getElementById('btnConfirmOtp');
+
+  errEl.textContent = '';
+  if(code.length < 6){ errEl.textContent = 'Ingresa los 6 dígitos.'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = 'Verificando<span class="spin"></span>';
+
+  try {
+    await confirmationResult.confirm(code);
+    phoneVerified = true;
+    closeSmsModal();
+    clearInterval(resendInterval);
+
+    // Actualizar UI del campo
+    document.getElementById('phoneInput').classList.add('verified');
+    document.getElementById('btnVerificarSms').style.display = 'none';
+    document.getElementById('phoneVerifiedBadge').classList.add('show');
+    showToast('✅ Número verificado correctamente');
+    checkFormReady();
+  } catch(err){
+    errEl.textContent = friendlyError(err.code);
+    boxes.forEach(b=>{ b.value=''; b.classList.remove('filled'); });
+    boxes[0].focus();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Confirmar código';
+  }
+};
+
+// ─── REENVIAR ─────────────────────────────────────────────────
+window.resendCode = async function(){
+  closeSmsModal();
+  window.recaptchaVerifier = null;
+  await window.iniciarVerificacionSMS();
+};
+
+function startResendTimer(sec){
+  const btn   = document.getElementById('btnResend');
+  const timer = document.getElementById('resendTimer');
+  let left    = sec;
+  btn.disabled = true;
+  timer.textContent = `(${left}s)`;
+  resendInterval = setInterval(()=>{
+    left--;
+    timer.textContent = `(${left}s)`;
+    if(left <= 0){ clearInterval(resendInterval); btn.disabled=false; timer.textContent=''; }
+  }, 1000);
+}
+
+// ─── OTP INPUT LOGIC ─────────────────────────────────────────
+function setupOtpInputs(){
+  const boxes = document.querySelectorAll('.otp-box');
+  boxes.forEach((box,i)=>{
+    box.value = ''; box.classList.remove('filled');
+    box.oninput = ()=>{
+      box.value = box.value.replace(/\D/g,'').slice(-1);
+      box.classList.toggle('filled', box.value !== '');
+      if(box.value && i < boxes.length-1) boxes[i+1].focus();
+    };
+    box.onkeydown = e=>{
+      if(e.key==='Backspace' && !box.value && i>0){
+        boxes[i-1].value=''; boxes[i-1].classList.remove('filled'); boxes[i-1].focus();
+      }
+    };
+    box.addEventListener('paste', e=>{
+      e.preventDefault();
+      const txt = e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);
+      txt.split('').forEach((ch,j)=>{ if(boxes[j]){ boxes[j].value=ch; boxes[j].classList.add('filled'); } });
+      boxes[Math.min(txt.length, boxes.length-1)].focus();
+    });
+  });
+  boxes[0].focus();
+}
+
+// ─── MODAL ───────────────────────────────────────────────────
+function openSmsModal(){ document.getElementById('smsModal').classList.add('show'); }
+function closeSmsModal(){ document.getElementById('smsModal').classList.remove('show'); }
+// Cerrar al tocar fondo
+document.getElementById('smsModal').addEventListener('click', e=>{
+  if(e.target === document.getElementById('smsModal')) closeSmsModal();
+});
+
+// ─── ESTADO CIVIL ─────────────────────────────────────────────
+window.setCivil = function(btn){
+  document.querySelectorAll('.civil-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+};
+
+// ─── FORM VALIDATION ─────────────────────────────────────────
+function checkFormReady(){
+  const doc   = document.getElementById('docInput').value.trim();
+  const name  = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phoneInput').value.trim();
+  const email = document.getElementById('emailInput').value.trim();
+  const ready = doc.length >= 8 && name.length >= 3 && phone.length === 9 &&
+                phoneVerified && email.includes('@');
+  document.getElementById('btnContinue').classList.toggle('disabled', !ready);
+}
+
+['docInput','fullName','phoneInput','emailInput'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', checkFormReady);
+});
+
+// ─── CONTINUAR ───────────────────────────────────────────────
+window.continuar = function(){
+  if(document.getElementById('btnContinue').classList.contains('disabled')) return;
+  // Guardar datos y navegar al siguiente paso
+  const datos = {
+    doc:    document.getElementById('docInput').value.trim(),
+    nombre: document.getElementById('fullName').value.trim(),
+    phone:  '+51' + document.getElementById('phoneInput').value.trim(),
+    email:  document.getElementById('emailInput').value.trim(),
+    civil:  document.querySelector('.civil-btn.active').textContent,
+  };
+  localStorage.setItem('chispago_datos', JSON.stringify(datos));
+  showToast('Cargando siguiente paso...');
+  setTimeout(()=>{ window.location.href = 'index.html'; }, 800);
+};
+
+// ─── TOAST ───────────────────────────────────────────────────
+let toastT;
+window.showToast = function(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>t.classList.remove('show'), 2500);
+};
+
+// ─── FRIENDLY ERRORS ─────────────────────────────────────────
+function friendlyError(code){
+  return {
+    'auth/invalid-phone-number':       'Número de teléfono inválido.',
+    'auth/too-many-requests':          'Demasiados intentos. Espera unos minutos.',
+    'auth/invalid-verification-code':  'Código incorrecto. Intenta de nuevo.',
+    'auth/code-expired':               'El código expiró. Solicita uno nuevo.',
+    'auth/network-request-failed':     'Sin conexión. Revisa tu internet.',
+  }[code] || `Error (${code})`;
+}
+</script>
+</body>
+</html>
