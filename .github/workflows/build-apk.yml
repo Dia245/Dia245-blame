@@ -5,6 +5,7 @@ on:
     branches: [ main, master, claude/cool-keller-S9H3V ]
     paths:
       - 'ChispaGoApp/**'
+      - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
 jobs:
