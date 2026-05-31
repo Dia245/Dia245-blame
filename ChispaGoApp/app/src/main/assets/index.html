@@ -429,52 +429,22 @@ function updateCenterCoords() {
 }
 
 // ── PERMISSION FLOW ──────────────────────────────────────────
+// El overlay solo cierra y pide GPS via Java nativo (no navigator.geolocation)
 function requestGPS() {
   document.getElementById('permOverlay').style.display = 'none';
-  // Iniciar mapa con satélite por defecto y spinner de carga
   initMap(DEFAULT_LAT, DEFAULT_LNG);
-  document.getElementById('coordsText').textContent = 'Obteniendo tu ubicación...';
-  document.getElementById('gpsBtn').classList.add('loading');
-
-  if (!navigator.geolocation) {
-    document.getElementById('gpsBtn').classList.remove('loading');
-    return;
+  setLoadingGPS(true);
+  // Llama a Java FusedLocationProvider directamente
+  if (window.AndroidGPS) {
+    AndroidGPS.getLocation();
+  } else {
+    // Fallback navegador (pruebas en PC/Firefox)
+    navigator.geolocation && navigator.geolocation.getCurrentPosition(
+      pos => receiveLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+      () => onGPSError('No se pudo obtener GPS.'),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
   }
-
-  // Obtener ubicación real y centrar automáticamente
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      hasGPS = true;
-      document.getElementById('gpsBtn').classList.remove('loading');
-      const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-      currentLat = lat; currentLng = lng;
-      map.setView([lat, lng], 18);
-      if (accuracyCircle) map.removeLayer(accuracyCircle);
-      accuracyCircle = L.circle([lat, lng], {
-        radius: accuracy, color:'#22c55e',
-        fillColor:'#22c55e', fillOpacity:0.1, weight:1.5
-      }).addTo(map);
-      document.getElementById('confirmBtn').classList.remove('disabled');
-    },
-    err => {
-      document.getElementById('gpsBtn').classList.remove('loading');
-      hasGPS = false;
-      const reasons = {
-        1: 'Permiso denegado. Ve a Ajustes > Apps > Chispa Go > Permisos > Ubicación.',
-        2: 'GPS sin señal. Activa la ubicación en Ajustes del celular.',
-        3: 'GPS tardó demasiado. Sal al exterior e intenta de nuevo.'
-      };
-      showManualHint(reasons[err.code] || 'No se pudo obtener GPS.');
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-  );
-}
-
-function showManualHint(reason) {
-  const box = document.getElementById('manualHintBox');
-  document.getElementById('manualHintReason').textContent = reason;
-  box.style.display = 'flex';
-  document.getElementById('centerPin').style.animation = 'hintBounce 0.6s ease 3';
 }
 
 function denyGPS() {
@@ -482,41 +452,59 @@ function denyGPS() {
   initMap(DEFAULT_LAT, DEFAULT_LNG);
 }
 
-// Llamado desde Android cuando el permiso es concedido después de cargar
-function onAndroidPermissionGranted() {
+// Java llama esta función con las coordenadas reales
+function receiveLocation(lat, lng, accuracy) {
+  setLoadingGPS(false);
+  hasGPS = true;
+  currentLat = lat; currentLng = lng;
+  map.setView([lat, lng], 18);
+  if (accuracyCircle) map.removeLayer(accuracyCircle);
+  accuracyCircle = L.circle([lat, lng], {
+    radius: accuracy, color:'#22c55e',
+    fillColor:'#22c55e', fillOpacity:0.1, weight:1.5
+  }).addTo(map);
+  document.getElementById('confirmBtn').classList.remove('disabled');
   document.getElementById('manualHintBox').style.display = 'none';
-  centerOnGPS();
 }
 
-// Llamado desde Android cuando el permiso es denegado
-function onAndroidPermissionDenied() {
-  showManualHint('Permiso de ubicación denegado. Ve a Ajustes del celular > Apps > Chispa Go > Permisos > Ubicación.');
+// Java llama esto si falla el GPS
+function onGPSError(msg) {
+  setLoadingGPS(false);
+  document.getElementById('manualHintReason').textContent = msg;
+  document.getElementById('manualHintBox').style.display = 'flex';
 }
 
-// ── GPS CENTER ───────────────────────────────────────────────
-function centerOnGPS() {
-  if (!navigator.geolocation) { showManualHint('GPS no disponible en este dispositivo.'); return; }
+// Android llama esto cuando el permiso fue concedido tras el diálogo
+function onPermissionGranted() {
+  document.getElementById('manualHintBox').style.display = 'none';
+  setLoadingGPS(true);
+  if (window.AndroidGPS) AndroidGPS.getLocation();
+}
+
+function setLoadingGPS(on) {
   const btn = document.getElementById('gpsBtn');
-  btn.classList.add('loading');
-  document.getElementById('coordsText').textContent = 'Buscando señal GPS...';
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      btn.classList.remove('loading');
-      document.getElementById('manualHintBox').style.display = 'none';
-      map.setView([pos.coords.latitude, pos.coords.longitude], 17);
-      showToast('📍 Centrado en tu ubicación');
-    },
-    err => {
-      btn.classList.remove('loading');
-      const reasons = {
-        1: 'Permiso denegado. Ve a Ajustes > Apps > Chispa Go > Permisos > Ubicación.',
-        2: 'Sin señal GPS. Activa ubicación en Ajustes del celular.',
-        3: 'GPS tardó demasiado. Sal al exterior e intenta de nuevo.'
-      };
-      showManualHint(reasons[err.code] || 'No se pudo obtener GPS.');
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
-  );
+  btn.classList.toggle('loading', on);
+  document.getElementById('coordsText').textContent = on
+    ? 'Obteniendo tu ubicación...' : document.getElementById('coordsText').textContent;
+}
+
+// ── GPS CENTER (botón GPS del mapa) ──────────────────────────
+function centerOnGPS() {
+  setLoadingGPS(true);
+  if (window.AndroidGPS) {
+    AndroidGPS.getLocation();
+  } else {
+    navigator.geolocation && navigator.geolocation.getCurrentPosition(
+      pos => receiveLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+      () => { setLoadingGPS(false); },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
+}
+
+// legacy — ya no se usa pero evita errores si algo lo llama
+function centerOnGPS_legacy() {
+  const btn = document.getElementById('gpsBtn');
 }
 
 // ── SATELLITE TOGGLE ─────────────────────────────────────────
