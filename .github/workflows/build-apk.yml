@@ -21,22 +21,17 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.2'
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Gradle wrapper jar
-        run: |
-          mkdir -p ChispaGoApp/gradle/wrapper
-          curl -Lo ChispaGoApp/gradle/wrapper/gradle-wrapper.jar \
-            https://github.com/gradle/gradle/raw/v8.2.0/gradle/wrapper/gradle-wrapper.jar
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x ChispaGoApp/gradlew
-
       - name: Build debug APK
-        run: |
-          cd ChispaGoApp
-          ./gradlew assembleDebug --no-daemon --stacktrace
+        working-directory: ChispaGoApp
+        run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
