@@ -383,7 +383,7 @@ updateClock(); setInterval(updateClock, 10000);
 
 // ── MAP SETUP ────────────────────────────────────────────────
 const DEFAULT_LAT = -12.09824, DEFAULT_LNG = -77.02876;
-let map, tileNormal, tileSat, isSat = false;
+let map, tileNormal, tileSat, isSat = true; // satélite por defecto
 let currentLat = DEFAULT_LAT, currentLng = DEFAULT_LNG;
 let accuracyCircle = null;
 let hasGPS = false;
@@ -393,7 +393,7 @@ function initMap(lat, lng) {
     zoomControl: false, attributionControl: true,
     dragging: true, touchZoom: true, doubleClickZoom: false,
     scrollWheelZoom: false
-  }).setView([lat, lng], 16);
+  }).setView([lat, lng], 17);
 
   tileNormal = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '©OpenStreetMap', maxZoom: 19
@@ -401,7 +401,9 @@ function initMap(lat, lng) {
   tileSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution: '©Esri', maxZoom: 19
   });
-  tileNormal.addTo(map);
+  // Cargar satélite por defecto
+  tileSat.addTo(map);
+  document.getElementById('satLabel').textContent = 'Ver Mapa';
 
   // Al mover el mapa actualizar coords del pin central
   map.on('move', updateCenterCoords);
@@ -429,38 +431,38 @@ function updateCenterCoords() {
 // ── PERMISSION FLOW ──────────────────────────────────────────
 function requestGPS() {
   document.getElementById('permOverlay').style.display = 'none';
+  // Iniciar mapa con satélite por defecto y spinner de carga
   initMap(DEFAULT_LAT, DEFAULT_LNG);
+  document.getElementById('coordsText').textContent = 'Obteniendo tu ubicación...';
+  document.getElementById('gpsBtn').classList.add('loading');
 
   if (!navigator.geolocation) {
-    showManualHint('Tu dispositivo no tiene GPS. Usa el mapa para posicionar el pin.');
+    document.getElementById('gpsBtn').classList.remove('loading');
     return;
   }
 
-  const gpsBtn = document.getElementById('gpsBtn');
-  gpsBtn.classList.add('loading');
-  document.getElementById('coordsText').textContent = 'Obteniendo ubicación GPS...';
-
+  // Obtener ubicación real y centrar automáticamente
   navigator.geolocation.getCurrentPosition(
     pos => {
       hasGPS = true;
-      gpsBtn.classList.remove('loading');
+      document.getElementById('gpsBtn').classList.remove('loading');
       const { latitude: lat, longitude: lng, accuracy } = pos.coords;
       currentLat = lat; currentLng = lng;
-      map.setView([lat, lng], 17);
+      map.setView([lat, lng], 18);
       if (accuracyCircle) map.removeLayer(accuracyCircle);
       accuracyCircle = L.circle([lat, lng], {
         radius: accuracy, color:'#22c55e',
-        fillColor:'#22c55e', fillOpacity:0.08, weight:1.5
+        fillColor:'#22c55e', fillOpacity:0.1, weight:1.5
       }).addTo(map);
-      showToast('📍 Ubicación GPS obtenida');
+      document.getElementById('confirmBtn').classList.remove('disabled');
     },
     err => {
-      gpsBtn.classList.remove('loading');
+      document.getElementById('gpsBtn').classList.remove('loading');
       hasGPS = false;
       const reasons = {
-        1: 'Permiso de ubicación denegado en el sistema.',
-        2: 'No se detectó señal GPS. Activa el GPS en Ajustes > Ubicación.',
-        3: 'El GPS tardó demasiado. Sal al exterior e intenta de nuevo.'
+        1: 'Permiso denegado. Ve a Ajustes > Apps > Chispa Go > Permisos > Ubicación.',
+        2: 'GPS sin señal. Activa la ubicación en Ajustes del celular.',
+        3: 'GPS tardó demasiado. Sal al exterior e intenta de nuevo.'
       };
       showManualHint(reasons[err.code] || 'No se pudo obtener GPS.');
     },
@@ -468,20 +470,16 @@ function requestGPS() {
   );
 }
 
-// Muestra un banner explicativo + animación de arrastre en el mapa
 function showManualHint(reason) {
   const box = document.getElementById('manualHintBox');
   document.getElementById('manualHintReason').textContent = reason;
   box.style.display = 'flex';
-  // Animar el pin para indicar que se puede arrastrar
-  const pin = document.getElementById('centerPin');
-  pin.style.animation = 'hintBounce 0.6s ease 3';
+  document.getElementById('centerPin').style.animation = 'hintBounce 0.6s ease 3';
 }
 
 function denyGPS() {
   document.getElementById('permOverlay').style.display = 'none';
   initMap(DEFAULT_LAT, DEFAULT_LNG);
-  showManualHint('Arrastra el mapa con tu dedo para posicionar el pin en tu dirección.');
 }
 
 // Llamado desde Android cuando el permiso es concedido después de cargar
