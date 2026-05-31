@@ -257,12 +257,17 @@ function onSuccess(pos) {
 }
 
 function onError(err) {
+  const isFileProtocol = location.protocol === 'file:';
+  const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+  const chromeFileNote = (isFileProtocol && isChrome)
+    ? ' ⚠ Chrome bloquea GPS en archivos locales. Haz doble clic en "iniciar-geotracker.bat" para abrir con servidor local, o usa Firefox.'
+    : '';
   const msgs = {
-    1: 'Permiso denegado. Debes aceptar el permiso de ubicación en tu navegador. Haz clic en el candado (🔒) en la barra de direcciones y permite la ubicación.',
+    1: 'Permiso denegado.' + chromeFileNote,
     2: 'Posición no disponible. Asegúrate de tener GPS activo.',
     3: 'Timeout — el GPS tardó demasiado. Intenta en exterior.'
   };
-  const msg = msgs[err.code] || 'Error desconocido: ' + err.message;
+  const msg = (msgs[err.code] || 'Error: ' + err.message);
   document.getElementById('errorMsg').textContent = '⚠ ' + msg;
   document.getElementById('errorMsg').style.display = 'block';
   document.getElementById('statusBar').textContent = 'Error: ' + msg;
