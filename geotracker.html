@@ -60,17 +60,46 @@
   .code-console { width: 420px; flex-shrink: 0; background: #0d1117; border-left: 1px solid #30363d; display: flex; flex-direction: column; transition: width 0.25s ease; overflow: hidden; }
   .code-console.hidden { width: 0; border: none; }
   .console-header { background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center; flex-shrink: 0; }
-  .console-tabs { display: flex; flex: 1; }
-  .console-tab { padding: 8px 16px; font-size: 0.78rem; cursor: pointer; color: #8b949e; border-right: 1px solid #30363d; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+  .console-tabs { display: flex; flex: 1; overflow-x: auto; }
+  .console-tab { padding: 8px 14px; font-size: 0.75rem; cursor: pointer; color: #8b949e; border-right: 1px solid #30363d; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
   .console-tab:hover { color: #c9d1d9; background: #21262d; }
   .console-tab.active { color: #e6edf3; border-bottom-color: #58a6ff; background: #0d1117; }
-  .console-actions { padding: 0 10px; display: flex; gap: 6px; }
+  .tab-lang { font-size: 0.62rem; background: #21262d; padding: 1px 5px; border-radius: 3px; color: #58a6ff; }
+  .console-tab.active .tab-lang { background: #1f3a5f; }
+  .console-actions { padding: 0 8px; display: flex; gap: 6px; flex-shrink: 0; }
   .console-actions button { padding: 4px 10px; font-size: 0.72rem; background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
   .console-actions button:hover { background: #30363d; }
-  .code-body { flex: 1; overflow: auto; padding: 0; }
-  .code-block { display: none; padding: 16px; }
-  .code-block.active { display: block; }
+
+  /* Editor area con números de línea */
+  .code-body { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+  .code-block { display: none; flex: 1; }
+  .code-block.active { display: flex; }
+  .line-numbers {
+    padding: 14px 0; background: #0d1117; border-right: 1px solid #1e2533;
+    text-align: right; user-select: none; flex-shrink: 0; min-width: 44px;
+  }
+  .line-numbers span {
+    display: block; padding: 0 10px 0 6px; font-family: 'Cascadia Code','Fira Code','Courier New',monospace;
+    font-size: 0.72rem; line-height: 1.6; color: #3d444d; cursor: default;
+  }
+  .line-numbers span.active-line { color: #8b949e; }
+  .code-content { padding: 14px 16px; overflow: visible; flex: 1; }
   pre { margin: 0; font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace; font-size: 0.75rem; line-height: 1.6; white-space: pre; tab-size: 2; }
+
+  /* Barra de estado estilo VS Code */
+  .console-statusbar {
+    background: #1f6feb; display: flex; align-items: center; gap: 0;
+    flex-shrink: 0; font-size: 0.7rem; font-family: 'Segoe UI', sans-serif;
+  }
+  .csb-item {
+    padding: 2px 10px; color: rgba(255,255,255,0.9); cursor: default;
+    border-right: 1px solid rgba(255,255,255,0.15); white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .csb-item:hover { background: rgba(255,255,255,0.15); }
+  .csb-right { margin-left: auto; display: flex; }
+  .csb-item.format { font-weight: 600; color: #fff; }
+  .csb-item.lines-count { color: rgba(255,255,255,0.75); }
 
   /* Syntax highlight colors */
   .kw  { color: #ff7b72; }   /* keywords */
@@ -186,11 +215,11 @@
   <div class="code-console" id="codeConsole">
     <div class="console-header">
       <div class="console-tabs">
-        <div class="console-tab active" onclick="switchTab('html')">HTML</div>
-        <div class="console-tab" onclick="switchTab('css')">CSS</div>
-        <div class="console-tab" onclick="switchTab('js')">JavaScript</div>
-        <div class="console-tab" onclick="switchTab('api')">API Endpoint</div>
-        <div class="console-tab" onclick="switchTab('db')">DB Schema</div>
+        <div class="console-tab active" onclick="switchTab('html')">HTML <span class="tab-lang">html</span></div>
+        <div class="console-tab" onclick="switchTab('css')">CSS <span class="tab-lang">css</span></div>
+        <div class="console-tab" onclick="switchTab('js')">JavaScript <span class="tab-lang">js</span></div>
+        <div class="console-tab" onclick="switchTab('api')">API <span class="tab-lang">js</span></div>
+        <div class="console-tab" onclick="switchTab('db')">DB Schema <span class="tab-lang">sql</span></div>
       </div>
       <div class="console-actions">
         <button onclick="copyCode()">⎘ Copiar</button>
@@ -200,6 +229,8 @@
 
       <!-- HTML TAB -->
       <div class="code-block active" id="tab-html">
+        <div class="line-numbers" id="ln-html"></div>
+        <div class="code-content">
 <pre><span class="cmt">&lt;!-- GeoTracker — estructura principal --&gt;</span>
 <span class="pun">&lt;!</span><span class="tag">DOCTYPE</span> <span class="atr">html</span><span class="pun">&gt;</span>
 <span class="pun">&lt;</span><span class="tag">html</span> <span class="atr">lang</span><span class="pun">="</span><span class="val">es</span><span class="pun">"&gt;</span>
@@ -227,10 +258,13 @@
 
 <span class="pun">&lt;/</span><span class="tag">body</span><span class="pun">&gt;</span>
 <span class="pun">&lt;/</span><span class="tag">html</span><span class="pun">&gt;</span></pre>
+        </div>
       </div>
 
       <!-- CSS TAB -->
       <div class="code-block" id="tab-css">
+        <div class="line-numbers" id="ln-css"></div>
+        <div class="code-content">
 <pre><span class="cmt">/* Reset y base */</span>
 <span class="sel">* </span><span class="pun">{</span>
   <span class="prop">margin</span><span class="pun">:</span> <span class="num">0</span><span class="pun">;</span>
@@ -277,10 +311,13 @@
   <span class="prop">border-radius</span><span class="pun">:</span> <span class="num">3px</span><span class="pun">;</span>
   <span class="prop">overflow</span><span class="pun">:</span> <span class="val">hidden</span><span class="pun">;</span>
 <span class="pun">}</span></pre>
+        </div>
       </div>
 
       <!-- JS TAB -->
       <div class="code-block" id="tab-js">
+        <div class="line-numbers" id="ln-js"></div>
+        <div class="code-content">
 <pre><span class="cmt">// Inicializar mapa Leaflet (tile oscuro CartoDB)</span>
 <span class="kw">const</span> <span class="fn">map</span> <span class="pun">=</span> L<span class="pun">.</span><span class="fn">map</span><span class="pun">(</span><span class="str">'map'</span><span class="pun">).</span><span class="fn">setView</span><span class="pun">([</span><span class="num">0</span><span class="pun">,</span><span class="num">0</span><span class="pun">],</span> <span class="num">2</span><span class="pun">);</span>
 L<span class="pun">.</span><span class="fn">tileLayer</span><span class="pun">(</span>
@@ -348,10 +385,13 @@ L<span class="pun">.</span><span class="fn">tileLayer</span><span class="pun">(<
   navigator<span class="pun">.</span>geolocation
     <span class="pun">.</span><span class="fn">clearWatch</span><span class="pun">(</span>watchId<span class="pun">);</span>
 <span class="pun">}</span></pre>
+        </div>
       </div>
 
       <!-- API TAB -->
       <div class="code-block" id="tab-api">
+        <div class="line-numbers" id="ln-api"></div>
+        <div class="code-content">
 <pre><span class="cmt"># Endpoint REST — Node.js / Express</span>
 
 <span class="kw">const</span> express <span class="pun">=</span> <span class="fn">require</span><span class="pun">(</span><span class="str">'express'</span><span class="pun">);</span>
@@ -413,10 +453,13 @@ app<span class="pun">.</span><span class="fn">get</span><span class="pun">(</spa
 <span class="pun">});</span>
 
 app<span class="pun">.</span><span class="fn">listen</span><span class="pun">(</span><span class="num">3000</span><span class="pun">);</span></pre>
+        </div>
       </div>
 
       <!-- DB TAB -->
       <div class="code-block" id="tab-db">
+        <div class="line-numbers" id="ln-db"></div>
+        <div class="code-content">
 <pre><span class="cmt">-- PostgreSQL + PostGIS Schema</span>
 
 <span class="kw">CREATE EXTENSION IF NOT EXISTS</span> postgis<span class="pun">;</span>
@@ -479,8 +522,20 @@ app<span class="pun">.</span><span class="fn">listen</span><span class="pun">(</
 <span class="kw">WHERE</span>  device_id <span class="pun">=</span> <span class="str">'uuid-aqui'</span>
   <span class="kw">AND</span>  recorded_at <span class="pun">&gt;=</span> <span class="fn">NOW</span><span class="pun">() -</span> <span class="kw">INTERVAL</span> <span class="str">'1 day'</span>
 <span class="kw">ORDER BY</span> recorded_at<span class="pun">;</span></pre>
+        </div>
       </div>
 
+    </div>
+
+    <!-- Barra de estado estilo VS Code -->
+    <div class="console-statusbar" id="consoleStatusbar">
+      <div class="csb-item format" id="csb-format">HTML</div>
+      <div class="csb-item lines-count" id="csb-lines">0 líneas</div>
+      <div class="csb-item" id="csb-cursor">Ln 1, Col 1</div>
+      <div class="csb-right">
+        <div class="csb-item" id="csb-encoding">UTF-8</div>
+        <div class="csb-item" id="csb-indent">Spaces: 2</div>
+      </div>
     </div>
   </div>
 </div>
@@ -637,6 +692,66 @@ function clearRoute() {
 
 // ── CONSOLA DE CÓDIGO ────────────────────────────────────────
 let consoleVisible = true;
+let currentTab = 'html';
+
+const TAB_META = {
+  html: { format: 'HTML',       indent: 'Spaces: 2' },
+  css:  { format: 'CSS',        indent: 'Spaces: 2' },
+  js:   { format: 'JavaScript', indent: 'Spaces: 2' },
+  api:  { format: 'JavaScript', indent: 'Spaces: 2' },
+  db:   { format: 'SQL',        indent: 'Spaces: 4' },
+};
+
+function buildLineNumbers(tabId) {
+  const pre = document.querySelector(`#tab-${tabId} pre`);
+  const lnEl = document.getElementById(`ln-${tabId}`);
+  if (!pre || !lnEl) return 0;
+  const lines = pre.innerText.split('\n').length;
+  lnEl.innerHTML = Array.from({length: lines}, (_, i) =>
+    `<span id="ln-${tabId}-${i+1}">${i+1}</span>`
+  ).join('');
+  return lines;
+}
+
+function updateStatusBar(tabName, lines) {
+  const meta = TAB_META[tabName] || { format: tabName.toUpperCase(), indent: 'Spaces: 2' };
+  document.getElementById('csb-format').textContent = meta.format;
+  document.getElementById('csb-lines').textContent  = lines + ' líneas';
+  document.getElementById('csb-indent').textContent = meta.indent;
+  document.getElementById('csb-cursor').textContent = 'Ln 1, Col 1';
+}
+
+function highlightActiveLine(tabName, lineNum) {
+  document.querySelectorAll(`#ln-${tabName} span`).forEach(s => s.classList.remove('active-line'));
+  const target = document.getElementById(`ln-${tabName}-${lineNum}`);
+  if (target) target.classList.add('active-line');
+  document.getElementById('csb-cursor').textContent = `Ln ${lineNum}, Col 1`;
+}
+
+function initAllTabs() {
+  ['html','css','js','api','db'].forEach(t => {
+    const lines = buildLineNumbers(t);
+    if (t === currentTab) updateStatusBar(t, lines);
+
+    // Sync scroll entre números y código
+    const content = document.querySelector(`#tab-${t} .code-content`);
+    const lnEl    = document.getElementById(`ln-${t}`);
+    const block   = document.getElementById(`tab-${t}`);
+    if (content && lnEl) {
+      block.addEventListener('scroll', () => { lnEl.scrollTop = block.scrollTop; });
+      // Detectar línea activa al hacer clic en código
+      content.addEventListener('click', e => {
+        const pre = content.querySelector('pre');
+        if (!pre) return;
+        const rect = pre.getBoundingClientRect();
+        const relY = e.clientY - rect.top;
+        const lineH = pre.getBoundingClientRect().height / pre.innerText.split('\n').length;
+        const lineNum = Math.max(1, Math.ceil(relY / lineH));
+        highlightActiveLine(t, lineNum);
+      });
+    }
+  });
+}
 
 function toggleConsole() {
   const console_ = document.getElementById('codeConsole');
@@ -648,16 +763,20 @@ function toggleConsole() {
 }
 
 function switchTab(name) {
-  document.querySelectorAll('.console-tab').forEach((t, i) => {
-    const names = ['html','css','js','api','db'];
-    t.classList.toggle('active', names[i] === name);
-  });
+  currentTab = name;
+  const names = ['html','css','js','api','db'];
+  document.querySelectorAll('.console-tab').forEach((t, i) =>
+    t.classList.toggle('active', names[i] === name));
   document.querySelectorAll('.code-block').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
+
+  const pre = document.querySelector(`#tab-${name} pre`);
+  const lines = pre ? pre.innerText.split('\n').length : 0;
+  updateStatusBar(name, lines);
 }
 
 function copyCode() {
-  const active = document.querySelector('.code-block.active');
+  const active = document.querySelector('.code-block.active pre');
   const text = active ? active.innerText : '';
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.querySelector('.console-actions button');
@@ -666,6 +785,8 @@ function copyCode() {
     setTimeout(() => btn.textContent = orig, 1500);
   });
 }
+
+window.addEventListener('load', () => { setTimeout(initAllTabs, 200); });
 
 // ── RESIZER (drag para redimensionar consola) ─────────────────
 const resizer = document.getElementById('resizer');
