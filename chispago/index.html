@@ -421,28 +421,52 @@ function requestGPS() {
   gpsBtn.classList.add('loading');
   document.getElementById('coordsText').textContent = 'Obteniendo ubicación GPS...';
 
-  navigator.geolocation.getCurrentPosition(
+  // Intentar primero con watchPosition para mayor compatibilidad con apps nativas
+  let gotLocation = false;
+  const watchId = navigator.geolocation.watchPosition(
     pos => {
+      if (gotLocation) return;
+      gotLocation = true;
+      navigator.geolocation.clearWatch(watchId);
       hasGPS = true;
       gpsBtn.classList.remove('loading');
       const { latitude: lat, longitude: lng, accuracy } = pos.coords;
       currentLat = lat; currentLng = lng;
-      map.setView([lat, lng], 17);
+      map.setView([lat, lng], 18);
       if (accuracyCircle) map.removeLayer(accuracyCircle);
       accuracyCircle = L.circle([lat, lng], {
         radius: accuracy, color:'#22c55e',
-        fillColor:'#22c55e', fillOpacity:0.08, weight:1.5
+        fillColor:'#22c55e', fillOpacity:0.1, weight:1.5
       }).addTo(map);
-      showToast('📍 Ubicación GPS obtenida');
+      document.getElementById('confirmBtn').classList.remove('disabled');
     },
     err => {
+      if (gotLocation) return;
+      navigator.geolocation.clearWatch(watchId);
       gpsBtn.classList.remove('loading');
-      const isFile = location.protocol === 'file:';
-      if (isFile) showToast('⚠ Abre desde servidor local para GPS');
-      else showToast('No se pudo obtener GPS. Ajusta el pin manualmente.');
       hasGPS = false;
+      // Reintentar con getCurrentPosition como fallback
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          hasGPS = true;
+          const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+          map.setView([lat, lng], 18);
+          if (accuracyCircle) map.removeLayer(accuracyCircle);
+          accuracyCircle = L.circle([lat, lng], {
+            radius: accuracy, color:'#22c55e',
+            fillColor:'#22c55e', fillOpacity:0.1, weight:1.5
+          }).addTo(map);
+          document.getElementById('confirmBtn').classList.remove('disabled');
+        },
+        () => {
+          document.getElementById('coordsText').textContent =
+            'Arrastra el mapa para fijar tu ubicación';
+          document.getElementById('confirmBtn').classList.remove('disabled');
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+      );
     },
-    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
   );
 }
 
