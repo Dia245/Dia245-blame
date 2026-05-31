@@ -31,7 +31,7 @@ jobs:
       - name: Build debug APK
         working-directory: ChispaGoApp
         env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_HOME: /usr/local/lib/android/sdk
         run: gradle assembleDebug --no-daemon
 
       - name: Upload APK
