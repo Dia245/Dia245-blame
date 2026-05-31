@@ -70,7 +70,7 @@
   #app { height:100%; display:flex; flex-direction:column; }
 
   /* STATUS BAR MOCK */
-
+  .status-bar { height:44px; background:var(--orange); display:flex; align-items:center; justify-content:space-between; padding:0 16px; flex-shrink:0; }
   .sb-time { color:#fff; font-size:0.85rem; font-weight:700; }
   .sb-icons { display:flex; gap:6px; align-items:center; }
   .sb-icons svg { width:16px; height:16px; fill:#fff; }
@@ -199,14 +199,6 @@
   .success-coords { background:var(--green-light); border-radius:10px; padding:10px 14px; font-family:monospace; font-size:0.78rem; color:#16a34a; margin-bottom:24px; }
   .btn-next { width:100%; padding:15px; background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border:none; border-radius:14px; font-size:0.95rem; font-weight:700; cursor:pointer; }
 
-  @keyframes hintBounce {
-    0%   { transform: translate(-50%, -100%) translateX(0); }
-    25%  { transform: translate(-50%, -100%) translateX(12px); }
-    50%  { transform: translate(-50%, -100%) translateX(-12px); }
-    75%  { transform: translate(-50%, -100%) translateX(8px); }
-    100% { transform: translate(-50%, -100%) translateX(0); }
-  }
-
   /* Leaflet overrides */
   .leaflet-control-zoom { display:none !important; }
   .leaflet-control-attribution { font-size:8px !important; }
@@ -323,17 +315,6 @@
           </svg>
         </div>
 
-        <!-- Banner error GPS con instrucción manual -->
-        <div id="manualHintBox" style="display:none;position:absolute;bottom:0;left:0;right:0;z-index:750;background:rgba(255,78,0,0.95);padding:10px 14px;align-items:flex-start;gap:10px;">
-          <span style="font-size:1.2rem;flex-shrink:0">⚠️</span>
-          <div style="flex:1">
-            <div style="color:#fff;font-size:0.78rem;font-weight:700;margin-bottom:2px">Usa el pin manualmente</div>
-            <div style="color:rgba(255,255,255,0.85);font-size:0.72rem;line-height:1.4" id="manualHintReason"></div>
-            <div style="color:rgba(255,255,255,0.7);font-size:0.7rem;margin-top:4px">👆 Arrastra el mapa con tu dedo para mover el pin verde al lugar exacto</div>
-          </div>
-          <button onclick="document.getElementById('manualHintBox').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:0.8rem;flex-shrink:0">✕</button>
-        </div>
-
         <!-- GPS btn -->
         <button class="gps-btn" id="gpsBtn" onclick="centerOnGPS()">
           <svg viewBox="0 0 24 24" id="gpsBtnIcon">
@@ -383,7 +364,7 @@ updateClock(); setInterval(updateClock, 10000);
 
 // ── MAP SETUP ────────────────────────────────────────────────
 const DEFAULT_LAT = -12.09824, DEFAULT_LNG = -77.02876;
-let map, tileNormal, tileSat, isSat = true; // satélite por defecto
+let map, tileNormal, tileSat, isSat = false;
 let currentLat = DEFAULT_LAT, currentLng = DEFAULT_LNG;
 let accuracyCircle = null;
 let hasGPS = false;
@@ -393,7 +374,7 @@ function initMap(lat, lng) {
     zoomControl: false, attributionControl: true,
     dragging: true, touchZoom: true, doubleClickZoom: false,
     scrollWheelZoom: false
-  }).setView([lat, lng], 17);
+  }).setView([lat, lng], 16);
 
   tileNormal = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '©OpenStreetMap', maxZoom: 19
@@ -401,9 +382,7 @@ function initMap(lat, lng) {
   tileSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution: '©Esri', maxZoom: 19
   });
-  // Cargar satélite por defecto
-  tileSat.addTo(map);
-  document.getElementById('satLabel').textContent = 'Ver Mapa';
+  tileNormal.addTo(map);
 
   // Al mover el mapa actualizar coords del pin central
   map.on('move', updateCenterCoords);
@@ -428,83 +407,125 @@ function updateCenterCoords() {
   }
 }
 
-// ── PERMISSION FLOW ──────────────────────────────────────────
-// El overlay solo cierra y pide GPS via Java nativo (no navigator.geolocation)
-function requestGPS() {
-  document.getElementById('permOverlay').style.display = 'none';
-  initMap(DEFAULT_LAT, DEFAULT_LNG);
-  setLoadingGPS(true);
-  // Llama a Java FusedLocationProvider directamente
-  if (window.AndroidGPS) {
-    AndroidGPS.getLocation();
-  } else {
-    // Fallback navegador (pruebas en PC/Firefox)
-    navigator.geolocation && navigator.geolocation.getCurrentPosition(
-      pos => receiveLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
-      () => onGPSError('No se pudo obtener GPS.'),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
-  }
-}
-
-function denyGPS() {
-  document.getElementById('permOverlay').style.display = 'none';
-  initMap(DEFAULT_LAT, DEFAULT_LNG);
-}
-
-// Java llama esta función con las coordenadas reales
-function receiveLocation(lat, lng, accuracy) {
-  setLoadingGPS(false);
+// ── GPS HELPERS ───────────────────────────────────────────────
+function applyLocation(lat, lng, accuracy) {
   hasGPS = true;
   currentLat = lat; currentLng = lng;
   map.setView([lat, lng], 18);
   if (accuracyCircle) map.removeLayer(accuracyCircle);
   accuracyCircle = L.circle([lat, lng], {
-    radius: accuracy, color:'#22c55e',
+    radius: accuracy || 20, color:'#22c55e',
     fillColor:'#22c55e', fillOpacity:0.1, weight:1.5
   }).addTo(map);
+  document.getElementById('gpsBtn').classList.remove('loading');
   document.getElementById('confirmBtn').classList.remove('disabled');
-  document.getElementById('manualHintBox').style.display = 'none';
 }
 
-// Java llama esto si falla el GPS
+function gpsManualFallback() {
+  document.getElementById('gpsBtn').classList.remove('loading');
+  document.getElementById('coordsText').textContent = 'Arrastra el mapa para fijar tu ubicación';
+  document.getElementById('confirmBtn').classList.remove('disabled');
+  showToast('Arrastra el mapa para posicionar tu dirección');
+}
+
+// Llamado desde Java (AndroidGPS bridge) cuando se obtiene GPS nativo
+function receiveLocation(lat, lng, acc) {
+  if (!map) initMap(lat, lng);
+  applyLocation(lat, lng, acc);
+}
+
+// Llamado desde Java cuando hay error GPS
 function onGPSError(msg) {
-  setLoadingGPS(false);
-  document.getElementById('manualHintReason').textContent = msg;
-  document.getElementById('manualHintBox').style.display = 'flex';
+  showToast(msg || 'No se pudo obtener GPS');
+  gpsManualFallback();
 }
 
-// Android llama esto cuando el permiso fue concedido tras el diálogo
+// Llamado desde Java cuando se concede permiso
 function onPermissionGranted() {
-  document.getElementById('manualHintBox').style.display = 'none';
-  setLoadingGPS(true);
-  if (window.AndroidGPS) AndroidGPS.getLocation();
+  if (window.AndroidGPS) window.AndroidGPS.getLocation();
 }
 
-function setLoadingGPS(on) {
-  const btn = document.getElementById('gpsBtn');
-  btn.classList.toggle('loading', on);
-  document.getElementById('coordsText').textContent = on
-    ? 'Obteniendo tu ubicación...' : document.getElementById('coordsText').textContent;
-}
+// ── PERMISSION FLOW ──────────────────────────────────────────
+function requestGPS() {
+  document.getElementById('permOverlay').style.display = 'none';
+  initMap(DEFAULT_LAT, DEFAULT_LNG);
+  document.getElementById('gpsBtn').classList.add('loading');
+  document.getElementById('coordsText').textContent = 'Obteniendo ubicación GPS...';
 
-// ── GPS CENTER (botón GPS del mapa) ──────────────────────────
-function centerOnGPS() {
-  setLoadingGPS(true);
+  // Si está el puente Java nativo (APK Android Studio), usarlo
   if (window.AndroidGPS) {
-    AndroidGPS.getLocation();
-  } else {
-    navigator.geolocation && navigator.geolocation.getCurrentPosition(
-      pos => receiveLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
-      () => { setLoadingGPS(false); },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
+    window.AndroidGPS.getLocation();
+    return;
   }
+
+  if (!navigator.geolocation) {
+    showToast('GPS no disponible en este dispositivo');
+    gpsManualFallback();
+    return;
+  }
+
+  // Intento 1: watchPosition alta precisión
+  let done = false;
+  const wid = navigator.geolocation.watchPosition(
+    pos => {
+      if (done) return; done = true;
+      navigator.geolocation.clearWatch(wid);
+      applyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+    },
+    err => {
+      if (done) return; done = true;
+      navigator.geolocation.clearWatch(wid);
+      // Intento 2: getCurrentPosition baja precisión con caché
+      navigator.geolocation.getCurrentPosition(
+        pos => applyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+        err2 => {
+          // Error code: 1=DENIED, 2=UNAVAILABLE, 3=TIMEOUT
+          if (err2.code === 1) {
+            showToast('Permiso GPS denegado. Actívalo en Ajustes > Apps > Chrome > Permisos');
+          }
+          gpsManualFallback();
+        },
+        { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 }
+      );
+    },
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+  );
 }
 
-// legacy — ya no se usa pero evita errores si algo lo llama
-function centerOnGPS_legacy() {
+function denyGPS() {
+  document.getElementById('permOverlay').style.display = 'none';
+  initMap(DEFAULT_LAT, DEFAULT_LNG);
+  showToast('Arrastra el mapa para posicionar tu dirección');
+}
+
+// ── GPS CENTER ───────────────────────────────────────────────
+function centerOnGPS() {
   const btn = document.getElementById('gpsBtn');
+  btn.classList.add('loading');
+
+  if (window.AndroidGPS) {
+    window.AndroidGPS.getLocation();
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    btn.classList.remove('loading');
+    showToast('GPS no disponible');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      btn.classList.remove('loading');
+      map.setView([pos.coords.latitude, pos.coords.longitude], 17);
+      showToast('Centrado en tu ubicación');
+    },
+    err => {
+      btn.classList.remove('loading');
+      showToast(err.code === 1 ? 'Permiso GPS denegado' : 'No se pudo obtener GPS');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+  );
 }
 
 // ── SATELLITE TOGGLE ─────────────────────────────────────────
