@@ -1,0 +1,58 @@
+═══════════════════════════════════════════════════════════
+  CHISPA GO — Cómo generar el APK en Android Studio
+═══════════════════════════════════════════════════════════
+
+PASO 1 — Instala Android Studio (gratis)
+  https://developer.android.com/studio
+
+PASO 2 — Abre el proyecto
+  → File > Open > selecciona la carpeta "ChispaGoApp"
+  → Espera que Gradle sincronice (1-2 min primera vez)
+
+PASO 3 — Genera el APK
+  → Menú: Build > Build Bundle(s) / APK(s) > Build APK(s)
+  → Espera ~1 minuto
+  → Sale una notificación: "APK generated"
+  → Clic en "locate" para encontrar el archivo
+
+PASO 4 — Instala en tu celular
+  → Copia el APK a tu Android
+  → En Android: Ajustes > Seguridad > "Orígenes desconocidos" ON
+  → Toca el archivo APK para instalar
+
+═══════════════════════════════════════════════════════════
+  ESTRUCTURA DEL PROYECTO
+═══════════════════════════════════════════════════════════
+
+ChispaGoApp/
+├── app/src/main/
+│   ├── AndroidManifest.xml     ← permisos GPS + internet
+│   ├── java/com/chispago/
+│   │   └── MainActivity.java   ← WebView + permisos Android
+│   ├── res/
+│   │   ├── layout/activity_main.xml
+│   │   └── values/styles.xml   ← color naranja #FF4E00
+│   └── assets/
+│       └── index.html          ← TODA la app (HTML+CSS+JS)
+├── app/build.gradle
+├── build.gradle
+└── settings.gradle
+
+El archivo index.html contiene TODO embebido:
+  - Mapa Leaflet (carga de CDN, requiere internet)
+  - Overlay de permiso GPS estilo Google Maps
+  - Búsqueda de dirección con autocompletado
+  - Pin verde arrastrable en el mapa
+  - Coordenadas en tiempo real
+  - Campo de referencia (paso 4 de 5)
+  - Barra de progreso naranja
+  - Botón satélite / GPS
+
+═══════════════════════════════════════════════════════════
+  REQUISITOS MÍNIMOS
+═══════════════════════════════════════════════════════════
+  Android Studio: Hedgehog o superior
+  JDK: 17 (incluido con Android Studio)
+  Android SDK: API 24+ (Android 7.0)
+  Espacio: ~2 GB para Android Studio + SDK
+═══════════════════════════════════════════════════════════
