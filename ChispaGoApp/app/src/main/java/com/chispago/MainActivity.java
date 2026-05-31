@@ -1,10 +1,13 @@
 package com.chispago;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.webkit.*;
-import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -14,16 +17,74 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private static final int LOCATION_PERMISSION_CODE = 1001;
 
+    // Guardamos el callback del WebView para invocarlo tras el resultado
+    private GeolocationPermissions.Callback pendingGeoCallback;
+    private String pendingGeoOrigin;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Ocultar barra de título nativa
         if (getSupportActionBar() != null) getSupportActionBar().hide();
-
         setContentView(R.layout.activity_main);
         webView = findViewById(R.id.webView);
 
+        // PASO 1: Pedir permiso Android ANTES de cargar la página
+        if (hasLocationPermission()) {
+            loadApp();
+        } else {
+            requestLocationPermission();
+        }
+    }
+
+    private boolean hasLocationPermission() {
+        return ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermission() {
+        ActivityCompat.requestPermissions(this,
+            new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            }, LOCATION_PERMISSION_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int code,
+            String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(code, permissions, results);
+
+        if (code == LOCATION_PERMISSION_CODE) {
+            boolean granted = results.length > 0
+                && results[0] == PackageManager.PERMISSION_GRANTED;
+
+            // Si hay un callback pendiente del WebView, resolverlo
+            if (pendingGeoCallback != null) {
+                pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
+                pendingGeoCallback = null;
+            }
+
+            if (granted) {
+                // Permiso concedido → cargar o recargar la app
+                if (webView.getUrl() == null) loadApp();
+                else webView.evaluateJavascript("onAndroidPermissionGranted()", null);
+            } else {
+                // Permiso denegado permanentemente → mostrar diálogo
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(
+                        this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    showGoToSettingsDialog();
+                } else {
+                    // Cargamos igual, el HTML mostrará modo manual
+                    loadApp();
+                    if (webView.getUrl() != null)
+                        webView.evaluateJavascript("onAndroidPermissionDenied()", null);
+                }
+            }
+        }
+    }
+
+    private void loadApp() {
         setupWebView();
         webView.loadUrl("file:///android_asset/index.html");
     }
@@ -46,28 +107,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin,
                     GeolocationPermissions.Callback callback) {
-                // Verificar permisos Android antes de conceder al WebView
-                if (ContextCompat.checkSelfPermission(MainActivity.this,
-                        Manifest.permission.ACCESS_FINE_LOCATION)
-                        == PackageManager.PERMISSION_GRANTED) {
+                if (hasLocationPermission()) {
+                    // Ya tenemos permiso Android → conceder directamente al WebView
                     callback.invoke(origin, true, false);
                 } else {
-                    // Guardar callback y pedir permiso
+                    // Guardar callback y pedir permiso Android
                     pendingGeoCallback = callback;
-                    pendingGeoOrigin  = origin;
-                    ActivityCompat.requestPermissions(MainActivity.this,
-                        new String[]{
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        }, LOCATION_PERMISSION_CODE);
+                    pendingGeoOrigin   = origin;
+                    requestLocationPermission();
                 }
             }
 
             @Override
             public boolean onConsoleMessage(ConsoleMessage msg) {
-                // útil para debug desde Android Studio Logcat
-                android.util.Log.d("ChispaGo", msg.message() +
-                    " — " + msg.sourceId() + ":" + msg.lineNumber());
+                android.util.Log.d("ChispaGo",
+                    msg.message() + " [" + msg.sourceId() + ":" + msg.lineNumber() + "]");
                 return true;
             }
         });
@@ -76,38 +130,46 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
                 String url = req.getUrl().toString();
-                // Dejar que el WebView maneje las URLs internas
                 if (url.startsWith("file://")) return false;
-                // URLs externas: abrir en navegador
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                 return true;
             }
         });
+
+        // Interfaz JS → Android para que el HTML pueda consultar el estado
+        webView.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
     }
 
-    // Callback pendiente de geolocalización
-    private GeolocationPermissions.Callback pendingGeoCallback;
-    private String pendingGeoOrigin;
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-            String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_CODE && pendingGeoCallback != null) {
-            boolean granted = grantResults.length > 0 &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED;
-            pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
-            pendingGeoCallback = null;
-            if (!granted) {
-                Toast.makeText(this,
-                    "Permiso de ubicación denegado. Ajusta el pin manualmente.",
-                    Toast.LENGTH_LONG).show();
-            }
+    // Puente Java ↔ JavaScript
+    class AndroidBridge {
+        @JavascriptInterface
+        public boolean hasLocationPermission() {
+            return MainActivity.this.hasLocationPermission();
         }
+
+        @JavascriptInterface
+        public void requestPermission() {
+            runOnUiThread(() -> requestLocationPermission());
+        }
+    }
+
+    private void showGoToSettingsDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("Permiso de ubicación requerido")
+            .setMessage("El permiso fue denegado permanentemente. Ve a Ajustes > Aplicaciones > Chispa Go > Permisos y activa \"Ubicación\".")
+            .setPositiveButton("Ir a Ajustes", (d, w) -> {
+                Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", getPackageName(), null));
+                startActivity(i);
+            })
+            .setNegativeButton("Continuar sin GPS", (d, w) -> loadApp())
+            .setCancelable(false)
+            .show();
     }
 
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) webView.goBack();
+        if (webView != null && webView.canGoBack()) webView.goBack();
         else super.onBackPressed();
     }
 }

@@ -199,6 +199,14 @@
   .success-coords { background:var(--green-light); border-radius:10px; padding:10px 14px; font-family:monospace; font-size:0.78rem; color:#16a34a; margin-bottom:24px; }
   .btn-next { width:100%; padding:15px; background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border:none; border-radius:14px; font-size:0.95rem; font-weight:700; cursor:pointer; }
 
+  @keyframes hintBounce {
+    0%   { transform: translate(-50%, -100%) translateX(0); }
+    25%  { transform: translate(-50%, -100%) translateX(12px); }
+    50%  { transform: translate(-50%, -100%) translateX(-12px); }
+    75%  { transform: translate(-50%, -100%) translateX(8px); }
+    100% { transform: translate(-50%, -100%) translateX(0); }
+  }
+
   /* Leaflet overrides */
   .leaflet-control-zoom { display:none !important; }
   .leaflet-control-attribution { font-size:8px !important; }
@@ -315,6 +323,17 @@
           </svg>
         </div>
 
+        <!-- Banner error GPS con instrucción manual -->
+        <div id="manualHintBox" style="display:none;position:absolute;bottom:0;left:0;right:0;z-index:750;background:rgba(255,78,0,0.95);padding:10px 14px;align-items:flex-start;gap:10px;">
+          <span style="font-size:1.2rem;flex-shrink:0">⚠️</span>
+          <div style="flex:1">
+            <div style="color:#fff;font-size:0.78rem;font-weight:700;margin-bottom:2px">Usa el pin manualmente</div>
+            <div style="color:rgba(255,255,255,0.85);font-size:0.72rem;line-height:1.4" id="manualHintReason"></div>
+            <div style="color:rgba(255,255,255,0.7);font-size:0.7rem;margin-top:4px">👆 Arrastra el mapa con tu dedo para mover el pin verde al lugar exacto</div>
+          </div>
+          <button onclick="document.getElementById('manualHintBox').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:0.8rem;flex-shrink:0">✕</button>
+        </div>
+
         <!-- GPS btn -->
         <button class="gps-btn" id="gpsBtn" onclick="centerOnGPS()">
           <svg viewBox="0 0 24 24" id="gpsBtnIcon">
@@ -413,7 +432,7 @@ function requestGPS() {
   initMap(DEFAULT_LAT, DEFAULT_LNG);
 
   if (!navigator.geolocation) {
-    showToast('GPS no disponible en este dispositivo');
+    showManualHint('Tu dispositivo no tiene GPS. Usa el mapa para posicionar el pin.');
     return;
   }
 
@@ -437,34 +456,68 @@ function requestGPS() {
     },
     err => {
       gpsBtn.classList.remove('loading');
-      const isFile = location.protocol === 'file:';
-      if (isFile) showToast('⚠ Abre desde servidor local para GPS');
-      else showToast('No se pudo obtener GPS. Ajusta el pin manualmente.');
       hasGPS = false;
+      const reasons = {
+        1: 'Permiso de ubicación denegado en el sistema.',
+        2: 'No se detectó señal GPS. Activa el GPS en Ajustes > Ubicación.',
+        3: 'El GPS tardó demasiado. Sal al exterior e intenta de nuevo.'
+      };
+      showManualHint(reasons[err.code] || 'No se pudo obtener GPS.');
     },
-    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
+}
+
+// Muestra un banner explicativo + animación de arrastre en el mapa
+function showManualHint(reason) {
+  const box = document.getElementById('manualHintBox');
+  document.getElementById('manualHintReason').textContent = reason;
+  box.style.display = 'flex';
+  // Animar el pin para indicar que se puede arrastrar
+  const pin = document.getElementById('centerPin');
+  pin.style.animation = 'hintBounce 0.6s ease 3';
 }
 
 function denyGPS() {
   document.getElementById('permOverlay').style.display = 'none';
   initMap(DEFAULT_LAT, DEFAULT_LNG);
-  showToast('Arrastra el mapa para posicionar tu dirección');
+  showManualHint('Arrastra el mapa con tu dedo para posicionar el pin en tu dirección.');
+}
+
+// Llamado desde Android cuando el permiso es concedido después de cargar
+function onAndroidPermissionGranted() {
+  document.getElementById('manualHintBox').style.display = 'none';
+  centerOnGPS();
+}
+
+// Llamado desde Android cuando el permiso es denegado
+function onAndroidPermissionDenied() {
+  showManualHint('Permiso de ubicación denegado. Ve a Ajustes del celular > Apps > Chispa Go > Permisos > Ubicación.');
 }
 
 // ── GPS CENTER ───────────────────────────────────────────────
 function centerOnGPS() {
-  if (!navigator.geolocation) { showToast('GPS no disponible'); return; }
+  if (!navigator.geolocation) { showManualHint('GPS no disponible en este dispositivo.'); return; }
   const btn = document.getElementById('gpsBtn');
   btn.classList.add('loading');
+  document.getElementById('coordsText').textContent = 'Buscando señal GPS...';
   navigator.geolocation.getCurrentPosition(
     pos => {
       btn.classList.remove('loading');
+      document.getElementById('manualHintBox').style.display = 'none';
       map.setView([pos.coords.latitude, pos.coords.longitude], 17);
       showToast('📍 Centrado en tu ubicación');
     },
-    () => { btn.classList.remove('loading'); showToast('No se pudo obtener GPS'); },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    err => {
+      btn.classList.remove('loading');
+      const reasons = {
+        1: 'Permiso denegado. Ve a Ajustes > Apps > Chispa Go > Permisos > Ubicación.',
+        2: 'Sin señal GPS. Activa ubicación en Ajustes del celular.',
+        3: 'GPS tardó demasiado. Sal al exterior e intenta de nuevo.'
+      };
+      showManualHint(reasons[err.code] || 'No se pudo obtener GPS.');
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
   );
 }
 
