@@ -545,46 +545,46 @@ function zoomOut() { map && map.zoomOut(); }
 
 // ── SEARCH ───────────────────────────────────────────────────
 let searchTimer = null;
-const SUGGESTIONS = [
-  { icon:'🏘', main:'Jr. Ucayali 450', sub:'Lima, Cercado de Lima' },
-  { icon:'🏢', main:'Av. Arequipa 1200', sub:'Miraflores, Lima' },
-  { icon:'🏡', main:'Calle Las Flores 89', sub:'San Isidro, Lima' },
-  { icon:'🏪', main:'Av. Javier Prado Este', sub:'La Molina, Lima' },
-  { icon:'🏬', main:'Av. Larco 700', sub:'Miraflores, Lima' },
-];
+let searchController = null;
 
 function onSearchInput(val) {
-  const clearBtn = document.getElementById('clearBtn');
-  clearBtn.classList.toggle('visible', val.length > 0);
+  document.getElementById('clearBtn').classList.toggle('visible', val.length > 0);
   clearTimeout(searchTimer);
-  if (val.length < 2) { closeAutocomplete(); return; }
-  searchTimer = setTimeout(() => showSuggestions(val), 300);
+  if (val.length < 3) { closeAutocomplete(); return; }
+  searchTimer = setTimeout(() => fetchSuggestions(val), 400);
 }
 
-function showSuggestions(query) {
+async function fetchSuggestions(query) {
+  if (searchController) searchController.abort();
+  searchController = new AbortController();
   const ac = document.getElementById('autocomplete');
-  const filtered = SUGGESTIONS.filter(s =>
-    s.main.toLowerCase().includes(query.toLowerCase()) ||
-    s.sub.toLowerCase().includes(query.toLowerCase())
-  );
-  if (!filtered.length) { closeAutocomplete(); return; }
-  ac.innerHTML = filtered.map(s => `
-    <div class="ac-item" onclick="selectSuggestion('${s.main}', '${s.sub}')">
-      <div class="ac-icon">${s.icon}</div>
-      <div class="ac-text"><strong>${s.main}</strong><span>${s.sub}</span></div>
-    </div>`).join('');
+  ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Buscando...</span></div></div>';
   ac.classList.add('open');
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&countrycodes=pe&accept-language=es`;
+    const res = await fetch(url, { signal: searchController.signal, headers: { 'Accept-Language': 'es' } });
+    const data = await res.json();
+    if (!data.length) { ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Sin resultados</span></div></div>'; return; }
+    ac.innerHTML = data.map((r, i) => {
+      const parts = r.display_name.split(', ');
+      const main = parts.slice(0, 2).join(', ');
+      const sub = parts.slice(2, 4).join(', ');
+      return `<div class="ac-item" onclick="selectResult(${r.lat}, ${r.lon}, '${main.replace(/'/g,"\\'")}', '${sub.replace(/'/g,"\\'")}')">
+        <div class="ac-icon">📍</div>
+        <div class="ac-text"><strong>${main}</strong><span>${sub}</span></div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    if (e.name !== 'AbortError') ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Error de conexión</span></div></div>';
+  }
 }
 
-function selectSuggestion(main, sub) {
+function selectResult(lat, lng, main, sub) {
   document.getElementById('searchInput').value = main;
   closeAutocomplete();
   document.getElementById('clearBtn').classList.add('visible');
-  showToast('📍 Buscando: ' + main);
-  // Geocoding simulado — mover mapa a coordenadas representativas
-  const offsets = [[0.002,0.003],[-.003,.002],[.001,-.002],[-.001,.001],[.004,-.003]];
-  const idx = Math.floor(Math.random() * offsets.length);
-  if (map) map.setView([DEFAULT_LAT + offsets[idx][0], DEFAULT_LNG + offsets[idx][1]], 17);
+  if (!map) initMap(lat, lng);
+  map.setView([parseFloat(lat), parseFloat(lng)], 17);
 }
 
 function clearSearch() {
