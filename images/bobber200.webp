@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" width="800" height="350">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d0d0d"/>
+      <stop offset="100%" style="stop-color:#1a0010"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#996633;stop-opacity:0.22"/>
+      <stop offset="100%" style="stop-color:transparent;stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="350" fill="url(#bg)"/>
+  <ellipse cx="400" cy="175" rx="350" ry="200" fill="url(#glow)"/>
+  <line x1="0" y1="320" x2="800" y2="320" stroke="#996633" stroke-width="2" opacity="0.5"/>
+  <ellipse cx="400" cy="175" rx="160" ry="55" fill="#996633" opacity="0.85"/>
+  <ellipse cx="365" cy="148" rx="75" ry="28" fill="#996633"/>
+  <ellipse cx="430" cy="148" rx="55" ry="18" fill="#333"/>
+  <circle cx="558" cy="178" r="22" fill="#222" stroke="#996633" stroke-width="2"/>
+  <circle cx="558" cy="178" r="14" fill="#ffe066" opacity="0.8"/>
+  <line x1="538" y1="178" x2="520" y2="218" stroke="#444" stroke-width="5"/>
+  <line x1="548" y1="178" x2="530" y2="218" stroke="#444" stroke-width="5"/>
+  <circle cx="525" cy="228" r="52" fill="none" stroke="#555" stroke-width="8"/>
+  <circle cx="525" cy="228" r="52" fill="none" stroke="#996633" stroke-width="2" opacity="0.5"/>
+  <circle cx="525" cy="228" r="18" fill="#333"/>
+  <circle cx="525" cy="228" r="6" fill="#996633"/>
+  <line x1="525" y1="176" x2="525" y2="280" stroke="#555" stroke-width="2"/>
+  <line x1="473" y1="228" x2="577" y2="228" stroke="#555" stroke-width="2"/>
+  <line x1="489" y1="191" x2="561" y2="265" stroke="#555" stroke-width="2"/>
+  <line x1="561" y1="191" x2="489" y2="265" stroke="#555" stroke-width="2"/>
+  <line x1="390" y1="185" x2="280" y2="218" stroke="#444" stroke-width="6"/>
+  <circle cx="270" cy="228" r="55" fill="none" stroke="#555" stroke-width="8"/>
+  <circle cx="270" cy="228" r="55" fill="none" stroke="#996633" stroke-width="2" opacity="0.5"/>
+  <circle cx="270" cy="228" r="18" fill="#333"/>
+  <circle cx="270" cy="228" r="6" fill="#996633"/>
+  <line x1="270" y1="173" x2="270" y2="283" stroke="#555" stroke-width="2"/>
+  <line x1="215" y1="228" x2="325" y2="228" stroke="#555" stroke-width="2"/>
+  <line x1="231" y1="189" x2="309" y2="267" stroke="#555" stroke-width="2"/>
+  <line x1="309" y1="189" x2="231" y2="267" stroke="#555" stroke-width="2"/>
+  <rect x="295" y="190" width="65" height="45" rx="6" fill="#2a2a2a" stroke="#444" stroke-width="2"/>
+  <path d="M 295 220 Q 260 240 240 255" stroke="#666" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <line x1="530" y1="148" x2="560" y2="148" stroke="#666" stroke-width="5"/>
+  <line x1="530" y1="148" x2="510" y2="128" stroke="#555" stroke-width="3"/>
+  <text x="400" y="310" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#666" letter-spacing="3">GLOBAL GO MOTOCICLETAS</text>
+  <text x="60" y="80" font-family="Arial,sans-serif" font-size="48" font-weight="900" fill="#996633" opacity="0.12">200</text>
+  <rect x="0" y="0" width="800" height="2" fill="#996633" opacity="0.4"/>
+</svg>
