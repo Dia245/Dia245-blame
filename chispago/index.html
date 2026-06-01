@@ -419,6 +419,21 @@ function applyLocation(lat, lng, accuracy) {
   }).addTo(map);
   document.getElementById('gpsBtn').classList.remove('loading');
   document.getElementById('confirmBtn').classList.remove('disabled');
+  reverseGeocode(lat, lng);
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`);
+    const data = await res.json();
+    if (data && data.display_name) {
+      const parts = data.display_name.split(', ');
+      const addr = parts.slice(0, 3).join(', ');
+      const input = document.getElementById('searchInput');
+      input.value = addr;
+      document.getElementById('clearBtn').classList.add('visible');
+    }
+  } catch(e) {}
 }
 
 function gpsManualFallback() {
