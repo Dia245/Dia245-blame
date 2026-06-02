@@ -1,64 +1,295 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Verificacion por SMS</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FF4E00">
+<title>Chispa Go</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{--orange:#FF4E00;--orange-dark:#e04300;--orange-light:#fff3ee;--green:#22c55e;--green-light:#dcfce7;--gray:#f5f5f5;--text:#1a1a1a;--sub:#6b7280;--border:#e5e7eb;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#fff;}
+  #permOverlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .3s ease;}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .perm-sheet{background:#fff;border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;animation:slideUp .35s cubic-bezier(.25,.8,.25,1);}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .perm-handle{width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 24px;}
+  .perm-icon-wrap{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#FF4E00,#ff7a40);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:32px;box-shadow:0 8px 24px rgba(255,78,0,.35);}
+  .perm-sheet h2{text-align:center;font-size:1.25rem;color:var(--text);margin-bottom:8px;font-weight:700;}
+  .perm-sheet p{text-align:center;font-size:0.88rem;color:var(--sub);line-height:1.55;margin-bottom:28px;}
+  .perm-benefits{display:flex;gap:12px;margin-bottom:28px;}
+  .perm-benefit{flex:1;background:var(--orange-light);border-radius:12px;padding:12px 8px;text-align:center;}
+  .perm-benefit .bi{font-size:1.4rem;margin-bottom:4px;}
+  .perm-benefit span{font-size:0.72rem;color:var(--orange);font-weight:600;display:block;}
+  .btn-allow{width:100%;padding:16px;background:linear-gradient(135deg,#FF4E00,#ff7a40);color:#fff;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,78,0,.4);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-allow:active{transform:scale(.98);}
+  .btn-deny{width:100%;padding:13px;background:transparent;color:var(--sub);border:1.5px solid var(--border);border-radius:14px;font-size:0.9rem;cursor:pointer;}
+  #app{height:100%;display:flex;flex-direction:column;}
+  .status-bar{height:44px;background:var(--orange);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;}
+  .sb-time{color:#fff;font-size:0.85rem;font-weight:700;}
+  .topbar{background:var(--orange);padding:0 16px 16px;flex-shrink:0;}
+  .topbar-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .back-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;flex-shrink:0;}
+  .back-btn svg{width:20px;height:20px;fill:#fff;}
+  .topbar h1{color:#fff;font-size:1rem;font-weight:700;flex:1;}
+  .steps{display:flex;gap:6px;align-items:center;}
+  .step-dot{height:4px;border-radius:2px;background:rgba(255,255,255,.35);transition:all .3s;flex:1;}
+  .step-dot.done{background:#fff;}
+  .step-dot.active{background:#fff;flex:2;}
+  .search-wrap{background:#fff;border-radius:14px;display:flex;align-items:center;gap:10px;padding:0 14px;box-shadow:0 2px 12px rgba(0,0,0,.12);}
+  .search-wrap svg{width:20px;height:20px;fill:var(--sub);flex-shrink:0;}
+  .search-wrap input{flex:1;border:none;outline:none;font-size:0.9rem;color:var(--text);padding:13px 0;background:transparent;}
+  .search-wrap input::placeholder{color:#9ca3af;}
+  .search-clear{width:22px;height:22px;border-radius:50%;background:var(--gray);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:0.75rem;color:var(--sub);}
+  .search-clear.visible{display:flex;}
+  .autocomplete{position:absolute;top:100%;left:0;right:0;background:#fff;border-radius:0 0 14px 14px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:800;max-height:220px;overflow-y:auto;display:none;}
+  .autocomplete.open{display:block;}
+  .ac-item{padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid #f3f4f6;}
+  .ac-icon{width:32px;height:32px;border-radius:50%;background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+  .ac-text strong{font-size:0.85rem;color:var(--text);display:block;}
+  .ac-text span{font-size:0.75rem;color:var(--sub);}
+  .content{flex:1;overflow-y:auto;overflow-x:hidden;}
+  .content-inner{padding:20px 16px;}
+  .step-label{font-size:0.75rem;color:var(--orange);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;}
+  .step-title{font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+  .step-desc{font-size:0.85rem;color:var(--sub);line-height:1.5;margin-bottom:20px;}
+  .map-wrap{position:relative;border-radius:18px;overflow:hidden;border:2.5px solid var(--green);box-shadow:0 4px 20px rgba(34,197,94,.2);height:300px;margin-bottom:14px;}
+  #map{height:100%;width:100%;}
+  .map-overlay-top{position:absolute;top:10px;left:10px;right:10px;z-index:700;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;}
+  .map-btn{pointer-events:all;background:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:0.78rem;font-weight:600;color:var(--text);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;gap:5px;}
+  .map-zoom{display:flex;flex-direction:column;gap:2px;}
+  .zoom-btn{width:36px;height:36px;background:#fff;border:none;border-radius:8px;font-size:1.1rem;font-weight:700;color:var(--text);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;}
+  .center-pin{position:absolute;left:50%;top:50%;z-index:600;transform:translate(-50%,-100%);pointer-events:none;transition:transform .15s;}
+  .center-pin.dragging{transform:translate(-50%,-120%) scale(1.1);}
+  .gps-btn{position:absolute;bottom:14px;right:14px;z-index:700;width:44px;height:44px;border-radius:50%;background:#fff;border:none;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;}
+  .gps-btn svg{width:22px;height:22px;}
+  .gps-btn.loading svg{animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .coords-box{display:flex;align-items:center;gap:8px;background:var(--orange-light);border-radius:10px;padding:10px 14px;margin-bottom:20px;}
+  .coords-box svg{width:18px;height:18px;fill:var(--orange);flex-shrink:0;}
+  .coords-text{font-size:0.8rem;color:var(--orange-dark);font-family:monospace;font-weight:600;}
+  .ref-label{font-size:0.82rem;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .ref-label span{background:var(--orange);color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;}
+  .ref-input{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-size:0.9rem;color:var(--text);outline:none;transition:border .2s;background:#fafafa;resize:none;font-family:inherit;}
+  .ref-input:focus{border-color:var(--orange);background:#fff;}
+  .ref-input::placeholder{color:#9ca3af;}
+  .char-count{text-align:right;font-size:0.72rem;color:var(--sub);margin-top:4px;margin-bottom:20px;}
+  .confirm-btn{width:100%;padding:17px;background:linear-gradient(135deg,#FF4E00,#ff7a40);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(255,78,0,.35);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;transition:all .2s;}
+  .confirm-btn.disabled{background:#d1d5db;box-shadow:none;cursor:not-allowed;}
+  .confirm-btn svg{width:20px;height:20px;fill:#fff;}
+  .skip-link{text-align:center;font-size:0.82rem;color:var(--sub);padding-bottom:8px;cursor:pointer;}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:24px;font-size:0.82rem;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:8000;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #successOverlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;display:none;align-items:center;justify-content:center;}
+  #successOverlay.show{display:flex;}
+  .success-card{background:#fff;border-radius:24px;padding:36px 28px;max-width:320px;width:90%;text-align:center;animation:slideUp .3s ease;}
+  .success-icon{width:72px;height:72px;border-radius:50%;background:var(--green-light);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
+  .success-card h3{font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:8px;}
+  .success-card p{font-size:0.85rem;color:var(--sub);line-height:1.5;margin-bottom:24px;}
+  .success-coords{background:var(--green-light);border-radius:10px;padding:10px 14px;font-family:monospace;font-size:0.78rem;color:#16a34a;margin-bottom:24px;}
+  .btn-next{width:100%;padding:15px;background:linear-gradient(135deg,#FF4E00,#ff7a40);color:#fff;border:none;border-radius:14px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+  .leaflet-control-zoom{display:none !important;}
+  .leaflet-control-attribution{font-size:8px !important;}
+</style>
 </head>
 <body>
-
-  <div class="card" id="step-phone">
-    <div class="icon">📱</div>
-    <h2>Verificar numero</h2>
-    <p>Ingresa tu numero y te enviamos un codigo por SMS</p>
-
-    <div class="input-group">
-      <select id="country-code">
-        <option value="+51">🇵🇪 +51</option>
-        <option value="+1">🇺🇸 +1</option>
-        <option value="+52">🇲🇽 +52</option>
-        <option value="+54">🇦🇷 +54</option>
-        <option value="+57">🇨🇴 +57</option>
-        <option value="+56">🇨🇱 +56</option>
-        <option value="+34">🇪🇸 +34</option>
-      </select>
-      <input type="tel" id="phone-input" placeholder="987 654 321" maxlength="15" />
+<div id="permOverlay">
+  <div class="perm-sheet">
+    <div class="perm-handle"></div>
+    <div class="perm-icon-wrap">📍</div>
+    <h2>Activar ubicación GPS</h2>
+    <p>Para confirmar tu domicilio necesitamos acceder a tu ubicación exacta y colocar el pin en el lugar correcto.</p>
+    <div class="perm-benefits">
+      <div class="perm-benefit"><div class="bi">🎯</div><span>Precisión exacta</span></div>
+      <div class="perm-benefit"><div class="bi">⚡</div><span>Detección rápida</span></div>
+      <div class="perm-benefit"><div class="bi">🔒</div><span>100% seguro</span></div>
     </div>
-
-    <div id="recaptcha-container"></div>
-
-    <button id="btn-send" onclick="sendOTP()">Enviar codigo</button>
-    <p class="error" id="error-phone"></p>
+    <button class="btn-allow" onclick="requestGPS()">
+      <svg viewBox="0 0 24 24" fill="white" style="width:20px;height:20px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      Permitir acceso a ubicación
+    </button>
+    <button class="btn-deny" onclick="denyGPS()">Ahora no</button>
   </div>
-
-  <div class="card hidden" id="step-otp">
-    <div class="icon">🔐</div>
-    <h2>Codigo enviado</h2>
-    <p>Ingresa el codigo de 6 digitos enviado a <strong id="phone-display"></strong></p>
-
-    <div class="otp-inputs">
-      <input type="number" class="otp-box" maxlength="1" />
-      <input type="number" class="otp-box" maxlength="1" />
-      <input type="number" class="otp-box" maxlength="1" />
-      <input type="number" class="otp-box" maxlength="1" />
-      <input type="number" class="otp-box" maxlength="1" />
-      <input type="number" class="otp-box" maxlength="1" />
+</div>
+<div id="successOverlay">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <h3>¡Domicilio confirmado!</h3>
+    <p>Tu ubicación ha sido guardada correctamente.</p>
+    <div class="success-coords" id="successCoords">Lat —, Lng —</div>
+    <button class="btn-next" onclick="goNext()">Continuar al paso 5 →</button>
+  </div>
+</div>
+<div id="app">
+  <div class="status-bar">
+    <span class="sb-time" id="sbTime">00:00</span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
     </div>
-
-    <button id="btn-verify" onclick="verifyOTP()">Verificar</button>
-    <button class="btn-secondary" onclick="resendOTP()">Reenviar codigo <span id="resend-timer"></span></button>
-    <p class="error" id="error-otp"></p>
   </div>
-
-  <div class="card hidden" id="step-success">
-    <div class="icon">✅</div>
-    <h2>Numero verificado</h2>
-    <p>Tu numero fue verificado exitosamente.</p>
-    <p class="uid-text">UID: <code id="user-uid"></code></p>
-    <button onclick="resetFlow()">Volver a empezar</button>
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back-btn"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+      <h1>Confirmar Domicilio</h1>
+    </div>
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:5px"><span style="color:rgba(255,255,255,.75);font-size:0.72rem;">Paso 4 de 5</span></div>
   </div>
-
-  <script type="module" src="app.js"></script>
+  <div class="content">
+    <div class="content-inner">
+      <div style="position:relative;margin-bottom:18px;">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" id="searchInput" placeholder="Busca tu calle, condominio o zona..." autocomplete="off" oninput="onSearchInput(this.value)">
+          <button class="search-clear" id="clearBtn" onclick="clearSearch()">✕</button>
+        </div>
+        <div class="autocomplete" id="autocomplete"></div>
+      </div>
+      <div class="step-label">Paso 4 de 5</div>
+      <div class="step-title">Fija tu ubicación exacta</div>
+      <div class="step-desc">Arrastra el mapa para centrar el pin en tu residencia o usa el botón GPS.</div>
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div class="map-overlay-top">
+          <button class="map-btn" onclick="toggleSatellite()">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#555"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <span id="satLabel">Ver Satélite</span>
+          </button>
+          <div class="map-zoom">
+            <button class="zoom-btn" onclick="zoomIn()">+</button>
+            <button class="zoom-btn" onclick="zoomOut()">−</button>
+          </div>
+        </div>
+        <div class="center-pin" id="centerPin">
+          <svg width="38" height="52" viewBox="0 0 38 52">
+            <ellipse cx="19" cy="49" rx="8" ry="3" fill="rgba(0,0,0,0.2)"/>
+            <path d="M19 0C8.51 0 0 8.51 0 19c0 14.25 19 33 19 33S38 33.25 38 19C38 8.51 29.49 0 19 0z" fill="#22c55e"/>
+            <circle cx="19" cy="19" r="8" fill="white"/>
+            <circle cx="19" cy="19" r="4" fill="#22c55e"/>
+          </svg>
+        </div>
+        <button class="gps-btn" id="gpsBtn" onclick="centerOnGPS()">
+          <svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" fill="#FF4E00"/></svg>
+        </button>
+      </div>
+      <div class="coords-box">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <span class="coords-text" id="coordsText">Coordenadas: esperando GPS...</span>
+      </div>
+      <div class="ref-label"><span>4</span> Referencia de dirección (opcional)</div>
+      <textarea class="ref-input" id="refInput" rows="2" placeholder="Ej: Frente al parque, casa con reja azul..." maxlength="120" oninput="updateCharCount(this)"></textarea>
+      <div class="char-count"><span id="charCount">0</span>/120</div>
+      <button class="confirm-btn disabled" id="confirmBtn" onclick="confirmLocation()">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        Confirmar esta ubicación
+      </button>
+      <div class="skip-link" onclick="skipStep()">Ingresar dirección manualmente</div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function updateClock(){const n=new Date();document.getElementById('sbTime').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
+updateClock();setInterval(updateClock,10000);
+const DEFAULT_LAT=-12.09824,DEFAULT_LNG=-77.02876;
+let map,tileNormal,tileSat,isSat=true,currentLat=DEFAULT_LAT,currentLng=DEFAULT_LNG,accuracyCircle=null,hasGPS=false;
+function initMap(lat,lng){
+  map=L.map('map',{zoomControl:false,attributionControl:true,dragging:true,touchZoom:true,doubleClickZoom:false,scrollWheelZoom:false}).setView([lat,lng],16);
+  tileNormal=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'©OSM',maxZoom:19});
+  tileSat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'©Esri',maxZoom:19});
+  tileSat.addTo(map);
+  document.getElementById('satLabel').textContent='Ver Mapa';
+  map.on('move',updateCenterCoords);
+  map.on('movestart',()=>document.getElementById('centerPin').classList.add('dragging'));
+  map.on('moveend',()=>{document.getElementById('centerPin').classList.remove('dragging');updateCenterCoords();});
+  updateCenterCoords();
+}
+function updateCenterCoords(){
+  const c=map.getCenter();currentLat=c.lat;currentLng=c.lng;
+  document.getElementById('coordsText').textContent='Lat '+c.lat.toFixed(5)+', Lng '+c.lng.toFixed(5);
+  document.getElementById('confirmBtn').classList.remove('disabled');
+  document.getElementById('successCoords').textContent='Lat '+c.lat.toFixed(5)+', Lng '+c.lng.toFixed(5);
+}
+function setGPS(lat,lng,acc){
+  hasGPS=true;
+  document.getElementById('gpsBtn').classList.remove('loading');
+  map.setView([lat,lng],18);
+  if(accuracyCircle)map.removeLayer(accuracyCircle);
+  accuracyCircle=L.circle([lat,lng],{radius:acc,color:'#22c55e',fillColor:'#22c55e',fillOpacity:0.1,weight:1.5}).addTo(map);
+  document.getElementById('confirmBtn').classList.remove('disabled');
+}
+function tryGPS(highAcc,maxAge,onFail){
+  let done=false;
+  const wid=navigator.geolocation.watchPosition(
+    pos=>{
+      if(done)return;done=true;
+      navigator.geolocation.clearWatch(wid);
+      setGPS(pos.coords.latitude,pos.coords.longitude,pos.coords.accuracy);
+    },
+    err=>{
+      if(done)return;done=true;
+      navigator.geolocation.clearWatch(wid);
+      if(onFail)onFail(err);
+    },
+    {enableHighAccuracy:highAcc,timeout:20000,maximumAge:maxAge}
+  );
+}
+function requestGPS(){
+  document.getElementById('permOverlay').style.display='none';
+  initMap(DEFAULT_LAT,DEFAULT_LNG);
+  if(!navigator.geolocation)return;
+  document.getElementById('gpsBtn').classList.add('loading');
+  document.getElementById('coordsText').textContent='Obteniendo tu ubicación...';
+  // Intento 1: alta precision
+  tryGPS(true,0,()=>{
+    // Intento 2: baja precision con cache
+    tryGPS(false,60000,()=>{
+      // Fallback: permitir confirmar con pin manual
+      document.getElementById('gpsBtn').classList.remove('loading');
+      document.getElementById('coordsText').textContent='Arrastra el mapa para fijar tu ubicación';
+      document.getElementById('confirmBtn').classList.remove('disabled');
+    });
+  });
+}
+function denyGPS(){document.getElementById('permOverlay').style.display='none';initMap(DEFAULT_LAT,DEFAULT_LNG);}
+function centerOnGPS(){
+  if(!navigator.geolocation)return;
+  document.getElementById('gpsBtn').classList.add('loading');
+  tryGPS(true,5000,()=>tryGPS(false,60000,()=>document.getElementById('gpsBtn').classList.remove('loading')));
+}
+function toggleSatellite(){
+  isSat=!isSat;
+  if(isSat){map.removeLayer(tileNormal);tileSat.addTo(map);document.getElementById('satLabel').textContent='Ver Mapa';}
+  else{map.removeLayer(tileSat);tileNormal.addTo(map);document.getElementById('satLabel').textContent='Ver Satélite';}
+}
+function zoomIn(){map&&map.zoomIn();}
+function zoomOut(){map&&map.zoomOut();}
+const SUGG=[{icon:'🏘',main:'Jr. Ucayali 450',sub:'Lima'},{icon:'🏢',main:'Av. Arequipa 1200',sub:'Miraflores'},{icon:'🏡',main:'Calle Las Flores 89',sub:'San Isidro'},{icon:'🏪',main:'Av. Javier Prado Este',sub:'La Molina'}];
+let st=null;
+function onSearchInput(v){document.getElementById('clearBtn').classList.toggle('visible',v.length>0);clearTimeout(st);if(v.length<2){closeAC();return;}st=setTimeout(()=>showSugg(v),300);}
+function showSugg(q){const ac=document.getElementById('autocomplete');const f=SUGG.filter(s=>s.main.toLowerCase().includes(q.toLowerCase()));if(!f.length){closeAC();return;}ac.innerHTML=f.map(s=>`<div class="ac-item" onclick="selSugg('${s.main}')"><div class="ac-icon">${s.icon}</div><div class="ac-text"><strong>${s.main}</strong><span>${s.sub}</span></div></div>`).join('');ac.classList.add('open');}
+function selSugg(m){document.getElementById('searchInput').value=m;closeAC();document.getElementById('clearBtn').classList.add('visible');}
+function clearSearch(){document.getElementById('searchInput').value='';document.getElementById('clearBtn').classList.remove('visible');closeAC();}
+function closeAC(){document.getElementById('autocomplete').classList.remove('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap')&&!e.target.closest('.autocomplete'))closeAC();});
+function updateCharCount(el){document.getElementById('charCount').textContent=el.value.length;}
+function confirmLocation(){if(document.getElementById('confirmBtn').classList.contains('disabled'))return;document.getElementById('successOverlay').classList.add('show');}
+function goNext(){document.getElementById('successOverlay').classList.remove('show');}
+function skipStep(){}
+let tt;
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2500);}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+</script>
 </body>
 </html>
