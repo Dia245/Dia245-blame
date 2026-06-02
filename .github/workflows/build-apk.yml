@@ -19,24 +19,23 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Capacitor dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm install && npm install sharp
 
-      - name: Install sharp for icon generation
-        run: npm install sharp
-
-      - name: Generate app icons from SVG
+      - name: Generate icons
         run: |
           node -e "
           const sharp = require('sharp');
           const fs = require('fs');
           const svg = fs.readFileSync('icon.svg');
-          sharp(svg).resize(512,512).png().toFile('icon-512.png', ()=>{});
-          sharp(svg).resize(192,192).png().toFile('icon-192.png', ()=>{});
+          const jobs = [
+            {f:'icon-512.png',s:512},{f:'icon-192.png',s:192}
+          ];
+          jobs.forEach(j=>sharp(svg).resize(j.s,j.s).png().toFile(j.f,e=>e&&console.error(e)));
           "
           sleep 2
 
-      - name: Copy web files to www folder
+      - name: Copy web files to www
         run: |
           mkdir -p www
           cp datos.html www/index.html
@@ -50,17 +49,10 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Allow cleartext traffic and internet permissions
+      - name: Write network security config
         run: |
-          # Add internet permission if not present
-          sed -i 's/<manifest/<manifest/g' android/app/src/main/AndroidManifest.xml
-          grep -q 'INTERNET' android/app/src/main/AndroidManifest.xml || \
-            sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET" \/><uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" \/><application/' android/app/src/main/AndroidManifest.xml
-          # Allow cleartext (HTTP/HTTPS to external domains)
-          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml || true
-          # Add network security config
           mkdir -p android/app/src/main/res/xml
-          cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+          cat > android/app/src/main/res/xml/network_security_config.xml << 'XMLEOF'
           <?xml version="1.0" encoding="utf-8"?>
           <network-security-config>
             <base-config cleartextTrafficPermitted="true">
@@ -69,22 +61,29 @@ jobs:
               </trust-anchors>
             </base-config>
           </network-security-config>
-          EOF
+          XMLEOF
 
-      - name: Copy icons to Android resources
+      - name: Patch AndroidManifest
         run: |
-          mkdir -p android/app/src/main/res/mipmap-hdpi
-          mkdir -p android/app/src/main/res/mipmap-mdpi
-          mkdir -p android/app/src/main/res/mipmap-xhdpi
-          mkdir -p android/app/src/main/res/mipmap-xxhdpi
-          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          # Add networkSecurityConfig and usesCleartextTraffic to application tag
+          sed -i 's|android:label="@string/app_name"|android:label="@string/app_name" android:networkSecurityConfig="@xml/network_security_config" android:usesCleartextTraffic="true"|g' $MANIFEST
+          cat $MANIFEST
+
+      - name: Copy icons to Android
+        run: |
           node -e "
           const sharp = require('sharp');
-          const svg = require('fs').readFileSync('icon.svg');
-          const sizes = [{dir:'mipmap-mdpi',size:48},{dir:'mipmap-hdpi',size:72},{dir:'mipmap-xhdpi',size:96},{dir:'mipmap-xxhdpi',size:144},{dir:'mipmap-xxxhdpi',size:192}];
-          sizes.forEach(({dir,size}) => {
-            sharp(svg).resize(size,size).png().toFile('android/app/src/main/res/'+dir+'/ic_launcher.png',()=>{});
-            sharp(svg).resize(size,size).png().toFile('android/app/src/main/res/'+dir+'/ic_launcher_round.png',()=>{});
+          const fs = require('fs');
+          const svg = fs.readFileSync('icon.svg');
+          const sizes = [
+            {dir:'mipmap-mdpi',s:48},{dir:'mipmap-hdpi',s:72},
+            {dir:'mipmap-xhdpi',s:96},{dir:'mipmap-xxhdpi',s:144},{dir:'mipmap-xxxhdpi',s:192}
+          ];
+          sizes.forEach(({dir,s})=>{
+            fs.mkdirSync('android/app/src/main/res/'+dir,{recursive:true});
+            sharp(svg).resize(s,s).png().toFile('android/app/src/main/res/'+dir+'/ic_launcher.png',e=>e&&console.error(e));
+            sharp(svg).resize(s,s).png().toFile('android/app/src/main/res/'+dir+'/ic_launcher_round.png',e=>e&&console.error(e));
           });
           "
           sleep 3
@@ -104,7 +103,7 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ChispaGo-debug
