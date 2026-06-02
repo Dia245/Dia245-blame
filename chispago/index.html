@@ -388,9 +388,9 @@
         </div>
         <div class="ubigeo-field">
           <label>Distrito</label>
-          <select class="ubigeo-select" id="selDist">
-            <option value="">Seleccionar</option>
-          </select>
+          <input type="text" class="ubigeo-select" id="selDist"
+            placeholder="Ej: Tambopata, Miraflores, San Isidro..."
+            style="appearance:none;background-image:none;">
         </div>
       </div>
 
@@ -799,14 +799,9 @@ function fillUbigeo(addr) {
   const prov = bestMatch(provs, county) || bestMatch(provs, city) || bestMatch(provs, district);
   fillDropdown('selProv', provs, prov);
 
-  // 3. Distrito — dinámico desde Nominatim + lista fija
-  const fixedDists = (DISTRITOS[dept] && DISTRITOS[dept][prov]) || [];
-  const distName = district || city;
-  const merged = (fixedDists.includes(distName) || !distName)
-    ? fixedDists
-    : [...new Set([...fixedDists, distName])].sort();
-  const selDist = bestMatch(merged, distName) || distName;
-  fillDropdown('selDist', merged.length ? merged : (distName ? [distName] : []), selDist);
+  // 3. Distrito — texto libre, autocompletado desde Nominatim
+  const distName = district || (city !== prov ? city : '');
+  if (distName) document.getElementById('selDist').value = distName;
 }
 
 initUbigeo();
