@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FF4E00">
+<title>Chispa Go – Datos</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--orange:#FF4E00;--orange-dark:#e04300;--orange-light:#fff3ee;--green:#22c55e;--green-light:#dcfce7;--gray:#f5f5f5;--text:#1a1a1a;--sub:#6b7280;--border:#e5e7eb;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#fff;}
+#app{height:100%;display:flex;flex-direction:column;}
+.status-bar{height:44px;background:var(--orange);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;}
+.sb-time{color:#fff;font-size:0.85rem;font-weight:700;}
+.topbar{background:var(--orange);padding:0 16px 16px;flex-shrink:0;}
+.topbar-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.back-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;flex-shrink:0;}
+.back-btn svg{width:20px;height:20px;fill:#fff;}
+.topbar-title{color:#fff;font-size:1rem;font-weight:700;flex:1;}
+.topbar-greeting{color:rgba(255,255,255,.85);font-size:0.85rem;font-weight:500;}
+.steps{display:flex;gap:6px;align-items:center;}
+.step-dot{height:4px;border-radius:2px;background:rgba(255,255,255,.35);transition:all .3s;flex:1;}
+.step-dot.done{background:#fff;}
+.step-dot.active{background:#fff;flex:2;}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;}
+.content-inner{padding:20px 16px 32px;}
+.step-label{font-size:0.75rem;color:var(--orange);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;}
+.step-title{font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.step-desc{font-size:0.85rem;color:var(--sub);line-height:1.5;margin-bottom:20px;}
+.doc-toggle{display:flex;background:var(--gray);border-radius:14px;padding:4px;margin-bottom:20px;}
+.doc-option{flex:1;padding:11px 8px;border:none;background:transparent;border-radius:11px;font-size:0.88rem;font-weight:600;color:var(--sub);cursor:pointer;transition:all .25s;}
+.doc-option.active{background:#fff;color:var(--orange);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.field-row{display:flex;gap:10px;margin-bottom:14px;align-items:stretch;}
+.field-wrap{flex:1;display:flex;flex-direction:column;gap:5px;}
+input.field{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-size:0.93rem;color:var(--text);outline:none;transition:border .2s,box-shadow .2s;background:#fafafa;font-family:inherit;}
+input.field:focus{border-color:var(--orange);background:#fff;box-shadow:0 0 0 3px rgba(255,78,0,.08);}
+input.field::placeholder{color:#9ca3af;}
+input.field:disabled{background:#f5f5f5;color:var(--sub);cursor:not-allowed;}
+input.field.verified{border-color:var(--green);background:#f0fdf4;}
+.btn-validar{padding:0 20px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:0.9rem;font-weight:700;cursor:pointer;white-space:nowrap;min-height:48px;transition:all .2s;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.btn-validar:active{transform:scale(.97);}
+.btn-validar:disabled{background:#d1d5db;cursor:not-allowed;}
+.phone-wrap{position:relative;}
+.btn-verificar-sms{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:0.75rem;font-weight:700;padding:6px 12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-verificar-sms:disabled{background:#d1d5db;cursor:not-allowed;}
+.phone-verified-badge{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--green-light);color:var(--green);border-radius:8px;font-size:0.75rem;font-weight:700;padding:6px 10px;display:none;align-items:center;gap:4px;}
+.phone-verified-badge.show{display:flex;}
+.dni-card{background:var(--orange-light);border:1.5px solid #ffd4c0;border-radius:14px;padding:14px 16px;margin-bottom:14px;display:none;animation:fadeSlide .3s ease;}
+.dni-card.show{display:block;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.dni-card-name{font-size:1rem;font-weight:700;color:var(--orange-dark);margin-bottom:2px;}
+.dni-card-sub{font-size:0.78rem;color:var(--sub);}
+.section-label{font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:10px;}
+.civil-options{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.civil-btn{padding:9px 16px;border:1.5px solid var(--border);border-radius:24px;background:#fff;font-size:0.83rem;font-weight:600;color:var(--sub);cursor:pointer;transition:all .2s;}
+.civil-btn.active{background:var(--text);color:#fff;border-color:var(--text);}
+.continue-btn{width:100%;padding:17px;background:linear-gradient(135deg,#FF4E00,#ff7a40);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(255,78,0,.35);display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;transition:all .2s;}
+.continue-btn:active{transform:scale(.98);}
+.continue-btn.disabled{background:#d1d5db;box-shadow:none;cursor:not-allowed;}
+.continue-btn svg{width:20px;height:20px;fill:#fff;}
+#smsModal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;}
+#smsModal.show{display:flex;}
+.sms-sheet{background:#fff;border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;animation:slideUp .35s cubic-bezier(.25,.8,.25,1);}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sms-handle{width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 24px;}
+.sms-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#FF4E00,#ff7a40);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px;box-shadow:0 6px 20px rgba(255,78,0,.3);}
+.sms-sheet h2{text-align:center;font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.sms-sheet p{text-align:center;font-size:0.84rem;color:var(--sub);line-height:1.5;margin-bottom:24px;}
+.sms-phone-display{font-weight:700;color:var(--orange);}
+.otp-row{display:flex;gap:10px;justify-content:center;margin-bottom:24px;}
+.otp-box{width:46px;height:54px;border:2px solid var(--border);border-radius:12px;text-align:center;font-size:22px;font-weight:700;color:var(--text);outline:none;transition:border .2s,box-shadow .2s;-moz-appearance:textfield;background:#fafafa;}
+.otp-box::-webkit-outer-spin-button,.otp-box::-webkit-inner-spin-button{-webkit-appearance:none;}
+.otp-box:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,78,0,.12);background:#fff;}
+.otp-box.filled{border-color:var(--orange);background:#fff3ee;}
+.btn-confirm-otp{width:100%;padding:15px;background:linear-gradient(135deg,#FF4E00,#ff7a40);color:#fff;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;transition:all .2s;box-shadow:0 4px 14px rgba(255,78,0,.35);}
+.btn-confirm-otp:disabled{background:#d1d5db;box-shadow:none;cursor:not-allowed;}
+.btn-resend{width:100%;padding:12px;background:transparent;color:var(--orange);border:1.5px solid var(--orange);border-radius:12px;font-size:0.88rem;font-weight:600;cursor:pointer;}
+.btn-resend:disabled{opacity:.4;cursor:not-allowed;}
+.sms-error{text-align:center;color:#e53935;font-size:0.8rem;min-height:18px;margin-top:-10px;margin-bottom:8px;}
+.sms-note{display:flex;align-items:flex-start;gap:8px;background:#fff3ee;border-radius:10px;padding:10px 12px;margin-bottom:20px;font-size:0.78rem;color:var(--orange-dark);line-height:1.4;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:24px;font-size:0.82rem;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:8000;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spinA .7s linear infinite;vertical-align:middle;margin-left:6px;}
+@keyframes spinA{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="smsModal">
+  <div class="sms-sheet">
+    <div class="sms-handle"></div>
+    <div class="sms-icon">📱</div>
+    <h2>Verificar número</h2>
+    <p>Enviamos un código de 6 dígitos por SMS a<br><span class="sms-phone-display" id="smsPhoneDisplay"></span></p>
+    <div class="sms-note">
+      <span>💡</span>
+      <span>Revisa tus mensajes de texto. El código llega en segundos.</span>
+    </div>
+    <div class="otp-row">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+      <input type="number" class="otp-box" maxlength="1">
+    </div>
+    <p class="sms-error" id="smsError"></p>
+    <button class="btn-confirm-otp" id="btnConfirmOtp" onclick="verifyOTP()">Confirmar código</button>
+    <button class="btn-resend" id="btnResend" onclick="resendCode()" disabled>Reenviar código <span id="resendTimer"></span></button>
+  </div>
+</div>
+<div id="app">
+  <div class="status-bar">
+    <span class="sb-time" id="sbTime">00:00</span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+    </div>
+  </div>
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back-btn" onclick="history.back()">
+        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      </button>
+      <span class="topbar-title">CHISPA GO</span>
+      <span class="topbar-greeting" id="greeting">¡Hola!</span>
+    </div>
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:5px">
+      <span style="color:rgba(255,255,255,.75);font-size:0.72rem;">Paso 2 de 5</span>
+    </div>
+  </div>
+  <div class="content">
+    <div class="content-inner">
+      <div class="step-label">Paso 2 de 5</div>
+      <div class="step-title">Ingresa tus datos</div>
+      <div class="step-desc">Selecciona tu tipo de documento e ingresa tu número para consultar tus datos oficiales.</div>
+      <div class="doc-toggle">
+        <button class="doc-option active" id="optDni" onclick="setDocType('dni')">DNI</button>
+        <button class="doc-option" id="optCe" onclick="setDocType('ce')">Carnet Extranjería (C.E.)</button>
+      </div>
+      <div class="field-row">
+        <div class="field-wrap">
+          <input class="field" type="tel" id="docInput" placeholder="Número de DNI 🪪" maxlength="8" oninput="onDocInput()">
+        </div>
+        <button class="btn-validar" id="btnValidar" onclick="validarDoc()" disabled>Validar</button>
+      </div>
+      <div class="dni-card" id="dniCard">
+        <div class="dni-card-name" id="dniName">—</div>
+        <div class="dni-card-sub" id="dniSub">Datos verificados ✅</div>
+      </div>
+      <div class="field-wrap" style="margin-bottom:14px">
+        <input class="field" type="text" id="fullName" placeholder="Nombres y Apellidos Completos" autocomplete="name">
+      </div>
+      <div class="field-wrap" style="margin-bottom:14px">
+        <div class="phone-wrap">
+          <input class="field" type="tel" id="phoneInput" placeholder="Número de Celular" maxlength="9" style="padding-right:120px" oninput="onPhoneInput()">
+          <button class="btn-verificar-sms" id="btnVerificarSms" onclick="iniciarVerificacion()" disabled>Verificar SMS</button>
+          <div class="phone-verified-badge" id="phoneVerifiedBadge">✅ Verificado</div>
+        </div>
+      </div>
+      <div class="field-wrap" style="margin-bottom:20px">
+        <input class="field" type="email" id="emailInput" placeholder="Correo Electrónico" autocomplete="email">
+      </div>
+      <div class="section-label">Estado Civil</div>
+      <div class="civil-options">
+        <button class="civil-btn active" onclick="setCivil(this)">Soltero</button>
+        <button class="civil-btn" onclick="setCivil(this)">Casado</button>
+        <button class="civil-btn" onclick="setCivil(this)">Viudo</button>
+        <button class="civil-btn" onclick="setCivil(this)">Divorciado</button>
+      </div>
+      <button class="continue-btn disabled" id="btnContinue" onclick="continuar()">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        Continuar a Documentos
+      </button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function updateClock(){const n=new Date();document.getElementById('sbTime').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
+updateClock();setInterval(updateClock,10000);
+const h=new Date().getHours();
+document.getElementById('greeting').textContent=h<12?'¡Buenos días!':h<19?'¡Buenas tardes!':'¡Buenas noches!';
+let phoneVerified=false,resendInterval=null;
+function setDocType(type){document.getElementById('optDni').classList.toggle('active',type==='dni');document.getElementById('optCe').classList.toggle('active',type==='ce');const inp=document.getElementById('docInput');inp.placeholder=type==='dni'?'Número de DNI 🪪':'Número de C.E. 🪪';inp.maxLength=type==='dni'?8:12;inp.value='';document.getElementById('dniCard').classList.remove('show');document.getElementById('fullName').value='';document.getElementById('btnValidar').disabled=true;}
+function onDocInput(){const v=document.getElementById('docInput').value.replace(/\D/g,'');document.getElementById('docInput').value=v;const isDni=document.getElementById('optDni').classList.contains('active');document.getElementById('btnValidar').disabled=v.length<(isDni?8:6);document.getElementById('dniCard').classList.remove('show');document.getElementById('fullName').value='';}
+async function validarDoc(){const num=document.getElementById('docInput').value.trim();const btn=document.getElementById('btnValidar');btn.disabled=true;btn.innerHTML='Validando<span class="spin"></span>';try{await new Promise(r=>setTimeout(r,1400));const nombre='JUAN CARLOS PÉREZ QUISPE';document.getElementById('fullName').value=nombre;document.getElementById('dniName').textContent=nombre;document.getElementById('dniSub').textContent=`DNI ${num} • Datos verificados ✅`;document.getElementById('dniCard').classList.add('show');showToast('✅ Datos encontrados');}catch(e){showToast('❌ No se pudo validar');}finally{btn.textContent='Validar';btn.disabled=false;}}
+function onPhoneInput(){const v=document.getElementById('phoneInput').value.replace(/\D/g,'');document.getElementById('phoneInput').value=v;document.getElementById('btnVerificarSms').disabled=v.length<9;if(phoneVerified){phoneVerified=false;document.getElementById('phoneVerifiedBadge').classList.remove('show');document.getElementById('btnVerificarSms').style.display='block';document.getElementById('phoneInput').classList.remove('verified');checkFormReady();}}
+async function iniciarVerificacion(){const raw=document.getElementById('phoneInput').value.trim();const phone='+51'+raw;const btn=document.getElementById('btnVerificarSms');btn.disabled=true;btn.innerHTML='Enviando<span class="spin"></span>';try{const res=await fetch('/.netlify/functions/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});const data=await res.json();if(!res.ok)throw new Error(data.error||'Error al enviar');document.getElementById('smsPhoneDisplay').textContent=phone;openModal();setupOtpInputs();startResendTimer(60);showToast('📱 Código enviado por SMS');}catch(err){showToast('❌ '+err.message);}finally{btn.innerHTML='Verificar SMS';btn.disabled=false;}}
+async function verifyOTP(){const boxes=document.querySelectorAll('.otp-box');const code=Array.from(boxes).map(b=>b.value).join('');const errEl=document.getElementById('smsError');const btn=document.getElementById('btnConfirmOtp');errEl.textContent='';if(code.length<6){errEl.textContent='Ingresa los 6 dígitos.';return;}btn.disabled=true;btn.innerHTML='Verificando<span class="spin"></span>';const phone='+51'+document.getElementById('phoneInput').value.trim();try{const res=await fetch('/.netlify/functions/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})});const data=await res.json();if(!res.ok)throw new Error(data.error||'Código incorrecto');phoneVerified=true;closeModal();clearInterval(resendInterval);document.getElementById('phoneInput').classList.add('verified');document.getElementById('btnVerificarSms').style.display='none';document.getElementById('phoneVerifiedBadge').classList.add('show');showToast('✅ Número verificado');checkFormReady();}catch(err){errEl.textContent=err.message;boxes.forEach(b=>{b.value='';b.classList.remove('filled');});boxes[0].focus();}finally{btn.disabled=false;btn.textContent='Confirmar código';}}
+async function resendCode(){closeModal();await iniciarVerificacion();}
+function startResendTimer(sec){const btn=document.getElementById('btnResend');const timer=document.getElementById('resendTimer');let left=sec;btn.disabled=true;timer.textContent=`(${left}s)`;resendInterval=setInterval(()=>{left--;timer.textContent=`(${left}s)`;if(left<=0){clearInterval(resendInterval);btn.disabled=false;timer.textContent='';}},1000);}
+function setupOtpInputs(){const boxes=document.querySelectorAll('.otp-box');boxes.forEach((box,i)=>{box.value='';box.classList.remove('filled');box.oninput=()=>{box.value=box.value.replace(/\D/g,'').slice(-1);box.classList.toggle('filled',box.value!=='');if(box.value&&i<boxes.length-1)boxes[i+1].focus();};box.onkeydown=e=>{if(e.key==='Backspace'&&!box.value&&i>0){boxes[i-1].value='';boxes[i-1].classList.remove('filled');boxes[i-1].focus();}};box.addEventListener('paste',e=>{e.preventDefault();const txt=e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);txt.split('').forEach((ch,j)=>{if(boxes[j]){boxes[j].value=ch;boxes[j].classList.add('filled');}});boxes[Math.min(txt.length,boxes.length-1)].focus();});});setTimeout(()=>boxes[0].focus(),300);}
+function openModal(){document.getElementById('smsModal').classList.add('show');}
+function closeModal(){document.getElementById('smsModal').classList.remove('show');}
+document.getElementById('smsModal').addEventListener('click',e=>{if(e.target===document.getElementById('smsModal'))closeModal();});
+function setCivil(btn){document.querySelectorAll('.civil-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function checkFormReady(){const doc=document.getElementById('docInput').value.trim();const name=document.getElementById('fullName').value.trim();const phone=document.getElementById('phoneInput').value.trim();const email=document.getElementById('emailInput').value.trim();const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&email.includes('@');document.getElementById('btnContinue').classList.toggle('disabled',!ready);}
+['docInput','fullName','phoneInput','emailInput'].forEach(id=>{document.getElementById(id).addEventListener('input',checkFormReady);});
+function continuar(){if(document.getElementById('btnContinue').classList.contains('disabled'))return;const datos={doc:document.getElementById('docInput').value.trim(),nombre:document.getElementById('fullName').value.trim(),phone:'+51'+document.getElementById('phoneInput').value.trim(),email:document.getElementById('emailInput').value.trim(),civil:document.querySelector('.civil-btn.active').textContent};localStorage.setItem('chispago_datos',JSON.stringify(datos));showToast('Cargando siguiente paso...');setTimeout(()=>{window.location.href='index.html';},800);}
+let toastT;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);}
+</script>
+</body>
+</html>
