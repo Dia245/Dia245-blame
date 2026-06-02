@@ -23,8 +23,8 @@ exports.handler = async (event) => {
     await client.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
       .verifications.create({
-        to: `whatsapp:${phone}`,
-        channel: 'whatsapp'
+        to: phone,
+        channel: 'sms'
       });
 
     return {
@@ -32,14 +32,10 @@ exports.handler = async (event) => {
       body: JSON.stringify({ ok: true })
     };
   } catch (err) {
-    // Si el número no tiene WhatsApp, Twilio devuelve error 60203/60200
-    const noWhatsapp = [60200, 60203, 21211].includes(err.code);
     return {
       statusCode: 400,
       body: JSON.stringify({
-        error: noWhatsapp
-          ? 'Este número no tiene WhatsApp activo.'
-          : 'No se pudo enviar el código. Intenta de nuevo.',
+        error: 'No se pudo enviar el SMS. Verifica el número.',
         code: err.code
       })
     };

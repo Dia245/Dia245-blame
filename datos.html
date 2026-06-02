@@ -44,7 +44,7 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
 .btn-validar:active{transform:scale(.97);}
 .btn-validar:disabled{background:#d1d5db;cursor:not-allowed;}
 .phone-wrap{position:relative;}
-.btn-verificar-sms{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:#25D366;color:#fff;border:none;border-radius:8px;font-size:0.75rem;font-weight:700;padding:6px 10px;cursor:pointer;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:4px;}
+.btn-verificar-sms{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:0.75rem;font-weight:700;padding:6px 12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
 .btn-verificar-sms:disabled{background:#d1d5db;cursor:not-allowed;}
 .phone-verified-badge{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--green-light);color:var(--green);border-radius:8px;font-size:0.75rem;font-weight:700;padding:6px 10px;display:none;align-items:center;gap:4px;}
 .phone-verified-badge.show{display:flex;}
@@ -61,28 +61,26 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
 .continue-btn:active{transform:scale(.98);}
 .continue-btn.disabled{background:#d1d5db;box-shadow:none;cursor:not-allowed;}
 .continue-btn svg{width:20px;height:20px;fill:#fff;}
-
-/* SMS MODAL */
 #smsModal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;}
 #smsModal.show{display:flex;}
 .sms-sheet{background:#fff;border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;animation:slideUp .35s cubic-bezier(.25,.8,.25,1);}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sms-handle{width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 24px;}
-.sms-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#25D366,#128C7E);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px;box-shadow:0 6px 20px rgba(37,211,102,.35);}
+.sms-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#FF4E00,#ff7a40);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px;box-shadow:0 6px 20px rgba(255,78,0,.3);}
 .sms-sheet h2{text-align:center;font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:6px;}
 .sms-sheet p{text-align:center;font-size:0.84rem;color:var(--sub);line-height:1.5;margin-bottom:24px;}
-.sms-phone-display{font-weight:700;color:#25D366;}
+.sms-phone-display{font-weight:700;color:var(--orange);}
 .otp-row{display:flex;gap:10px;justify-content:center;margin-bottom:24px;}
 .otp-box{width:46px;height:54px;border:2px solid var(--border);border-radius:12px;text-align:center;font-size:22px;font-weight:700;color:var(--text);outline:none;transition:border .2s,box-shadow .2s;-moz-appearance:textfield;background:#fafafa;}
 .otp-box::-webkit-outer-spin-button,.otp-box::-webkit-inner-spin-button{-webkit-appearance:none;}
-.otp-box:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.15);background:#fff;}
-.otp-box.filled{border-color:#25D366;background:#f0fdf4;}
-.btn-confirm-otp{width:100%;padding:15px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;transition:all .2s;box-shadow:0 4px 14px rgba(37,211,102,.35);}
+.otp-box:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,78,0,.12);background:#fff;}
+.otp-box.filled{border-color:var(--orange);background:#fff3ee;}
+.btn-confirm-otp{width:100%;padding:15px;background:linear-gradient(135deg,#FF4E00,#ff7a40);color:#fff;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:12px;transition:all .2s;box-shadow:0 4px 14px rgba(255,78,0,.35);}
 .btn-confirm-otp:disabled{background:#d1d5db;box-shadow:none;cursor:not-allowed;}
-.btn-resend{width:100%;padding:12px;background:transparent;color:#25D366;border:1.5px solid #25D366;border-radius:12px;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-resend{width:100%;padding:12px;background:transparent;color:var(--orange);border:1.5px solid var(--orange);border-radius:12px;font-size:0.88rem;font-weight:600;cursor:pointer;}
 .btn-resend:disabled{opacity:.4;cursor:not-allowed;}
 .sms-error{text-align:center;color:#e53935;font-size:0.8rem;min-height:18px;margin-top:-10px;margin-bottom:8px;}
-.wa-note{display:flex;align-items:flex-start;gap:8px;background:#f0fdf4;border-radius:10px;padding:10px 12px;margin-bottom:20px;font-size:0.78rem;color:#166534;line-height:1.4;}
+.sms-note{display:flex;align-items:flex-start;gap:8px;background:#fff3ee;border-radius:10px;padding:10px 12px;margin-bottom:20px;font-size:0.78rem;color:var(--orange-dark);line-height:1.4;}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:24px;font-size:0.82rem;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:8000;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spinA .7s linear infinite;vertical-align:middle;margin-left:6px;}
@@ -90,20 +88,17 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
 </style>
 </head>
 <body>
-
-<!-- WHATSAPP OTP MODAL -->
 <div id="smsModal">
   <div class="sms-sheet">
     <div class="sms-handle"></div>
-    <div class="sms-icon">💬</div>
-    <h2>Verificar por WhatsApp</h2>
-    <p>Enviamos un código de 6 dígitos a tu WhatsApp<br>
-       <span class="sms-phone-display" id="smsPhoneDisplay"></span></p>
-    <div class="wa-note">
+    <div class="sms-icon">📱</div>
+    <h2>Verificar número</h2>
+    <p>Enviamos un código de 6 dígitos por SMS a<br><span class="sms-phone-display" id="smsPhoneDisplay"></span></p>
+    <div class="sms-note">
       <span>💡</span>
-      <span>Abre WhatsApp — recibirás un mensaje de <strong>Twilio</strong> con tu código.</span>
+      <span>Revisa tus mensajes de texto. El código llega en segundos.</span>
     </div>
-    <div class="otp-row" id="otpRow">
+    <div class="otp-row">
       <input type="number" class="otp-box" maxlength="1">
       <input type="number" class="otp-box" maxlength="1">
       <input type="number" class="otp-box" maxlength="1">
@@ -113,13 +108,9 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
     </div>
     <p class="sms-error" id="smsError"></p>
     <button class="btn-confirm-otp" id="btnConfirmOtp" onclick="verifyOTP()">Confirmar código</button>
-    <button class="btn-resend" id="btnResend" onclick="resendCode()" disabled>
-      Reenviar código <span id="resendTimer"></span>
-    </button>
+    <button class="btn-resend" id="btnResend" onclick="resendCode()" disabled>Reenviar código <span id="resendTimer"></span></button>
   </div>
 </div>
-
-<!-- APP -->
 <div id="app">
   <div class="status-bar">
     <span class="sb-time" id="sbTime">00:00</span>
@@ -128,7 +119,6 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
       <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
     </div>
   </div>
-
   <div class="topbar">
     <div class="topbar-row">
       <button class="back-btn" onclick="history.back()">
@@ -148,56 +138,38 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
       <span style="color:rgba(255,255,255,.75);font-size:0.72rem;">Paso 2 de 5</span>
     </div>
   </div>
-
   <div class="content">
     <div class="content-inner">
       <div class="step-label">Paso 2 de 5</div>
       <div class="step-title">Ingresa tus datos</div>
       <div class="step-desc">Selecciona tu tipo de documento e ingresa tu número para consultar tus datos oficiales.</div>
-
       <div class="doc-toggle">
         <button class="doc-option active" id="optDni" onclick="setDocType('dni')">DNI</button>
         <button class="doc-option" id="optCe" onclick="setDocType('ce')">Carnet Extranjería (C.E.)</button>
       </div>
-
       <div class="field-row">
         <div class="field-wrap">
-          <input class="field" type="tel" id="docInput"
-            placeholder="Número de DNI 🪪" maxlength="8" oninput="onDocInput()">
+          <input class="field" type="tel" id="docInput" placeholder="Número de DNI 🪪" maxlength="8" oninput="onDocInput()">
         </div>
         <button class="btn-validar" id="btnValidar" onclick="validarDoc()" disabled>Validar</button>
       </div>
-
       <div class="dni-card" id="dniCard">
         <div class="dni-card-name" id="dniName">—</div>
         <div class="dni-card-sub" id="dniSub">Datos verificados ✅</div>
       </div>
-
       <div class="field-wrap" style="margin-bottom:14px">
-        <input class="field" type="text" id="fullName"
-          placeholder="Nombres y Apellidos Completos" autocomplete="name">
+        <input class="field" type="text" id="fullName" placeholder="Nombres y Apellidos Completos" autocomplete="name">
       </div>
-
       <div class="field-wrap" style="margin-bottom:14px">
         <div class="phone-wrap">
-          <input class="field" type="tel" id="phoneInput"
-            placeholder="Número de Celular / WhatsApp"
-            maxlength="9" style="padding-right:120px"
-            oninput="onPhoneInput()">
-          <button class="btn-verificar-sms" id="btnVerificarSms"
-            onclick="iniciarVerificacion()" disabled>
-            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 0C5.372 0 0 5.372 0 11.998c0 2.117.554 4.104 1.523 5.83L.044 23.52a.5.5 0 00.614.614l5.701-1.482A11.94 11.94 0 0011.998 24C18.626 24 24 18.626 24 11.998 24 5.372 18.626 0 11.998 0zm0 21.818a9.8 9.8 0 01-5.031-1.384l-.36-.214-3.733.97.993-3.62-.236-.373A9.799 9.799 0 012.18 11.998c0-5.415 4.404-9.818 9.818-9.818 5.415 0 9.82 4.403 9.82 9.818 0 5.414-4.405 9.82-9.82 9.82z"/></svg>
-            Verificar WA
-          </button>
+          <input class="field" type="tel" id="phoneInput" placeholder="Número de Celular" maxlength="9" style="padding-right:120px" oninput="onPhoneInput()">
+          <button class="btn-verificar-sms" id="btnVerificarSms" onclick="iniciarVerificacion()" disabled>Verificar SMS</button>
           <div class="phone-verified-badge" id="phoneVerifiedBadge">✅ Verificado</div>
         </div>
       </div>
-
       <div class="field-wrap" style="margin-bottom:20px">
-        <input class="field" type="email" id="emailInput"
-          placeholder="Correo Electrónico" autocomplete="email">
+        <input class="field" type="email" id="emailInput" placeholder="Correo Electrónico" autocomplete="email">
       </div>
-
       <div class="section-label">Estado Civil</div>
       <div class="civil-options">
         <button class="civil-btn active" onclick="setCivil(this)">Soltero</button>
@@ -205,7 +177,6 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
         <button class="civil-btn" onclick="setCivil(this)">Viudo</button>
         <button class="civil-btn" onclick="setCivil(this)">Divorciado</button>
       </div>
-
       <button class="continue-btn disabled" id="btnContinue" onclick="continuar()">
         <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
         Continuar a Documentos
@@ -213,245 +184,31 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
-
 <script>
-// ── CLOCK & GREETING ─────────────────────────────────────────
-function updateClock(){
-  const n=new Date();
-  document.getElementById('sbTime').textContent=
-    n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
-}
-updateClock(); setInterval(updateClock,10000);
+function updateClock(){const n=new Date();document.getElementById('sbTime').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
+updateClock();setInterval(updateClock,10000);
 const h=new Date().getHours();
-document.getElementById('greeting').textContent=
-  h<12?'¡Buenos días!':h<19?'¡Buenas tardes!':'¡Buenas noches!';
-
-// ── STATE ────────────────────────────────────────────────────
-let phoneVerified = false;
-let resendInterval = null;
-
-// ── DOC TYPE ─────────────────────────────────────────────────
-function setDocType(type){
-  document.getElementById('optDni').classList.toggle('active',type==='dni');
-  document.getElementById('optCe').classList.toggle('active',type==='ce');
-  const inp=document.getElementById('docInput');
-  inp.placeholder=type==='dni'?'Número de DNI 🪪':'Número de C.E. 🪪';
-  inp.maxLength=type==='dni'?8:12;
-  inp.value='';
-  document.getElementById('dniCard').classList.remove('show');
-  document.getElementById('fullName').value='';
-  document.getElementById('btnValidar').disabled=true;
-}
-
-function onDocInput(){
-  const v=document.getElementById('docInput').value.replace(/\D/g,'');
-  document.getElementById('docInput').value=v;
-  const isDni=document.getElementById('optDni').classList.contains('active');
-  document.getElementById('btnValidar').disabled=v.length<(isDni?8:6);
-  document.getElementById('dniCard').classList.remove('show');
-  document.getElementById('fullName').value='';
-}
-
-// ── VALIDAR DNI ───────────────────────────────────────────────
-async function validarDoc(){
-  const num=document.getElementById('docInput').value.trim();
-  const btn=document.getElementById('btnValidar');
-  btn.disabled=true;
-  btn.innerHTML='Validando<span class="spin"></span>';
-  try{
-    // Reemplaza con tu API real: const res=await fetch(`https://tu-api.com/dni/${num}`);
-    await new Promise(r=>setTimeout(r,1400));
-    const nombre='JUAN CARLOS PÉREZ QUISPE'; // ← respuesta simulada
-    document.getElementById('fullName').value=nombre;
-    document.getElementById('dniName').textContent=nombre;
-    document.getElementById('dniSub').textContent=`DNI ${num} • Datos verificados ✅`;
-    document.getElementById('dniCard').classList.add('show');
-    showToast('✅ Datos encontrados');
-  }catch(e){
-    showToast('❌ No se pudo validar el documento');
-  }finally{
-    btn.textContent='Validar';
-    btn.disabled=false;
-  }
-}
-
-// ── PHONE INPUT ───────────────────────────────────────────────
-function onPhoneInput(){
-  const v=document.getElementById('phoneInput').value.replace(/\D/g,'');
-  document.getElementById('phoneInput').value=v;
-  document.getElementById('btnVerificarSms').disabled=v.length<9;
-  if(phoneVerified){
-    phoneVerified=false;
-    document.getElementById('phoneVerifiedBadge').classList.remove('show');
-    document.getElementById('btnVerificarSms').style.display='flex';
-    document.getElementById('phoneInput').classList.remove('verified');
-    checkFormReady();
-  }
-}
-
-// ── ENVIAR CÓDIGO WA ──────────────────────────────────────────
-async function iniciarVerificacion(){
-  const raw=document.getElementById('phoneInput').value.trim();
-  const phone='+51'+raw;
-  const btn=document.getElementById('btnVerificarSms');
-  btn.disabled=true;
-  btn.innerHTML='<span class="spin"></span>';
-
-  try{
-    const res=await fetch('/.netlify/functions/send-otp',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({phone})
-    });
-    const data=await res.json();
-    if(!res.ok) throw new Error(data.error||'Error al enviar');
-
-    document.getElementById('smsPhoneDisplay').textContent=phone;
-    openModal();
-    setupOtpInputs();
-    startResendTimer(60);
-    showToast('📲 Código enviado a tu WhatsApp');
-  }catch(err){
-    showToast('❌ '+err.message);
-  }finally{
-    btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 0C5.372 0 0 5.372 0 11.998c0 2.117.554 4.104 1.523 5.83L.044 23.52a.5.5 0 00.614.614l5.701-1.482A11.94 11.94 0 0011.998 24C18.626 24 24 18.626 24 11.998 24 5.372 18.626 0 11.998 0zm0 21.818a9.8 9.8 0 01-5.031-1.384l-.36-.214-3.733.97.993-3.62-.236-.373A9.799 9.799 0 012.18 11.998c0-5.415 4.404-9.818 9.818-9.818 5.415 0 9.82 4.403 9.82 9.818 0 5.414-4.405 9.82-9.82 9.82z"/></svg> Verificar WA';
-    btn.disabled=false;
-  }
-}
-
-// ── VERIFICAR CÓDIGO ──────────────────────────────────────────
-async function verifyOTP(){
-  const boxes=document.querySelectorAll('.otp-box');
-  const code=Array.from(boxes).map(b=>b.value).join('');
-  const errEl=document.getElementById('smsError');
-  const btn=document.getElementById('btnConfirmOtp');
-  errEl.textContent='';
-  if(code.length<6){errEl.textContent='Ingresa los 6 dígitos.';return;}
-
-  btn.disabled=true;
-  btn.innerHTML='Verificando<span class="spin"></span>';
-
-  const phone='+51'+document.getElementById('phoneInput').value.trim();
-  try{
-    const res=await fetch('/.netlify/functions/verify-otp',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({phone,code})
-    });
-    const data=await res.json();
-    if(!res.ok) throw new Error(data.error||'Código incorrecto');
-
-    phoneVerified=true;
-    closeModal();
-    clearInterval(resendInterval);
-    document.getElementById('phoneInput').classList.add('verified');
-    document.getElementById('btnVerificarSms').style.display='none';
-    document.getElementById('phoneVerifiedBadge').classList.add('show');
-    showToast('✅ WhatsApp verificado correctamente');
-    checkFormReady();
-  }catch(err){
-    errEl.textContent=err.message;
-    boxes.forEach(b=>{b.value='';b.classList.remove('filled');});
-    boxes[0].focus();
-  }finally{
-    btn.disabled=false;
-    btn.textContent='Confirmar código';
-  }
-}
-
-async function resendCode(){
-  closeModal();
-  await iniciarVerificacion();
-}
-
-function startResendTimer(sec){
-  const btn=document.getElementById('btnResend');
-  const timer=document.getElementById('resendTimer');
-  let left=sec;
-  btn.disabled=true;
-  timer.textContent=`(${left}s)`;
-  resendInterval=setInterval(()=>{
-    left--;
-    timer.textContent=`(${left}s)`;
-    if(left<=0){clearInterval(resendInterval);btn.disabled=false;timer.textContent='';}
-  },1000);
-}
-
-// ── OTP INPUT LOGIC ───────────────────────────────────────────
-function setupOtpInputs(){
-  const boxes=document.querySelectorAll('.otp-box');
-  boxes.forEach((box,i)=>{
-    box.value=''; box.classList.remove('filled');
-    box.oninput=()=>{
-      box.value=box.value.replace(/\D/g,'').slice(-1);
-      box.classList.toggle('filled',box.value!=='');
-      if(box.value&&i<boxes.length-1)boxes[i+1].focus();
-    };
-    box.onkeydown=e=>{
-      if(e.key==='Backspace'&&!box.value&&i>0){
-        boxes[i-1].value='';boxes[i-1].classList.remove('filled');boxes[i-1].focus();
-      }
-    };
-    box.addEventListener('paste',e=>{
-      e.preventDefault();
-      const txt=e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);
-      txt.split('').forEach((ch,j)=>{if(boxes[j]){boxes[j].value=ch;boxes[j].classList.add('filled');}});
-      boxes[Math.min(txt.length,boxes.length-1)].focus();
-    });
-  });
-  setTimeout(()=>boxes[0].focus(),300);
-}
-
+document.getElementById('greeting').textContent=h<12?'¡Buenos días!':h<19?'¡Buenas tardes!':'¡Buenas noches!';
+let phoneVerified=false,resendInterval=null;
+function setDocType(type){document.getElementById('optDni').classList.toggle('active',type==='dni');document.getElementById('optCe').classList.toggle('active',type==='ce');const inp=document.getElementById('docInput');inp.placeholder=type==='dni'?'Número de DNI 🪪':'Número de C.E. 🪪';inp.maxLength=type==='dni'?8:12;inp.value='';document.getElementById('dniCard').classList.remove('show');document.getElementById('fullName').value='';document.getElementById('btnValidar').disabled=true;}
+function onDocInput(){const v=document.getElementById('docInput').value.replace(/\D/g,'');document.getElementById('docInput').value=v;const isDni=document.getElementById('optDni').classList.contains('active');document.getElementById('btnValidar').disabled=v.length<(isDni?8:6);document.getElementById('dniCard').classList.remove('show');document.getElementById('fullName').value='';}
+async function validarDoc(){const num=document.getElementById('docInput').value.trim();const btn=document.getElementById('btnValidar');btn.disabled=true;btn.innerHTML='Validando<span class="spin"></span>';try{await new Promise(r=>setTimeout(r,1400));const nombre='JUAN CARLOS PÉREZ QUISPE';document.getElementById('fullName').value=nombre;document.getElementById('dniName').textContent=nombre;document.getElementById('dniSub').textContent=`DNI ${num} • Datos verificados ✅`;document.getElementById('dniCard').classList.add('show');showToast('✅ Datos encontrados');}catch(e){showToast('❌ No se pudo validar');}finally{btn.textContent='Validar';btn.disabled=false;}}
+function onPhoneInput(){const v=document.getElementById('phoneInput').value.replace(/\D/g,'');document.getElementById('phoneInput').value=v;document.getElementById('btnVerificarSms').disabled=v.length<9;if(phoneVerified){phoneVerified=false;document.getElementById('phoneVerifiedBadge').classList.remove('show');document.getElementById('btnVerificarSms').style.display='block';document.getElementById('phoneInput').classList.remove('verified');checkFormReady();}}
+async function iniciarVerificacion(){const raw=document.getElementById('phoneInput').value.trim();const phone='+51'+raw;const btn=document.getElementById('btnVerificarSms');btn.disabled=true;btn.innerHTML='Enviando<span class="spin"></span>';try{const res=await fetch('/.netlify/functions/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});const data=await res.json();if(!res.ok)throw new Error(data.error||'Error al enviar');document.getElementById('smsPhoneDisplay').textContent=phone;openModal();setupOtpInputs();startResendTimer(60);showToast('📱 Código enviado por SMS');}catch(err){showToast('❌ '+err.message);}finally{btn.innerHTML='Verificar SMS';btn.disabled=false;}}
+async function verifyOTP(){const boxes=document.querySelectorAll('.otp-box');const code=Array.from(boxes).map(b=>b.value).join('');const errEl=document.getElementById('smsError');const btn=document.getElementById('btnConfirmOtp');errEl.textContent='';if(code.length<6){errEl.textContent='Ingresa los 6 dígitos.';return;}btn.disabled=true;btn.innerHTML='Verificando<span class="spin"></span>';const phone='+51'+document.getElementById('phoneInput').value.trim();try{const res=await fetch('/.netlify/functions/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code})});const data=await res.json();if(!res.ok)throw new Error(data.error||'Código incorrecto');phoneVerified=true;closeModal();clearInterval(resendInterval);document.getElementById('phoneInput').classList.add('verified');document.getElementById('btnVerificarSms').style.display='none';document.getElementById('phoneVerifiedBadge').classList.add('show');showToast('✅ Número verificado');checkFormReady();}catch(err){errEl.textContent=err.message;boxes.forEach(b=>{b.value='';b.classList.remove('filled');});boxes[0].focus();}finally{btn.disabled=false;btn.textContent='Confirmar código';}}
+async function resendCode(){closeModal();await iniciarVerificacion();}
+function startResendTimer(sec){const btn=document.getElementById('btnResend');const timer=document.getElementById('resendTimer');let left=sec;btn.disabled=true;timer.textContent=`(${left}s)`;resendInterval=setInterval(()=>{left--;timer.textContent=`(${left}s)`;if(left<=0){clearInterval(resendInterval);btn.disabled=false;timer.textContent='';}},1000);}
+function setupOtpInputs(){const boxes=document.querySelectorAll('.otp-box');boxes.forEach((box,i)=>{box.value='';box.classList.remove('filled');box.oninput=()=>{box.value=box.value.replace(/\D/g,'').slice(-1);box.classList.toggle('filled',box.value!=='');if(box.value&&i<boxes.length-1)boxes[i+1].focus();};box.onkeydown=e=>{if(e.key==='Backspace'&&!box.value&&i>0){boxes[i-1].value='';boxes[i-1].classList.remove('filled');boxes[i-1].focus();}};box.addEventListener('paste',e=>{e.preventDefault();const txt=e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);txt.split('').forEach((ch,j)=>{if(boxes[j]){boxes[j].value=ch;boxes[j].classList.add('filled');}});boxes[Math.min(txt.length,boxes.length-1)].focus();});});setTimeout(()=>boxes[0].focus(),300);}
 function openModal(){document.getElementById('smsModal').classList.add('show');}
 function closeModal(){document.getElementById('smsModal').classList.remove('show');}
-document.getElementById('smsModal').addEventListener('click',e=>{
-  if(e.target===document.getElementById('smsModal'))closeModal();
-});
-
-// ── ESTADO CIVIL ──────────────────────────────────────────────
-function setCivil(btn){
-  document.querySelectorAll('.civil-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-// ── FORM READY CHECK ──────────────────────────────────────────
-function checkFormReady(){
-  const doc=document.getElementById('docInput').value.trim();
-  const name=document.getElementById('fullName').value.trim();
-  const phone=document.getElementById('phoneInput').value.trim();
-  const email=document.getElementById('emailInput').value.trim();
-  const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&email.includes('@');
-  document.getElementById('btnContinue').classList.toggle('disabled',!ready);
-}
-['docInput','fullName','phoneInput','emailInput'].forEach(id=>{
-  document.getElementById(id).addEventListener('input',checkFormReady);
-});
-
-// ── CONTINUAR ─────────────────────────────────────────────────
-function continuar(){
-  if(document.getElementById('btnContinue').classList.contains('disabled'))return;
-  const datos={
-    doc:   document.getElementById('docInput').value.trim(),
-    nombre:document.getElementById('fullName').value.trim(),
-    phone: '+51'+document.getElementById('phoneInput').value.trim(),
-    email: document.getElementById('emailInput').value.trim(),
-    civil: document.querySelector('.civil-btn.active').textContent,
-  };
-  localStorage.setItem('chispago_datos',JSON.stringify(datos));
-  showToast('Cargando siguiente paso...');
-  setTimeout(()=>{window.location.href='index.html';},800);
-}
-
-// ── TOAST ─────────────────────────────────────────────────────
+document.getElementById('smsModal').addEventListener('click',e=>{if(e.target===document.getElementById('smsModal'))closeModal();});
+function setCivil(btn){document.querySelectorAll('.civil-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function checkFormReady(){const doc=document.getElementById('docInput').value.trim();const name=document.getElementById('fullName').value.trim();const phone=document.getElementById('phoneInput').value.trim();const email=document.getElementById('emailInput').value.trim();const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&email.includes('@');document.getElementById('btnContinue').classList.toggle('disabled',!ready);}
+['docInput','fullName','phoneInput','emailInput'].forEach(id=>{document.getElementById(id).addEventListener('input',checkFormReady);});
+function continuar(){if(document.getElementById('btnContinue').classList.contains('disabled'))return;const datos={doc:document.getElementById('docInput').value.trim(),nombre:document.getElementById('fullName').value.trim(),phone:'+51'+document.getElementById('phoneInput').value.trim(),email:document.getElementById('emailInput').value.trim(),civil:document.querySelector('.civil-btn.active').textContent};localStorage.setItem('chispago_datos',JSON.stringify(datos));showToast('Cargando siguiente paso...');setTimeout(()=>{window.location.href='index.html';},800);}
 let toastT;
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  clearTimeout(toastT);
-  toastT=setTimeout(()=>t.classList.remove('show'),2800);
-}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
 </body>
 </html>
