@@ -24,16 +24,17 @@ jobs:
 
       - name: Generate icons
         run: |
-          node -e "
+          node << 'JSEOF'
           const sharp = require('sharp');
           const fs = require('fs');
-          const svg = fs.readFileSync('icon.svg');
-          const jobs = [
-            {f:'icon-512.png',s:512},{f:'icon-192.png',s:192}
-          ];
-          jobs.forEach(j=>sharp(svg).resize(j.s,j.s).png().toFile(j.f,e=>e&&console.error(e)));
-          "
-          sleep 2
+          async function main() {
+            const svg = fs.readFileSync('icon.svg');
+            await sharp(svg).resize(512,512).png().toFile('icon-512.png');
+            await sharp(svg).resize(192,192).png().toFile('icon-192.png');
+            console.log('Icons OK');
+          }
+          main().catch(e => { console.error(e); process.exit(1); });
+          JSEOF
 
       - name: Copy web files to www
         run: |
@@ -53,40 +54,53 @@ jobs:
         run: |
           mkdir -p android/app/src/main/res/xml
           cat > android/app/src/main/res/xml/network_security_config.xml << 'XMLEOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <network-security-config>
-            <base-config cleartextTrafficPermitted="true">
-              <trust-anchors>
-                <certificates src="system" />
-              </trust-anchors>
-            </base-config>
-          </network-security-config>
-          XMLEOF
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <base-config cleartextTrafficPermitted="true">
+    <trust-anchors>
+      <certificates src="system" />
+    </trust-anchors>
+  </base-config>
+</network-security-config>
+XMLEOF
 
       - name: Patch AndroidManifest
         run: |
-          MANIFEST=android/app/src/main/AndroidManifest.xml
-          # Add networkSecurityConfig and usesCleartextTraffic to application tag
-          sed -i 's|android:label="@string/app_name"|android:label="@string/app_name" android:networkSecurityConfig="@xml/network_security_config" android:usesCleartextTraffic="true"|g' $MANIFEST
-          cat $MANIFEST
+          python3 << 'PYEOF'
+          f = 'android/app/src/main/AndroidManifest.xml'
+          c = open(f).read()
+          print('BEFORE:', c[:500])
+          c = c.replace(
+            'android:supportsRtl="true"',
+            'android:supportsRtl="true" android:networkSecurityConfig="@xml/network_security_config" android:usesCleartextTraffic="true"'
+          )
+          open(f, 'w').write(c)
+          print('AFTER:', open(f).read()[:500])
+          print('AndroidManifest patched OK')
+          PYEOF
 
-      - name: Copy icons to Android
+      - name: Copy icons to Android resources
         run: |
-          node -e "
+          node << 'JSEOF'
           const sharp = require('sharp');
           const fs = require('fs');
-          const svg = fs.readFileSync('icon.svg');
-          const sizes = [
-            {dir:'mipmap-mdpi',s:48},{dir:'mipmap-hdpi',s:72},
-            {dir:'mipmap-xhdpi',s:96},{dir:'mipmap-xxhdpi',s:144},{dir:'mipmap-xxxhdpi',s:192}
-          ];
-          sizes.forEach(({dir,s})=>{
-            fs.mkdirSync('android/app/src/main/res/'+dir,{recursive:true});
-            sharp(svg).resize(s,s).png().toFile('android/app/src/main/res/'+dir+'/ic_launcher.png',e=>e&&console.error(e));
-            sharp(svg).resize(s,s).png().toFile('android/app/src/main/res/'+dir+'/ic_launcher_round.png',e=>e&&console.error(e));
-          });
-          "
-          sleep 3
+          async function main() {
+            const svg = fs.readFileSync('icon.svg');
+            const sizes = [
+              {dir:'mipmap-mdpi',s:48},{dir:'mipmap-hdpi',s:72},
+              {dir:'mipmap-xhdpi',s:96},{dir:'mipmap-xxhdpi',s:144},
+              {dir:'mipmap-xxxhdpi',s:192}
+            ];
+            for (const {dir, s} of sizes) {
+              const path = `android/app/src/main/res/${dir}`;
+              fs.mkdirSync(path, {recursive:true});
+              await sharp(svg).resize(s,s).png().toFile(`${path}/ic_launcher.png`);
+              await sharp(svg).resize(s,s).png().toFile(`${path}/ic_launcher_round.png`);
+            }
+            console.log('Icons copied OK');
+          }
+          main().catch(e => { console.error(e); process.exit(1); });
+          JSEOF
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
