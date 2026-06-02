@@ -5,196 +5,102 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#FF4E00">
 <title>Chispa Go</title>
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
-    --orange: #FF4E00;
-    --orange-dark: #e04300;
-    --orange-light: #fff3ee;
-    --green: #22c55e;
-    --green-light: #dcfce7;
-    --gray: #f5f5f5;
-    --text: #1a1a1a;
-    --sub: #6b7280;
-    --border: #e5e7eb;
-    --white: #ffffff;
+    --orange:#FF4E00; --orange-dark:#e04300; --orange-light:#fff3ee;
+    --green:#22c55e; --green-light:#dcfce7;
+    --gray:#f5f5f5; --text:#1a1a1a; --sub:#6b7280; --border:#e5e7eb;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body { height:100%; overflow:hidden; font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; background:#fff; }
+  html,body { height:100%; overflow:hidden; font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:#fff; }
 
-  /* ── PERMISSION OVERLAY ── */
-  #permOverlay {
-    position:fixed; inset:0; z-index:9999;
-    background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
-    display:flex; align-items:flex-end; justify-content:center;
-    animation: fadeIn .3s ease;
-  }
+  /* PERMISSION OVERLAY */
+  #permOverlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.6); backdrop-filter:blur(6px); display:flex; align-items:flex-end; justify-content:center; animation:fadeIn .3s ease; }
   @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-  .perm-sheet {
-    background:#fff; border-radius:24px 24px 0 0;
-    padding:28px 24px 40px; width:100%; max-width:480px;
-    animation: slideUp .35s cubic-bezier(.25,.8,.25,1);
-  }
+  .perm-sheet { background:#fff; border-radius:24px 24px 0 0; padding:28px 24px 40px; width:100%; max-width:480px; animation:slideUp .35s cubic-bezier(.25,.8,.25,1); }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
   .perm-handle { width:40px; height:4px; background:#e5e7eb; border-radius:2px; margin:0 auto 24px; }
-  .perm-icon-wrap {
-    width:72px; height:72px; border-radius:50%;
-    background:linear-gradient(135deg,#FF4E00,#ff7a40);
-    display:flex; align-items:center; justify-content:center;
-    margin:0 auto 16px; font-size:32px;
-    box-shadow:0 8px 24px rgba(255,78,0,.35);
-  }
+  .perm-icon-wrap { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#FF4E00,#ff7a40); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:32px; box-shadow:0 8px 24px rgba(255,78,0,.35); }
   .perm-sheet h2 { text-align:center; font-size:1.25rem; color:var(--text); margin-bottom:8px; font-weight:700; }
   .perm-sheet p { text-align:center; font-size:0.88rem; color:var(--sub); line-height:1.55; margin-bottom:28px; }
   .perm-benefits { display:flex; gap:12px; margin-bottom:28px; }
   .perm-benefit { flex:1; background:var(--orange-light); border-radius:12px; padding:12px 8px; text-align:center; }
   .perm-benefit .bi { font-size:1.4rem; margin-bottom:4px; }
   .perm-benefit span { font-size:0.72rem; color:var(--orange); font-weight:600; display:block; }
-  .btn-allow {
-    width:100%; padding:16px; background:linear-gradient(135deg,#FF4E00,#ff7a40);
-    color:#fff; border:none; border-radius:14px; font-size:1rem; font-weight:700;
-    cursor:pointer; box-shadow:0 4px 16px rgba(255,78,0,.4); margin-bottom:12px;
-    display:flex; align-items:center; justify-content:center; gap:8px;
-  }
-  .btn-allow:active { transform:scale(.98); }
-  .btn-deny { width:100%; padding:13px; background:transparent; color:var(--sub);
-    border:1.5px solid var(--border); border-radius:14px; font-size:0.9rem; cursor:pointer; }
-  .btn-deny:active { background:var(--gray); }
+  .btn-allow { width:100%; padding:16px; background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border:none; border-radius:14px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(255,78,0,.4); margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn-deny { width:100%; padding:13px; background:transparent; color:var(--sub); border:1.5px solid var(--border); border-radius:14px; font-size:0.9rem; cursor:pointer; }
 
-  /* ── APP SHELL ── */
+  /* APP */
   #app { height:100%; display:flex; flex-direction:column; }
-
-  /* STATUS BAR MOCK */
   .status-bar { height:44px; background:var(--orange); display:flex; align-items:center; justify-content:space-between; padding:0 16px; flex-shrink:0; }
   .sb-time { color:#fff; font-size:0.85rem; font-weight:700; }
   .sb-icons { display:flex; gap:6px; align-items:center; }
   .sb-icons svg { width:16px; height:16px; fill:#fff; }
-
-  /* TOP BAR */
   .topbar { background:var(--orange); padding:0 16px 16px; flex-shrink:0; }
   .topbar-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
-  .back-btn { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.2);
-    display:flex; align-items:center; justify-content:center; border:none; cursor:pointer; flex-shrink:0; }
+  .back-btn { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; border:none; cursor:pointer; flex-shrink:0; }
   .back-btn svg { width:20px; height:20px; fill:#fff; }
   .topbar h1 { color:#fff; font-size:1rem; font-weight:700; flex:1; }
-
-  /* STEP INDICATOR */
   .steps { display:flex; gap:6px; align-items:center; }
   .step-dot { height:4px; border-radius:2px; background:rgba(255,255,255,.35); transition:all .3s; }
   .step-dot.done { background:#fff; }
   .step-dot.active { background:#fff; flex:2; }
 
-  /* SEARCH BAR */
+  /* SEARCH */
   .search-wrap { background:#fff; border-radius:14px; display:flex; align-items:center; gap:10px; padding:0 14px; box-shadow:0 2px 12px rgba(0,0,0,.12); }
   .search-wrap svg { width:20px; height:20px; fill:var(--sub); flex-shrink:0; }
-  .search-wrap input { flex:1; border:none; outline:none; font-size:0.9rem; color:var(--text); padding:13px 0; background:transparent; }
-  .search-wrap input::placeholder { color:#9ca3af; }
+  #searchInput { flex:1; border:none; outline:none; font-size:0.9rem; color:var(--text); padding:13px 0; background:transparent; width:100%; }
+  #searchInput::placeholder { color:#9ca3af; }
   .search-clear { width:22px; height:22px; border-radius:50%; background:var(--gray); border:none; cursor:pointer; display:none; align-items:center; justify-content:center; font-size:0.75rem; color:var(--sub); }
   .search-clear.visible { display:flex; }
+  /* Ocultar dropdown nativo de Google */
+  .pac-container { border-radius:0 0 14px 14px !important; box-shadow:0 8px 24px rgba(0,0,0,.12) !important; border:none !important; font-family:inherit !important; margin-top:4px; }
+  .pac-item { padding:10px 16px !important; font-size:0.85rem !important; cursor:pointer; }
+  .pac-item:hover { background:var(--gray) !important; }
+  .pac-item-query { font-size:0.85rem !important; color:var(--text) !important; }
 
-  /* AUTOCOMPLETE */
-  .autocomplete { position:absolute; top:100%; left:0; right:0; background:#fff;
-    border-radius:0 0 14px 14px; box-shadow:0 8px 24px rgba(0,0,0,.12);
-    z-index:800; max-height:220px; overflow-y:auto; display:none; }
-  .autocomplete.open { display:block; }
-  .ac-item { padding:12px 16px; display:flex; align-items:center; gap:10px; cursor:pointer; border-bottom:1px solid #f3f4f6; }
-  .ac-item:last-child { border-bottom:none; }
-  .ac-item:active { background:var(--gray); }
-  .ac-icon { width:32px; height:32px; border-radius:50%; background:var(--orange-light); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
-  .ac-text strong { font-size:0.85rem; color:var(--text); display:block; }
-  .ac-text span { font-size:0.75rem; color:var(--sub); }
-
-  /* CONTENT SCROLL */
+  /* CONTENT */
   .content { flex:1; overflow-y:auto; overflow-x:hidden; }
   .content-inner { padding:20px 16px; }
-
-  /* STEP LABEL */
   .step-label { font-size:0.75rem; color:var(--orange); font-weight:700; letter-spacing:.5px; text-transform:uppercase; margin-bottom:4px; }
   .step-title { font-size:1.15rem; font-weight:700; color:var(--text); margin-bottom:6px; }
   .step-desc { font-size:0.85rem; color:var(--sub); line-height:1.5; margin-bottom:20px; }
 
-  /* MAP CONTAINER */
-  .map-wrap {
-    position:relative; border-radius:18px; overflow:hidden;
-    border:2.5px solid var(--green); box-shadow:0 4px 20px rgba(34,197,94,.2);
-    height:300px; margin-bottom:14px;
-  }
+  /* MAP */
+  .map-wrap { position:relative; border-radius:18px; overflow:hidden; border:2.5px solid var(--green); box-shadow:0 4px 20px rgba(34,197,94,.2); height:300px; margin-bottom:14px; }
   #map { height:100%; width:100%; }
   .map-overlay-top { position:absolute; top:10px; left:10px; right:10px; z-index:700; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
   .map-btn { pointer-events:all; background:#fff; border:none; border-radius:10px; padding:8px 12px; font-size:0.78rem; font-weight:600; color:var(--text); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.12); display:flex; align-items:center; gap:5px; }
-  .map-btn svg { width:16px; height:16px; }
   .map-zoom { display:flex; flex-direction:column; gap:2px; }
   .zoom-btn { width:36px; height:36px; background:#fff; border:none; border-radius:8px; font-size:1.1rem; font-weight:700; color:var(--text); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.12); display:flex; align-items:center; justify-content:center; }
-  .zoom-btn:active { background:var(--gray); }
-
-  /* CENTER PIN (siempre en el medio del mapa) */
-  .center-pin {
-    position:absolute; left:50%; top:50%; z-index:600;
-    transform:translate(-50%, -100%); pointer-events:none;
-    transition:transform .15s;
-  }
-  .center-pin.dragging { transform:translate(-50%, -120%) scale(1.1); }
-  .pin-shadow { width:16px; height:8px; background:rgba(0,0,0,.2); border-radius:50%; margin:0 auto; position:absolute; bottom:-4px; left:50%; transform:translateX(-50%); filter:blur(3px); }
-
-  /* GPS BUTTON */
-  .gps-btn {
-    position:absolute; bottom:14px; right:14px; z-index:700;
-    width:44px; height:44px; border-radius:50%; background:#fff;
-    border:none; cursor:pointer; box-shadow:0 3px 12px rgba(0,0,0,.18);
-    display:flex; align-items:center; justify-content:center;
-  }
+  .center-pin { position:absolute; left:50%; top:50%; z-index:600; transform:translate(-50%,-100%); pointer-events:none; transition:transform .15s; }
+  .center-pin.dragging { transform:translate(-50%,-120%) scale(1.1); }
+  .gps-btn { position:absolute; bottom:14px; right:14px; z-index:700; width:44px; height:44px; border-radius:50%; background:#fff; border:none; cursor:pointer; box-shadow:0 3px 12px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; }
   .gps-btn svg { width:22px; height:22px; }
   .gps-btn.loading svg { animation:spin .8s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
 
-  /* ACCURACY RING */
-  .leaflet-accuracy-circle { opacity:.15; }
-
-  /* COORDS BOX */
+  /* COORDS */
   .coords-box { display:flex; align-items:center; gap:8px; background:var(--orange-light); border-radius:10px; padding:10px 14px; margin-bottom:20px; }
   .coords-box svg { width:18px; height:18px; fill:var(--orange); flex-shrink:0; }
   .coords-text { font-size:0.8rem; color:var(--orange-dark); font-family:monospace; font-weight:600; }
 
-  /* UBIGEO DROPDOWNS */
+  /* UBIGEO */
   .ubigeo-section { margin-bottom:20px; }
   .ubigeo-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
   .ubigeo-field label { display:block; font-size:0.72rem; font-weight:600; color:var(--sub); margin-bottom:5px; text-transform:uppercase; letter-spacing:.4px; }
-  .ubigeo-select {
-    width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:12px;
-    font-size:0.88rem; color:var(--text); background:#fafafa; outline:none;
-    appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:right 12px center;
-    padding-right:32px; cursor:pointer; transition:border .2s;
-  }
+  .ubigeo-select { width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:12px; font-size:0.88rem; color:var(--text); background:#fafafa; outline:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; cursor:pointer; transition:border .2s; }
   .ubigeo-select:focus { border-color:var(--orange); background-color:#fff; }
 
-  /* CHAT BUTTON */
-  .chat-fab {
-    position:fixed; bottom:24px; right:20px; z-index:7000;
-    width:56px; height:56px; border-radius:50%; border:none; cursor:pointer;
-    background:linear-gradient(135deg,#FF4E00,#ff7a40);
-    box-shadow:0 4px 16px rgba(255,78,0,.45);
-    display:flex; align-items:center; justify-content:center;
-    font-size:26px; transition:transform .2s;
-  }
+  /* CHAT */
+  .chat-fab { position:fixed; bottom:24px; right:20px; z-index:7000; width:56px; height:56px; border-radius:50%; border:none; cursor:pointer; background:linear-gradient(135deg,#FF4E00,#ff7a40); box-shadow:0 4px 16px rgba(255,78,0,.45); display:flex; align-items:center; justify-content:center; font-size:26px; transition:transform .2s; }
   .chat-fab:active { transform:scale(.92); }
-  .chat-panel {
-    position:fixed; bottom:0; left:0; right:0; z-index:7500;
-    background:#fff; border-radius:24px 24px 0 0;
-    box-shadow:0 -4px 32px rgba(0,0,0,.18);
-    transform:translateY(100%); transition:transform .35s cubic-bezier(.25,.8,.25,1);
-    max-height:75vh; display:flex; flex-direction:column;
-  }
+  .chat-panel { position:fixed; bottom:0; left:0; right:0; z-index:7500; background:#fff; border-radius:24px 24px 0 0; box-shadow:0 -4px 32px rgba(0,0,0,.18); transform:translateY(100%); transition:transform .35s cubic-bezier(.25,.8,.25,1); max-height:75vh; display:flex; flex-direction:column; }
   .chat-panel.open { transform:translateY(0); }
-  .chat-header {
-    padding:16px 20px 12px; display:flex; align-items:center; gap:12px;
-    border-bottom:1px solid var(--border); flex-shrink:0;
-  }
+  .chat-header { padding:16px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); flex-shrink:0; }
   .chat-avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#FF4E00,#ff7a40); display:flex; align-items:center; justify-content:center; font-size:20px; }
   .chat-info strong { display:block; font-size:0.95rem; font-weight:700; }
   .chat-info span { font-size:0.75rem; color:#22c55e; font-weight:500; }
@@ -205,49 +111,37 @@
   .chat-bubble.user { background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border-bottom-right-radius:4px; align-self:flex-end; }
   .chat-input-row { display:flex; gap:8px; padding:12px 16px 20px; border-top:1px solid var(--border); flex-shrink:0; }
   .chat-input { flex:1; border:1.5px solid var(--border); border-radius:24px; padding:10px 16px; font-size:0.88rem; outline:none; font-family:inherit; }
-  .chat-input:focus { border-color:var(--orange); }
   .chat-send { width:40px; height:40px; border-radius:50%; background:var(--orange); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .chat-send svg { width:18px; height:18px; fill:#fff; }
 
-  /* CONFIRM BTN */
-  .confirm-btn {
-    width:100%; padding:17px; background:linear-gradient(135deg,#FF4E00,#ff7a40);
-    color:#fff; border:none; border-radius:16px; font-size:1rem; font-weight:700;
-    cursor:pointer; box-shadow:0 4px 20px rgba(255,78,0,.35);
-    display:flex; align-items:center; justify-content:center; gap:10px;
-    margin-bottom:8px; transition:all .2s;
-  }
-  .confirm-btn:active { transform:scale(.98); box-shadow:0 2px 10px rgba(255,78,0,.3); }
+  /* CONFIRM */
+  .confirm-btn { width:100%; padding:17px; background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border:none; border-radius:16px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(255,78,0,.35); display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px; transition:all .2s; }
   .confirm-btn.disabled { background:#d1d5db; box-shadow:none; cursor:not-allowed; }
   .confirm-btn svg { width:20px; height:20px; fill:#fff; }
   .skip-link { text-align:center; font-size:0.82rem; color:var(--sub); padding-bottom:8px; cursor:pointer; }
-  .skip-link:active { color:var(--orange); }
 
   /* TOAST */
-  .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
-    background:#1a1a1a; color:#fff; padding:10px 20px; border-radius:24px; font-size:0.82rem;
-    opacity:0; transition:all .3s; pointer-events:none; white-space:nowrap; z-index:8000; }
+  .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); background:#1a1a1a; color:#fff; padding:10px 20px; border-radius:24px; font-size:0.82rem; opacity:0; transition:all .3s; pointer-events:none; white-space:nowrap; z-index:8000; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-  /* SUCCESS OVERLAY */
-  #successOverlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9998;
-    display:none; align-items:center; justify-content:center; }
+  /* SUCCESS */
+  #successOverlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9998; display:none; align-items:center; justify-content:center; }
   #successOverlay.show { display:flex; }
   .success-card { background:#fff; border-radius:24px; padding:36px 28px; max-width:320px; width:90%; text-align:center; animation:slideUp .3s ease; }
   .success-icon { width:72px; height:72px; border-radius:50%; background:var(--green-light); margin:0 auto 16px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
-  .success-card h3 { font-size:1.2rem; font-weight:700; color:var(--text); margin-bottom:8px; }
+  .success-card h3 { font-size:1.2rem; font-weight:700; margin-bottom:8px; }
   .success-card p { font-size:0.85rem; color:var(--sub); line-height:1.5; margin-bottom:24px; }
   .success-coords { background:var(--green-light); border-radius:10px; padding:10px 14px; font-family:monospace; font-size:0.78rem; color:#16a34a; margin-bottom:24px; }
   .btn-next { width:100%; padding:15px; background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border:none; border-radius:14px; font-size:0.95rem; font-weight:700; cursor:pointer; }
 
-  /* Leaflet overrides */
-  .leaflet-control-zoom { display:none !important; }
-  .leaflet-control-attribution { font-size:8px !important; }
+  /* Ocultar controles nativos de Google Maps */
+  .gmnoprint, .gm-style-cc, a[href*="maps.google.com"] { display:none !important; }
+  .gm-bundled-control { display:none !important; }
 </style>
 </head>
 <body>
 
-<!-- ── PERMISSION OVERLAY ── -->
+<!-- PERMISSION OVERLAY -->
 <div id="permOverlay">
   <div class="perm-sheet">
     <div class="perm-handle"></div>
@@ -267,38 +161,31 @@
   </div>
 </div>
 
-<!-- ── SUCCESS OVERLAY ── -->
+<!-- SUCCESS OVERLAY -->
 <div id="successOverlay">
   <div class="success-card">
     <div class="success-icon">✅</div>
     <h3>¡Domicilio confirmado!</h3>
-    <p>Tu ubicación ha sido guardada correctamente. Continuaremos con el siguiente paso.</p>
+    <p>Tu ubicación ha sido guardada correctamente.</p>
     <div class="success-coords" id="successCoords">Lat —, Lng —</div>
     <button class="btn-next" onclick="goNext()">Continuar al paso 5 →</button>
   </div>
 </div>
 
-<!-- ── APP ── -->
+<!-- APP -->
 <div id="app">
-
-  <!-- STATUS BAR -->
   <div class="status-bar">
-    <span class="sb-time" id="sbTime">4:38</span>
+    <span class="sb-time" id="sbTime">00:00</span>
     <div class="sb-icons">
       <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
       <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
     </div>
   </div>
-
-  <!-- TOP BAR -->
   <div class="topbar">
     <div class="topbar-row">
-      <button class="back-btn">
-        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-      </button>
+      <button class="back-btn"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
       <h1>Confirmar Domicilio</h1>
     </div>
-    <!-- Steps 1-5 -->
     <div class="steps">
       <div class="step-dot done" style="flex:1"></div>
       <div class="step-dot done" style="flex:1"></div>
@@ -311,30 +198,25 @@
     </div>
   </div>
 
-  <!-- CONTENT -->
   <div class="content">
     <div class="content-inner">
 
-      <!-- SEARCH -->
+      <!-- SEARCH (Google Places Autocomplete) -->
       <div style="position:relative;margin-bottom:18px;">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-          <input type="text" id="searchInput" placeholder="Busca tu calle, condominio o zona..." autocomplete="off" oninput="onSearchInput(this.value)">
+          <input type="text" id="searchInput" placeholder="Busca tu calle, condominio o zona..." autocomplete="off">
           <button class="search-clear" id="clearBtn" onclick="clearSearch()">✕</button>
         </div>
-        <div class="autocomplete" id="autocomplete"></div>
       </div>
 
-      <!-- STEP INFO -->
       <div class="step-label">Paso 4 de 5</div>
       <div class="step-title">Fija tu ubicación exacta</div>
-      <div class="step-desc">Arrastra el mapa para centrar el pin 📍 en tu residencia. Puedes escribir tu calle arriba o usar el botón GPS.</div>
+      <div class="step-desc">Arrastra el mapa para centrar el pin en tu residencia. Escribe tu dirección arriba o usa el botón GPS.</div>
 
       <!-- MAP -->
       <div class="map-wrap" id="mapWrap">
         <div id="map"></div>
-
-        <!-- Overlay top: satélite + zoom -->
         <div class="map-overlay-top">
           <button class="map-btn" id="satBtn" onclick="toggleSatellite()">
             <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#555"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
@@ -345,8 +227,6 @@
             <button class="zoom-btn" onclick="zoomOut()">−</button>
           </div>
         </div>
-
-        <!-- Pin fijo en el centro -->
         <div class="center-pin" id="centerPin">
           <svg width="38" height="52" viewBox="0 0 38 52">
             <ellipse cx="19" cy="49" rx="8" ry="3" fill="rgba(0,0,0,0.2)"/>
@@ -355,16 +235,11 @@
             <circle cx="19" cy="19" r="4" fill="#22c55e"/>
           </svg>
         </div>
-
-        <!-- GPS btn -->
         <button class="gps-btn" id="gpsBtn" onclick="centerOnGPS()">
-          <svg viewBox="0 0 24 24" id="gpsBtnIcon">
-            <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" fill="#FF4E00"/>
-          </svg>
+          <svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" fill="#FF4E00"/></svg>
         </button>
       </div>
 
-      <!-- COORDINATES -->
       <div class="coords-box">
         <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
         <span class="coords-text" id="coordsText">Coordenadas: esperando GPS...</span>
@@ -375,32 +250,24 @@
         <div class="ubigeo-row">
           <div class="ubigeo-field">
             <label>Departamento</label>
-            <select class="ubigeo-select" id="selDept" onchange="onDeptChange()">
-              <option value="">Seleccionar</option>
-            </select>
+            <select class="ubigeo-select" id="selDept" onchange="onDeptChange()"><option value="">Seleccionar</option></select>
           </div>
           <div class="ubigeo-field">
             <label>Provincia</label>
-            <select class="ubigeo-select" id="selProv" onchange="onProvChange()">
-              <option value="">Seleccionar</option>
-            </select>
+            <select class="ubigeo-select" id="selProv" onchange="onProvChange()"><option value="">Seleccionar</option></select>
           </div>
         </div>
         <div class="ubigeo-field">
           <label>Distrito</label>
-          <select class="ubigeo-select" id="selDist">
-            <option value="">Seleccionar</option>
-          </select>
+          <select class="ubigeo-select" id="selDist"><option value="">Seleccionar</option></select>
         </div>
       </div>
 
-      <!-- CONFIRM -->
       <button class="confirm-btn disabled" id="confirmBtn" onclick="confirmLocation()">
         <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
         Confirmar esta ubicación
       </button>
-      <div class="skip-link" onclick="skipStep()">Ingresar dirección manualmente</div>
-
+      <div class="skip-link" onclick="denyGPS()">Ingresar dirección manualmente</div>
     </div>
   </div>
 </div>
@@ -408,177 +275,181 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- CHAT FAB -->
+<!-- CHAT -->
 <button class="chat-fab" onclick="toggleChat()">🐱</button>
-
-<!-- CHAT PANEL -->
 <div class="chat-panel" id="chatPanel">
   <div class="chat-header">
     <div class="chat-avatar">🐱</div>
-    <div class="chat-info">
-      <strong>Chispa Go IA</strong>
-      <span>● En línea</span>
-    </div>
+    <div class="chat-info"><strong>Chispa Go IA</strong><span>● En línea</span></div>
     <button class="chat-close" onclick="toggleChat()">✕</button>
   </div>
   <div class="chat-messages" id="chatMessages">
-    <div class="chat-bubble bot">¡Hola! 👋 Soy la IA de Chispa Go. ¿En qué puedo ayudarte con tu dirección?</div>
+    <div class="chat-bubble bot">¡Hola! 👋 Soy la IA de Chispa Go. ¿En qué puedo ayudarte?</div>
   </div>
   <div class="chat-input-row">
     <input class="chat-input" id="chatInput" type="text" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')sendChat()">
-    <button class="chat-send" onclick="sendChat()">
-      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-    </button>
+    <button class="chat-send" onclick="sendChat()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
   </div>
 </div>
 
+<!-- GOOGLE MAPS API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnEh4IPccVKlkQfaLdShBafuXFyvzWm9c&libraries=places&language=es&region=PE&callback=initGoogleMaps" async defer></script>
+
 <script>
+const DEFAULT_LAT = -12.04318, DEFAULT_LNG = -77.02824;
+let map, geocoder, isSat = false;
+let currentLat = DEFAULT_LAT, currentLng = DEFAULT_LNG;
+let hasGPS = false, mapReady = false;
+
 // ── CLOCK ────────────────────────────────────────────────────
 function updateClock() {
-  const now = new Date();
+  const n = new Date();
   document.getElementById('sbTime').textContent =
-    now.getHours().toString().padStart(2,'0') + ':' +
-    now.getMinutes().toString().padStart(2,'0');
+    n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
 }
 updateClock(); setInterval(updateClock, 10000);
 
-// ── MAP SETUP ────────────────────────────────────────────────
-const DEFAULT_LAT = -12.09824, DEFAULT_LNG = -77.02876;
-let map, tileNormal, tileSat, isSat = false;
-let currentLat = DEFAULT_LAT, currentLng = DEFAULT_LNG;
-let accuracyCircle = null;
-let hasGPS = false;
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
 
-function initMap(lat, lng) {
-  map = L.map('map', {
-    zoomControl: false, attributionControl: true,
-    dragging: true, touchZoom: true, doubleClickZoom: false,
-    scrollWheelZoom: false
-  }).setView([lat, lng], 16);
+// ── GOOGLE MAPS INIT ─────────────────────────────────────────
+function initGoogleMaps() {
+  geocoder = new google.maps.Geocoder();
 
-  tileNormal = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '©OpenStreetMap', maxZoom: 19
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: DEFAULT_LAT, lng: DEFAULT_LNG },
+    zoom: 15,
+    mapTypeId: 'roadmap',
+    disableDefaultUI: true,
+    gestureHandling: 'greedy',
+    styles: [{ featureType:'poi', stylers:[{visibility:'off'}] }]
   });
-  tileSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: '©Esri', maxZoom: 19
-  });
-  tileNormal.addTo(map);
 
-  // Al mover el mapa actualizar coords del pin central
-  map.on('move', updateCenterCoords);
-  map.on('movestart', () => document.getElementById('centerPin').classList.add('dragging'));
-  map.on('moveend', () => {
+  // Actualizar coords al mover el mapa
+  google.maps.event.addListener(map, 'center_changed', updateCenterCoords);
+  google.maps.event.addListener(map, 'dragstart', () =>
+    document.getElementById('centerPin').classList.add('dragging'));
+  google.maps.event.addListener(map, 'idle', () => {
     document.getElementById('centerPin').classList.remove('dragging');
     updateCenterCoords();
   });
 
+  // Google Places Autocomplete
+  const input = document.getElementById('searchInput');
+  const ac = new google.maps.places.Autocomplete(input, {
+    componentRestrictions: { country: 'pe' },
+    fields: ['geometry', 'name', 'formatted_address', 'address_components'],
+    language: 'es'
+  });
+  ac.addListener('place_changed', () => {
+    const place = ac.getPlace();
+    if (!place.geometry) return;
+    document.getElementById('clearBtn').classList.add('visible');
+    map.setCenter(place.geometry.location);
+    map.setZoom(17);
+    if (place.address_components) fillUbigeoFromComponents(place.address_components);
+  });
+
+  // Mostrar/ocultar X en búsqueda
+  input.addEventListener('input', () => {
+    document.getElementById('clearBtn').classList.toggle('visible', input.value.length > 0);
+  });
+
+  mapReady = true;
   updateCenterCoords();
 }
 
 function updateCenterCoords() {
+  if (!map) return;
   const c = map.getCenter();
-  currentLat = c.lat; currentLng = c.lng;
+  currentLat = c.lat(); currentLng = c.lng();
   document.getElementById('coordsText').textContent =
-    `Lat ${c.lat.toFixed(5)}, Lng ${c.lng.toFixed(5)}`;
+    `Lat ${currentLat.toFixed(5)}, Lng ${currentLng.toFixed(5)}`;
   document.getElementById('confirmBtn').classList.remove('disabled');
-  if (hasGPS) {
-    document.getElementById('successCoords').textContent =
-      `Lat ${c.lat.toFixed(5)}, Lng ${c.lng.toFixed(5)}`;
-  }
+  document.getElementById('successCoords').textContent =
+    `Lat ${currentLat.toFixed(5)}, Lng ${currentLng.toFixed(5)}`;
+}
+
+function zoomIn()  { if (map) map.setZoom(map.getZoom()+1); }
+function zoomOut() { if (map) map.setZoom(map.getZoom()-1); }
+
+function toggleSatellite() {
+  isSat = !isSat;
+  map.setMapTypeId(isSat ? 'satellite' : 'roadmap');
+  document.getElementById('satLabel').textContent = isSat ? 'Ver Mapa' : 'Ver Satélite';
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearBtn').classList.remove('visible');
 }
 
 // ── GPS HELPERS ───────────────────────────────────────────────
-function applyLocation(lat, lng, accuracy) {
+function applyLocation(lat, lng) {
   hasGPS = true;
   currentLat = lat; currentLng = lng;
-  map.setView([lat, lng], 18);
-  if (accuracyCircle) map.removeLayer(accuracyCircle);
-  accuracyCircle = L.circle([lat, lng], {
-    radius: accuracy || 20, color:'#22c55e',
-    fillColor:'#22c55e', fillOpacity:0.1, weight:1.5
-  }).addTo(map);
+  if (map) {
+    map.setCenter({ lat, lng });
+    map.setZoom(17);
+  }
   document.getElementById('gpsBtn').classList.remove('loading');
   document.getElementById('confirmBtn').classList.remove('disabled');
   reverseGeocode(lat, lng);
 }
 
-async function reverseGeocode(lat, lng) {
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`);
-    const data = await res.json();
-    if (data && data.display_name) {
-      const parts = data.display_name.split(', ');
-      document.getElementById('searchInput').value = parts.slice(0, 3).join(', ');
+function reverseGeocode(lat, lng) {
+  if (!geocoder) return;
+  geocoder.geocode({ location: { lat, lng }, language: 'es' }, (results, status) => {
+    if (status === 'OK' && results[0]) {
+      document.getElementById('searchInput').value = results[0].formatted_address;
       document.getElementById('clearBtn').classList.add('visible');
-      if (data.address) fillUbigeo(data.address);
+      fillUbigeoFromComponents(results[0].address_components);
     }
-  } catch(e) {}
+  });
+}
+
+function receiveLocation(lat, lng, acc) {
+  applyLocation(lat, lng);
+}
+function onGPSError(msg) {
+  showToast(msg || 'No se pudo obtener GPS');
+  document.getElementById('gpsBtn').classList.remove('loading');
+}
+function onPermissionGranted() {
+  if (window.AndroidGPS) window.AndroidGPS.getLocation();
 }
 
 function gpsManualFallback() {
   document.getElementById('gpsBtn').classList.remove('loading');
   document.getElementById('coordsText').textContent = 'Arrastra el mapa para fijar tu ubicación';
   document.getElementById('confirmBtn').classList.remove('disabled');
-  showToast('Arrastra el mapa para posicionar tu dirección');
 }
 
-// Llamado desde Java (AndroidGPS bridge) cuando se obtiene GPS nativo
-function receiveLocation(lat, lng, acc) {
-  if (!map) initMap(lat, lng);
-  applyLocation(lat, lng, acc);
-}
-
-// Llamado desde Java cuando hay error GPS
-function onGPSError(msg) {
-  showToast(msg || 'No se pudo obtener GPS');
-  gpsManualFallback();
-}
-
-// Llamado desde Java cuando se concede permiso
-function onPermissionGranted() {
-  if (window.AndroidGPS) window.AndroidGPS.getLocation();
-}
-
-// ── PERMISSION FLOW ──────────────────────────────────────────
+// ── PERMISSION FLOW ───────────────────────────────────────────
 function requestGPS() {
   document.getElementById('permOverlay').style.display = 'none';
-  initMap(DEFAULT_LAT, DEFAULT_LNG);
   document.getElementById('gpsBtn').classList.add('loading');
-  document.getElementById('coordsText').textContent = 'Obteniendo ubicación GPS...';
 
-  // Si está el puente Java nativo (APK Android Studio), usarlo
-  if (window.AndroidGPS) {
-    window.AndroidGPS.getLocation();
-    return;
-  }
+  if (window.AndroidGPS) { window.AndroidGPS.getLocation(); return; }
+  if (!navigator.geolocation) { gpsManualFallback(); return; }
 
-  if (!navigator.geolocation) {
-    showToast('GPS no disponible en este dispositivo');
-    gpsManualFallback();
-    return;
-  }
-
-  // Intento 1: watchPosition alta precisión
   let done = false;
   const wid = navigator.geolocation.watchPosition(
     pos => {
       if (done) return; done = true;
       navigator.geolocation.clearWatch(wid);
-      applyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      applyLocation(pos.coords.latitude, pos.coords.longitude);
     },
     err => {
       if (done) return; done = true;
       navigator.geolocation.clearWatch(wid);
-      // Intento 2: getCurrentPosition baja precisión con caché
       navigator.geolocation.getCurrentPosition(
-        pos => applyLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
-        err2 => {
-          // Error code: 1=DENIED, 2=UNAVAILABLE, 3=TIMEOUT
-          if (err2.code === 1) {
-            showToast('Permiso GPS denegado. Actívalo en Ajustes > Apps > Chrome > Permisos');
-          }
-          gpsManualFallback();
-        },
+        pos => applyLocation(pos.coords.latitude, pos.coords.longitude),
+        () => gpsManualFallback(),
         { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 }
       );
     },
@@ -588,126 +459,17 @@ function requestGPS() {
 
 function denyGPS() {
   document.getElementById('permOverlay').style.display = 'none';
-  initMap(DEFAULT_LAT, DEFAULT_LNG);
-  showToast('Arrastra el mapa para posicionar tu dirección');
 }
 
-// ── GPS CENTER ───────────────────────────────────────────────
 function centerOnGPS() {
-  const btn = document.getElementById('gpsBtn');
-  btn.classList.add('loading');
-
-  if (window.AndroidGPS) {
-    window.AndroidGPS.getLocation();
-    return;
-  }
-
-  if (!navigator.geolocation) {
-    btn.classList.remove('loading');
-    showToast('GPS no disponible');
-    return;
-  }
-
+  document.getElementById('gpsBtn').classList.add('loading');
+  if (window.AndroidGPS) { window.AndroidGPS.getLocation(); return; }
+  if (!navigator.geolocation) { document.getElementById('gpsBtn').classList.remove('loading'); return; }
   navigator.geolocation.getCurrentPosition(
-    pos => {
-      btn.classList.remove('loading');
-      map.setView([pos.coords.latitude, pos.coords.longitude], 17);
-      showToast('Centrado en tu ubicación');
-    },
-    err => {
-      btn.classList.remove('loading');
-      showToast(err.code === 1 ? 'Permiso GPS denegado' : 'No se pudo obtener GPS');
-    },
+    pos => applyLocation(pos.coords.latitude, pos.coords.longitude),
+    () => { document.getElementById('gpsBtn').classList.remove('loading'); showToast('No se pudo obtener GPS'); },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
   );
-}
-
-// ── SATELLITE TOGGLE ─────────────────────────────────────────
-function toggleSatellite() {
-  isSat = !isSat;
-  if (isSat) {
-    map.removeLayer(tileNormal); tileSat.addTo(map);
-    document.getElementById('satLabel').textContent = 'Ver Mapa';
-  } else {
-    map.removeLayer(tileSat); tileNormal.addTo(map);
-    document.getElementById('satLabel').textContent = 'Ver Satélite';
-  }
-}
-
-function zoomIn()  { map && map.zoomIn(); }
-function zoomOut() { map && map.zoomOut(); }
-
-// ── SEARCH ───────────────────────────────────────────────────
-let searchTimer = null;
-let searchController = null;
-
-function onSearchInput(val) {
-  document.getElementById('clearBtn').classList.toggle('visible', val.length > 0);
-  clearTimeout(searchTimer);
-  if (val.length < 3) { closeAutocomplete(); return; }
-  searchTimer = setTimeout(() => fetchSuggestions(val), 400);
-}
-
-async function fetchSuggestions(query) {
-  if (searchController) searchController.abort();
-  searchController = new AbortController();
-  const ac = document.getElementById('autocomplete');
-  ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Buscando...</span></div></div>';
-  ac.classList.add('open');
-  try {
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query + ' Peru')}&limit=8&lang=es`;
-    const res = await fetch(url, { signal: searchController.signal });
-    const data = await res.json();
-    // Filtrar solo Peru por countrycode (evita problema de tilde en "Perú")
-    const features = (data.features || []).filter(f => {
-      const cc = (f.properties.countrycode || '').toUpperCase();
-      return cc === 'PE';
-    });
-    if (!features.length) { ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Sin resultados para Perú</span></div></div>'; return; }
-    ac.innerHTML = features.slice(0, 6).map(f => {
-      const p = f.properties;
-      const parts = [p.name, p.street && p.housenumber ? p.street + ' ' + p.housenumber : p.street, p.district, p.city].filter(Boolean);
-      const main = parts[0] || '';
-      const sub  = parts.slice(1, 3).join(', ');
-      const [lng, lat] = f.geometry.coordinates;
-      const addrObj = { state: p.state, county: p.county || p.city, city: p.city, city_district: p.district, suburb: p.district };
-      return `<div class="ac-item" onclick='selectResult(${lat},${lng},${JSON.stringify(main)},${JSON.stringify(sub)},${JSON.stringify(addrObj)})'>
-        <div class="ac-icon">📍</div>
-        <div class="ac-text"><strong>${main}</strong><span>${sub}</span></div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    if (e.name === 'AbortError') return;
-    // Fallback a Nominatim
-    try {
-      const url2 = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=pe&accept-language=es`;
-      const res2 = await fetch(url2);
-      const data2 = await res2.json();
-      if (!data2.length) { ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Sin resultados</span></div></div>'; return; }
-      ac.innerHTML = data2.map(r => {
-        const parts = r.display_name.split(', ');
-        const main = parts[0] || '';
-        const sub  = parts.slice(1, 3).join(', ');
-        const a = r.address || {};
-        const addrObj = { state: a.state, county: a.county, city: a.city || a.town, city_district: a.city_district, suburb: a.suburb };
-        return `<div class="ac-item" onclick='selectResult(${r.lat},${r.lon},${JSON.stringify(main)},${JSON.stringify(sub)},${JSON.stringify(addrObj)})'>
-          <div class="ac-icon">📍</div>
-          <div class="ac-text"><strong>${main}</strong><span>${sub}</span></div>
-        </div>`;
-      }).join('');
-    } catch(e2) {
-      ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Error de conexión</span></div></div>';
-    }
-  }
-}
-
-function selectResult(lat, lng, main, sub, addr) {
-  document.getElementById('searchInput').value = main;
-  closeAutocomplete();
-  document.getElementById('clearBtn').classList.add('visible');
-  if (!map) initMap(lat, lng);
-  map.setView([parseFloat(lat), parseFloat(lng)], 17);
-  if (addr) fillUbigeo(addr);
 }
 
 // ── UBIGEO ────────────────────────────────────────────────────
@@ -726,7 +488,7 @@ const UBIGEO = {
   'Junín':['Huancayo','Chanchamayo','Chupaca','Concepción','Jauja','Junín','Satipo','Tarma','Yauli'],
   'La Libertad':['Trujillo','Ascope','Bolívar','Chepén','Julcán','Otuzco','Pacasmayo','Pataz','Sánchez Carrión','Santiago de Chuco','Gran Chimú','Virú'],
   'Lambayeque':['Chiclayo','Ferreñafe','Lambayeque'],
-  'Lima':['Lima','Barranca','Cajatambo','Callao','Canta','Cañete','Huaral','Huarochirí','Huaura','Oyón','Yauyos'],
+  'Lima':['Lima','Barranca','Cajatambo','Canta','Cañete','Huaral','Huarochirí','Huaura','Oyón','Yauyos'],
   'Loreto':['Maynas','Alto Amazonas','Datem del Marañón','Loreto','Mariscal Ramón Castilla','Putumayo','Requena','Ucayali'],
   'Madre de Dios':['Tambopata','Manu','Tahuamanu'],
   'Moquegua':['Mariscal Nieto','General Sánchez Cerro','Ilo'],
@@ -739,13 +501,8 @@ const UBIGEO = {
   'Ucayali':['Coronel Portillo','Atalaya','Padre Abad','Purús']
 };
 
-const DISTRITOS = {
-  'Lima':{
-    'Lima':['Ancón','Ate','Barranco','Breña','Carabayllo','Chaclacayo','Chorrillos','Cieneguilla','Comas','El Agustino','Independencia','Jesús María','La Molina','La Victoria','Lince','Los Olivos','Lurigancho','Lurín','Magdalena del Mar','Miraflores','Pachacámac','Pucusana','Pueblo Libre','Puente Piedra','Punta Hermosa','Punta Negra','Rímac','San Bartolo','San Borja','San Isidro','San Juan de Lurigancho','San Juan de Miraflores','San Luis','San Martín de Porres','San Miguel','Santa Anita','Santa María del Mar','Santa Rosa','Santiago de Surco','Surquillo','Villa El Salvador','Villa María del Triunfo','Lima'],
-    'Callao':['Bellavista','Callao','Carmen de la Legua Reynoso','La Perla','La Punta','Mi Perú','Ventanilla'],
-  },
-  'Callao':{'Callao':['Bellavista','Callao','Carmen de la Legua Reynoso','La Perla','La Punta','Mi Perú','Ventanilla']},
-};
+const LIMA_DISTRITOS = ['Ancón','Ate','Barranco','Breña','Carabayllo','Chaclacayo','Chorrillos','Cieneguilla','Comas','El Agustino','Independencia','Jesús María','La Molina','La Victoria','Lince','Los Olivos','Lurigancho','Lurín','Magdalena del Mar','Miraflores','Pachacámac','Pucusana','Pueblo Libre','Puente Piedra','Punta Hermosa','Punta Negra','Rímac','San Bartolo','San Borja','San Isidro','San Juan de Lurigancho','San Juan de Miraflores','San Luis','San Martín de Porres','San Miguel','Santa Anita','Santa María del Mar','Santa Rosa','Santiago de Surco','Surquillo','Villa El Salvador','Villa María del Triunfo','Lima'];
+const CALLAO_DISTRITOS = ['Bellavista','Callao','Carmen de la Legua Reynoso','La Perla','La Punta','Mi Perú','Ventanilla'];
 
 function fillDropdown(id, options, selected) {
   const el = document.getElementById(id);
@@ -754,29 +511,11 @@ function fillDropdown(id, options, selected) {
 }
 
 function initUbigeo() {
-  // Pre-seleccionar Lima por defecto
   fillDropdown('selDept', Object.keys(UBIGEO).sort(), 'Lima');
   document.getElementById('selDept').value = 'Lima';
   fillDropdown('selProv', UBIGEO['Lima'], 'Lima');
   document.getElementById('selProv').value = 'Lima';
-  fillDropdown('selDist', DISTRITOS['Lima']['Lima'], '');
-}
-
-function normalize(s) {
-  return (s || '').toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/\b(region|province|provincia|departamento|distrito|de|del|la|el|los|las)\b/g, '')
-    .replace(/\s+/g, ' ').trim();
-}
-
-function bestMatch(list, raw) {
-  if (!raw) return '';
-  const n = normalize(raw);
-  if (!n) return '';
-  return list.find(item => {
-    const ni = normalize(item);
-    return ni === n || n.includes(ni) || ni.includes(n);
-  }) || '';
+  fillDropdown('selDist', LIMA_DISTRITOS, '');
 }
 
 function onDeptChange() {
@@ -786,36 +525,66 @@ function onDeptChange() {
 }
 
 function onProvChange() {
-  fillDropdown('selDist', [], '');
+  const dept = document.getElementById('selDept').value;
+  const prov = document.getElementById('selProv').value;
+  let dists = [];
+  if (dept === 'Lima' && prov === 'Lima') dists = LIMA_DISTRITOS;
+  else if (dept === 'Callao' || prov === 'Callao') dists = CALLAO_DISTRITOS;
+  fillDropdown('selDist', dists, '');
 }
 
-function fillUbigeo(addr) {
-  // Nominatim devuelve: state=Departamento, county=Provincia, suburb/city_district=Distrito
-  const state    = addr.state || '';
-  const county   = addr.county || addr.state_district || '';
-  const city     = addr.city || addr.town || addr.municipality || '';
-  const district = addr.city_district || addr.suburb || addr.neighbourhood || addr.quarter || addr.village || '';
+function norm(s) {
+  return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/\b(province|region|provincia|departamento|de|del|la|el)\b/g,'').trim();
+}
 
-  // 1. Departamento
+function fillUbigeoFromComponents(components) {
+  // Google Maps address_components
+  const get = type => {
+    const c = components.find(c => c.types.includes(type));
+    return c ? c.long_name : '';
+  };
+  const dept   = get('administrative_area_level_1'); // Departamento
+  const prov   = get('administrative_area_level_2'); // Provincia
+  const dist   = get('locality') || get('sublocality_level_1') || get('administrative_area_level_3');
+
+  // Buscar departamento
   const depts = Object.keys(UBIGEO);
-  const dept = bestMatch(depts, state);
-  if (!dept) return;
-  document.getElementById('selDept').value = dept;
+  const matchDept = depts.find(d => norm(d) === norm(dept) || norm(dept).includes(norm(d))) || '';
+  if (!matchDept) return;
+  fillDropdown('selDept', depts.sort(), matchDept);
+  document.getElementById('selDept').value = matchDept;
 
-  // 2. Provincia — probar county primero, luego city
-  const provs = UBIGEO[dept] || [];
-  const prov = bestMatch(provs, county) || bestMatch(provs, city) || bestMatch(provs, district);
-  fillDropdown('selProv', provs, prov);
+  // Buscar provincia
+  const provs = UBIGEO[matchDept] || [];
+  const matchProv = provs.find(p => norm(p) === norm(prov) || norm(prov).includes(norm(p))) || '';
+  fillDropdown('selProv', provs, matchProv);
+  if (matchProv) document.getElementById('selProv').value = matchProv;
 
-  // 3. Distrito
-  const dists = (DISTRITOS[dept] && DISTRITOS[dept][prov]) || [];
-  const distName = district || (city !== prov ? city : '');
-  const selDist = bestMatch(dists, distName) || bestMatch(dists, suburb) || '';
-  if (dists.length) fillDropdown('selDist', dists, selDist);
-  else fillDropdown('selDist', distName ? [distName] : [], distName);
+  // Buscar distrito
+  let dists = [];
+  if (matchDept === 'Lima' && matchProv === 'Lima') dists = LIMA_DISTRITOS;
+  else if (matchProv === 'Callao') dists = CALLAO_DISTRITOS;
+  const matchDist = dists.find(d => norm(d) === norm(dist) || norm(dist).includes(norm(d))) || '';
+  fillDropdown('selDist', dists, matchDist);
+  if (matchDist) document.getElementById('selDist').value = matchDist;
 }
 
 initUbigeo();
+
+// ── CONFIRM ───────────────────────────────────────────────────
+function confirmLocation() {
+  if (document.getElementById('confirmBtn').classList.contains('disabled')) return;
+  document.getElementById('successCoords').textContent =
+    `Lat ${currentLat.toFixed(5)}, Lng ${currentLng.toFixed(5)}`;
+  document.getElementById('successOverlay').classList.add('show');
+}
+function goNext() {
+  document.getElementById('successOverlay').classList.remove('show');
+}
+function skipStep() {
+  document.getElementById('permOverlay').style.display = 'none';
+}
 
 // ── CHAT ──────────────────────────────────────────────────────
 const CHAT_REPLIES = [
@@ -826,11 +595,7 @@ const CHAT_REPLIES = [
   'Una vez que el pin esté en tu ubicación exacta, presiona "Confirmar esta ubicación".',
 ];
 let chatIdx = 0;
-
-function toggleChat() {
-  document.getElementById('chatPanel').classList.toggle('open');
-}
-
+function toggleChat() { document.getElementById('chatPanel').classList.toggle('open'); }
 function sendChat() {
   const input = document.getElementById('chatInput');
   const msg = input.value.trim();
@@ -839,61 +604,10 @@ function sendChat() {
   msgs.innerHTML += `<div class="chat-bubble user">${msg}</div>`;
   input.value = '';
   setTimeout(() => {
-    msgs.innerHTML += `<div class="chat-bubble bot">${CHAT_REPLIES[chatIdx % CHAT_REPLIES.length]}</div>`;
-    chatIdx++;
+    msgs.innerHTML += `<div class="chat-bubble bot">${CHAT_REPLIES[chatIdx++ % CHAT_REPLIES.length]}</div>`;
     msgs.scrollTop = msgs.scrollHeight;
   }, 700);
   msgs.scrollTop = msgs.scrollHeight;
-}
-
-function clearSearch() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('clearBtn').classList.remove('visible');
-  closeAutocomplete();
-}
-
-function closeAutocomplete() {
-  document.getElementById('autocomplete').classList.remove('open');
-}
-
-document.addEventListener('click', e => {
-  if (!e.target.closest('.search-wrap') && !e.target.closest('.autocomplete'))
-    closeAutocomplete();
-});
-
-// ── REFERENCE ────────────────────────────────────────────────
-function updateCharCount(el) {
-  document.getElementById('charCount').textContent = el.value.length;
-}
-
-// ── CONFIRM ──────────────────────────────────────────────────
-function confirmLocation() {
-  if (document.getElementById('confirmBtn').classList.contains('disabled')) return;
-  const c = map.getCenter();
-  document.getElementById('successCoords').textContent =
-    `Lat ${c.lat.toFixed(5)}, Lng ${c.lng.toFixed(5)}`;
-  document.getElementById('successOverlay').classList.add('show');
-}
-
-function goNext() {
-  document.getElementById('successOverlay').classList.remove('show');
-  showToast('✅ Avanzando al paso 5...');
-}
-
-function skipStep() { showToast('Ingresa tu dirección manualmente'); }
-
-// ── TOAST ────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ── SERVICE WORKER (PWA) ─────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 </script>
 </body>
