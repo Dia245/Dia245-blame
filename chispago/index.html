@@ -655,16 +655,19 @@ async function fetchSuggestions(query) {
   ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Buscando...</span></div></div>';
   ac.classList.add('open');
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6&countrycodes=pe&accept-language=es`;
-    const res = await fetch(url, { signal: searchController.signal, headers: { 'Accept-Language': 'es' } });
+    // Photon (Komoot) — mejor relevancia que Nominatim para América Latina
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6&lang=es&bbox=-81.3,-18.4,-68.7,0.0`;
+    const res = await fetch(url, { signal: searchController.signal });
     const data = await res.json();
-    if (!data.length) { ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Sin resultados</span></div></div>'; return; }
-    ac.innerHTML = data.map(r => {
-      const parts = r.display_name.split(', ');
-      const main = parts.slice(0, 2).join(', ');
-      const sub = parts.slice(2, 4).join(', ');
-      const addr = JSON.stringify(r.address || {});
-      return `<div class="ac-item" onclick='selectResult(${r.lat}, ${r.lon}, ${JSON.stringify(main)}, ${JSON.stringify(sub)}, ${addr})'>
+    const features = (data.features || []).filter(f => f.properties.country === 'Peru' || f.properties.countrycode === 'PE');
+    if (!features.length) { ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Sin resultados para Perú</span></div></div>'; return; }
+    ac.innerHTML = features.map(f => {
+      const p = f.properties;
+      const main = [p.name, p.street, p.housenumber].filter(Boolean).join(' ') || p.name || '';
+      const sub  = [p.district, p.city, p.state].filter(Boolean).join(', ');
+      const [lng, lat] = f.geometry.coordinates;
+      const addrObj = { state: p.state, county: p.county || p.city, city: p.city, city_district: p.district, suburb: p.district };
+      return `<div class="ac-item" onclick='selectResult(${lat},${lng},${JSON.stringify(main)},${JSON.stringify(sub)},${JSON.stringify(addrObj)})'>
         <div class="ac-icon">📍</div>
         <div class="ac-text"><strong>${main}</strong><span>${sub}</span></div>
       </div>`;
@@ -730,12 +733,14 @@ function initUbigeo() {
 function normalize(s) {
   return (s || '').toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/\b(region|province|provincia|departamento|de|del|la|el)\b/g, '')
-    .trim();
+    .replace(/\b(region|province|provincia|departamento|distrito|de|del|la|el|los|las)\b/g, '')
+    .replace(/\s+/g, ' ').trim();
 }
 
 function bestMatch(list, raw) {
+  if (!raw) return '';
   const n = normalize(raw);
+  if (!n) return '';
   return list.find(item => {
     const ni = normalize(item);
     return ni === n || n.includes(ni) || ni.includes(n);
@@ -753,30 +758,31 @@ function onProvChange() {
 }
 
 function fillUbigeo(addr) {
-  const state  = addr.state || addr.region || '';
-  const county = addr.county || addr.city || addr.municipality || addr.town || '';
+  // Nominatim devuelve: state=Departamento, county=Provincia, suburb/city_district=Distrito
+  const state    = addr.state || '';
+  const county   = addr.county || addr.state_district || '';
+  const city     = addr.city || addr.town || addr.municipality || '';
   const district = addr.city_district || addr.suburb || addr.neighbourhood || addr.quarter || addr.village || '';
 
+  // 1. Departamento
   const depts = Object.keys(UBIGEO);
   const dept = bestMatch(depts, state);
-
   if (!dept) return;
-
   document.getElementById('selDept').value = dept;
 
+  // 2. Provincia — probar county primero, luego city
   const provs = UBIGEO[dept] || [];
-  const prov = bestMatch(provs, county) || bestMatch(provs, district);
+  const prov = bestMatch(provs, county) || bestMatch(provs, city) || bestMatch(provs, district);
   fillDropdown('selProv', provs, prov);
 
-  // Distrito: combinar DISTRITOS fijos + valor de Nominatim dinámico
+  // 3. Distrito — dinámico desde Nominatim + lista fija
   const fixedDists = (DISTRITOS[dept] && DISTRITOS[dept][prov]) || [];
-  const nominatimDist = district;
-  // Agregar distrito de Nominatim si no está en la lista fija
-  const allDists = fixedDists.includes(nominatimDist) || !nominatimDist
+  const distName = district || city;
+  const merged = (fixedDists.includes(distName) || !distName)
     ? fixedDists
-    : [...fixedDists, nominatimDist].sort();
-  const matchDist = bestMatch(allDists, nominatimDist) || nominatimDist;
-  fillDropdown('selDist', allDists.length ? allDists : (nominatimDist ? [nominatimDist] : []), matchDist);
+    : [...new Set([...fixedDists, distName])].sort();
+  const selDist = bestMatch(merged, distName) || distName;
+  fillDropdown('selDist', merged.length ? merged : (distName ? [distName] : []), selDist);
 }
 
 initUbigeo();
