@@ -655,16 +655,20 @@ async function fetchSuggestions(query) {
   ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Buscando...</span></div></div>';
   ac.classList.add('open');
   try {
-    // Photon (Komoot) — mejor relevancia que Nominatim para América Latina
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6&lang=es&bbox=-81.3,-18.4,-68.7,0.0`;
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query + ' Peru')}&limit=8&lang=es`;
     const res = await fetch(url, { signal: searchController.signal });
     const data = await res.json();
-    const features = (data.features || []).filter(f => f.properties.country === 'Peru' || f.properties.countrycode === 'PE');
+    // Filtrar solo Peru por countrycode (evita problema de tilde en "Perú")
+    const features = (data.features || []).filter(f => {
+      const cc = (f.properties.countrycode || '').toUpperCase();
+      return cc === 'PE';
+    });
     if (!features.length) { ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Sin resultados para Perú</span></div></div>'; return; }
-    ac.innerHTML = features.map(f => {
+    ac.innerHTML = features.slice(0, 6).map(f => {
       const p = f.properties;
-      const main = [p.name, p.street, p.housenumber].filter(Boolean).join(' ') || p.name || '';
-      const sub  = [p.district, p.city, p.state].filter(Boolean).join(', ');
+      const parts = [p.name, p.street && p.housenumber ? p.street + ' ' + p.housenumber : p.street, p.district, p.city].filter(Boolean);
+      const main = parts[0] || '';
+      const sub  = parts.slice(1, 3).join(', ');
       const [lng, lat] = f.geometry.coordinates;
       const addrObj = { state: p.state, county: p.county || p.city, city: p.city, city_district: p.district, suburb: p.district };
       return `<div class="ac-item" onclick='selectResult(${lat},${lng},${JSON.stringify(main)},${JSON.stringify(sub)},${JSON.stringify(addrObj)})'>
@@ -673,7 +677,27 @@ async function fetchSuggestions(query) {
       </div>`;
     }).join('');
   } catch(e) {
-    if (e.name !== 'AbortError') ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Error de conexión</span></div></div>';
+    if (e.name === 'AbortError') return;
+    // Fallback a Nominatim
+    try {
+      const url2 = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=pe&accept-language=es`;
+      const res2 = await fetch(url2);
+      const data2 = await res2.json();
+      if (!data2.length) { ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Sin resultados</span></div></div>'; return; }
+      ac.innerHTML = data2.map(r => {
+        const parts = r.display_name.split(', ');
+        const main = parts[0] || '';
+        const sub  = parts.slice(1, 3).join(', ');
+        const a = r.address || {};
+        const addrObj = { state: a.state, county: a.county, city: a.city || a.town, city_district: a.city_district, suburb: a.suburb };
+        return `<div class="ac-item" onclick='selectResult(${r.lat},${r.lon},${JSON.stringify(main)},${JSON.stringify(sub)},${JSON.stringify(addrObj)})'>
+          <div class="ac-icon">📍</div>
+          <div class="ac-text"><strong>${main}</strong><span>${sub}</span></div>
+        </div>`;
+      }).join('');
+    } catch(e2) {
+      ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Error de conexión</span></div></div>';
+    }
   }
 }
 
