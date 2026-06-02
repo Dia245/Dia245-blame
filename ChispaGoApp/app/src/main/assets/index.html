@@ -727,42 +727,56 @@ function initUbigeo() {
   fillDropdown('selDept', Object.keys(UBIGEO).sort(), '');
 }
 
+function normalize(s) {
+  return (s || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\b(region|province|provincia|departamento|de|del|la|el)\b/g, '')
+    .trim();
+}
+
+function bestMatch(list, raw) {
+  const n = normalize(raw);
+  return list.find(item => {
+    const ni = normalize(item);
+    return ni === n || n.includes(ni) || ni.includes(n);
+  }) || '';
+}
+
 function onDeptChange() {
   const dept = document.getElementById('selDept').value;
-  const provs = dept ? UBIGEO[dept] || [] : [];
-  fillDropdown('selProv', provs, '');
+  fillDropdown('selProv', dept ? UBIGEO[dept] || [] : [], '');
   fillDropdown('selDist', [], '');
 }
 
 function onProvChange() {
-  const dept = document.getElementById('selDept').value;
-  const prov = document.getElementById('selProv').value;
-  const dists = (DISTRITOS[dept] && DISTRITOS[dept][prov]) || [];
-  fillDropdown('selDist', dists, '');
+  fillDropdown('selDist', [], '');
 }
 
 function fillUbigeo(addr) {
-  // Nominatim fields: state=departamento, county/city_district=provincia, suburb/town=distrito
-  const state = addr.state || addr.region || '';
-  const county = addr.county || addr.city || addr.town || '';
-  const suburb = addr.suburb || addr.village || addr.city_district || addr.quarter || '';
+  const state  = addr.state || addr.region || '';
+  const county = addr.county || addr.city || addr.municipality || addr.town || '';
+  const district = addr.city_district || addr.suburb || addr.neighbourhood || addr.quarter || addr.village || '';
 
-  // Match departamento
   const depts = Object.keys(UBIGEO);
-  const dept = depts.find(d => state.toLowerCase().includes(d.toLowerCase()) || d.toLowerCase().includes(state.toLowerCase())) || '';
-  if (dept) {
-    document.getElementById('selDept').value = dept;
-    const provs = UBIGEO[dept] || [];
-    fillDropdown('selProv', provs, '');
-    const prov = provs.find(p => county.toLowerCase().includes(p.toLowerCase()) || p.toLowerCase().includes(county.toLowerCase())) || '';
-    if (prov) {
-      document.getElementById('selProv').value = prov;
-      const dists = (DISTRITOS[dept] && DISTRITOS[dept][prov]) || [];
-      fillDropdown('selDist', dists, '');
-      const dist = dists.find(d => suburb.toLowerCase().includes(d.toLowerCase()) || d.toLowerCase().includes(suburb.toLowerCase())) || '';
-      if (dist) document.getElementById('selDist').value = dist;
-    }
-  }
+  const dept = bestMatch(depts, state);
+
+  if (!dept) return;
+
+  document.getElementById('selDept').value = dept;
+
+  const provs = UBIGEO[dept] || [];
+  const prov = bestMatch(provs, county) || bestMatch(provs, district);
+  fillDropdown('selProv', provs, prov);
+
+  // Distrito: combinar DISTRITOS fijos + valor de Nominatim dinámico
+  const fixedDists = (DISTRITOS[dept] && DISTRITOS[dept][prov]) || [];
+  const nominatimDist = district;
+  // Agregar distrito de Nominatim si no está en la lista fija
+  const allDists = fixedDists.includes(nominatimDist) || !nominatimDist
+    ? fixedDists
+    : [...fixedDists, nominatimDist].sort();
+  const matchDist = bestMatch(allDists, nominatimDist) || nominatimDist;
+  fillDropdown('selDist', allDists.length ? allDists : (nominatimDist ? [nominatimDist] : []), matchDist);
 }
 
 initUbigeo();
