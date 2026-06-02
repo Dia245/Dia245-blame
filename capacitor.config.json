@@ -1,18 +1,5 @@
 {
   "appId": "com.chispago.app",
   "appName": "Chispa Go",
-  "webDir": "www",
-  "server": {
-    "androidScheme": "https",
-    "hostname": "localhost",
-    "url": "https://localhost"
-  },
-  "android": {
-    "path": "android"
-  },
-  "plugins": {
-    "SplashScreen": {
-      "launchAutoHide": true
-    }
-  }
+  "webDir": "www"
 }
