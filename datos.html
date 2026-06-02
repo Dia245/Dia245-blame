@@ -11,11 +11,12 @@
 <style>
 :root{--orange:#FF4E00;--orange-dark:#e04300;--orange-light:#fff3ee;--green:#22c55e;--green-light:#dcfce7;--gray:#f5f5f5;--text:#1a1a1a;--sub:#6b7280;--border:#e5e7eb;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#fff;}
-#app{height:100%;display:flex;flex-direction:column;}
-.status-bar{height:44px;background:var(--orange);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;}
+html,body{height:100%;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#fff;}
+body{overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#app{min-height:100%;display:flex;flex-direction:column;}
+.status-bar{height:44px;background:var(--orange);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;position:sticky;top:0;z-index:100;}
 .sb-time{color:#fff;font-size:0.85rem;font-weight:700;}
-.topbar{background:var(--orange);padding:0 16px 16px;flex-shrink:0;}
+.topbar{background:var(--orange);padding:0 16px 16px;flex-shrink:0;position:sticky;top:44px;z-index:99;}
 .topbar-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
 .back-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;flex-shrink:0;}
 .back-btn svg{width:20px;height:20px;fill:#fff;}
@@ -25,7 +26,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,'Segoe UI',Robot
 .step-dot{height:4px;border-radius:2px;background:rgba(255,255,255,.35);transition:all .3s;flex:1;}
 .step-dot.done{background:#fff;}
 .step-dot.active{background:#fff;flex:2;}
-.content{flex:1;overflow-y:auto;overflow-x:hidden;}
 .content-inner{padding:20px 16px 32px;}
 .step-label{font-size:0.75rem;color:var(--orange);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;}
 .step-title{font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:6px;}
@@ -136,50 +136,48 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
       <span style="color:rgba(255,255,255,.75);font-size:0.72rem;">Paso 2 de 5</span>
     </div>
   </div>
-  <div class="content">
-    <div class="content-inner">
-      <div class="step-label">Paso 2 de 5</div>
-      <div class="step-title">Ingresa tus datos</div>
-      <div class="step-desc">Selecciona tu tipo de documento e ingresa tu número para consultar tus datos oficiales.</div>
-      <div class="doc-toggle">
-        <button class="doc-option active" id="optDni" onclick="setDocType('dni')">DNI</button>
-        <button class="doc-option" id="optCe" onclick="setDocType('ce')">Carnet Extranjería (C.E.)</button>
-      </div>
-      <div class="field-row">
-        <div class="field-wrap">
-          <input class="field" type="tel" id="docInput" placeholder="Número de DNI 🪪" maxlength="8" oninput="onDocInput()">
-        </div>
-        <button class="btn-validar" id="btnValidar" onclick="validarDoc()" disabled>Validar</button>
-      </div>
-      <div class="dni-card" id="dniCard">
-        <div class="dni-card-name" id="dniName">—</div>
-        <div class="dni-card-sub" id="dniSub">Datos verificados ✅</div>
-      </div>
-      <div class="field-wrap" style="margin-bottom:14px">
-        <input class="field" type="text" id="fullName" placeholder="Nombres y Apellidos Completos" autocomplete="name">
-      </div>
-      <div class="field-wrap" style="margin-bottom:14px">
-        <div class="phone-wrap">
-          <input class="field" type="tel" id="phoneInput" placeholder="Número de Celular" maxlength="9" style="padding-right:120px" oninput="onPhoneInput()">
-          <button class="btn-verificar-sms" id="btnVerificarSms" onclick="iniciarVerificacion()" disabled>Verificar SMS</button>
-          <div class="phone-verified-badge" id="phoneVerifiedBadge">✅ Verificado</div>
-        </div>
-      </div>
-      <div class="field-wrap" style="margin-bottom:20px">
-        <input class="field" type="email" id="emailInput" placeholder="Correo Electrónico" autocomplete="email">
-      </div>
-      <div class="section-label">Estado Civil</div>
-      <div class="civil-options">
-        <button class="civil-btn active" onclick="setCivil(this)">Soltero</button>
-        <button class="civil-btn" onclick="setCivil(this)">Casado</button>
-        <button class="civil-btn" onclick="setCivil(this)">Viudo</button>
-        <button class="civil-btn" onclick="setCivil(this)">Divorciado</button>
-      </div>
-      <button class="continue-btn disabled" id="btnContinue" onclick="continuar()">
-        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-        Continuar a Documentos
-      </button>
+  <div class="content-inner">
+    <div class="step-label">Paso 2 de 5</div>
+    <div class="step-title">Ingresa tus datos</div>
+    <div class="step-desc">Selecciona tu tipo de documento e ingresa tu número para consultar tus datos oficiales.</div>
+    <div class="doc-toggle">
+      <button class="doc-option active" id="optDni" onclick="setDocType('dni')">DNI</button>
+      <button class="doc-option" id="optCe" onclick="setDocType('ce')">Carnet Extranjería (C.E.)</button>
     </div>
+    <div class="field-row">
+      <div class="field-wrap">
+        <input class="field" type="tel" id="docInput" placeholder="Número de DNI 🪪" maxlength="8" oninput="onDocInput()">
+      </div>
+      <button class="btn-validar" id="btnValidar" onclick="validarDoc()" disabled>Validar</button>
+    </div>
+    <div class="dni-card" id="dniCard">
+      <div class="dni-card-name" id="dniName">—</div>
+      <div class="dni-card-sub" id="dniSub">Datos verificados ✅</div>
+    </div>
+    <div class="field-wrap" style="margin-bottom:14px">
+      <input class="field" type="text" id="fullName" placeholder="Nombres y Apellidos Completos" autocomplete="name">
+    </div>
+    <div class="field-wrap" style="margin-bottom:14px">
+      <div class="phone-wrap">
+        <input class="field" type="tel" id="phoneInput" placeholder="Número de Celular" maxlength="9" style="padding-right:120px" oninput="onPhoneInput()">
+        <button class="btn-verificar-sms" id="btnVerificarSms" onclick="iniciarVerificacion()" disabled>Verificar SMS</button>
+        <div class="phone-verified-badge" id="phoneVerifiedBadge">✅ Verificado</div>
+      </div>
+    </div>
+    <div class="field-wrap" style="margin-bottom:20px">
+      <input class="field" type="email" id="emailInput" placeholder="Correo Electrónico" autocomplete="email">
+    </div>
+    <div class="section-label">Estado Civil</div>
+    <div class="civil-options">
+      <button class="civil-btn active" onclick="setCivil(this)">Soltero</button>
+      <button class="civil-btn" onclick="setCivil(this)">Casado</button>
+      <button class="civil-btn" onclick="setCivil(this)">Viudo</button>
+      <button class="civil-btn" onclick="setCivil(this)">Divorciado</button>
+    </div>
+    <button class="continue-btn disabled" id="btnContinue" onclick="continuar()">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      Continuar a Documentos
+    </button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -205,7 +203,7 @@ document.getElementById('smsModal').addEventListener('click',e=>{if(e.target===d
 function setCivil(btn){document.querySelectorAll('.civil-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function checkFormReady(){const doc=document.getElementById('docInput').value.trim();const name=document.getElementById('fullName').value.trim();const phone=document.getElementById('phoneInput').value.trim();const email=document.getElementById('emailInput').value.trim();const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&email.includes('@');document.getElementById('btnContinue').classList.toggle('disabled',!ready);}
 ['docInput','fullName','phoneInput','emailInput'].forEach(id=>{document.getElementById(id).addEventListener('input',checkFormReady);});
-function continuar(){if(document.getElementById('btnContinue').classList.contains('disabled'))return;const datos={doc:document.getElementById('docInput').value.trim(),nombre:document.getElementById('fullName').value.trim(),phone:'+51'+document.getElementById('phoneInput').value.trim(),email:document.getElementById('emailInput').value.trim(),civil:document.querySelector('.civil-btn.active').textContent};localStorage.setItem('chispago_datos',JSON.stringify(datos));showToast('Cargando siguiente paso...');setTimeout(()=>{window.location.href='index.html';},800);}
+function continuar(){if(document.getElementById('btnContinue').classList.contains('disabled'))return;const datos={doc:document.getElementById('docInput').value.trim(),nombre:document.getElementById('fullName').value.trim(),phone:'+51'+document.getElementById('phoneInput').value.trim(),email:document.getElementById('emailInput').value.trim(),civil:document.querySelector('.civil-btn.active').textContent};localStorage.setItem('chispago_datos',JSON.stringify(datos));showToast('Cargando siguiente paso...');setTimeout(()=>{window.location.href='domicilio.html';},800);}
 let toastT;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
