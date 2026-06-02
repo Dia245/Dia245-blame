@@ -388,9 +388,9 @@
         </div>
         <div class="ubigeo-field">
           <label>Distrito</label>
-          <input type="text" class="ubigeo-select" id="selDist"
-            placeholder="Ej: Tambopata, Miraflores, San Isidro..."
-            style="appearance:none;background-image:none;">
+          <select class="ubigeo-select" id="selDist">
+            <option value="">Seleccionar</option>
+          </select>
         </div>
       </div>
 
@@ -740,7 +740,10 @@ const UBIGEO = {
 };
 
 const DISTRITOS = {
-  'Lima':{'Lima':['Barranco','Breña','Chorrillos','Comas','El Agustino','Independencia','Jesús María','La Molina','La Victoria','Lince','Los Olivos','Lurigancho','Lurín','Magdalena del Mar','Miraflores','Pachacámac','Puente Piedra','Pueblo Libre','Rímac','San Borja','San Isidro','San Juan de Lurigancho','San Juan de Miraflores','San Luis','San Martín de Porres','San Miguel','Santa Anita','Santiago de Surco','Surquillo','Villa El Salvador','Villa María del Triunfo','Lima','Ancón','Ate','Carabayllo']},
+  'Lima':{
+    'Lima':['Ancón','Ate','Barranco','Breña','Carabayllo','Chaclacayo','Chorrillos','Cieneguilla','Comas','El Agustino','Independencia','Jesús María','La Molina','La Victoria','Lince','Los Olivos','Lurigancho','Lurín','Magdalena del Mar','Miraflores','Pachacámac','Pucusana','Pueblo Libre','Puente Piedra','Punta Hermosa','Punta Negra','Rímac','San Bartolo','San Borja','San Isidro','San Juan de Lurigancho','San Juan de Miraflores','San Luis','San Martín de Porres','San Miguel','Santa Anita','Santa María del Mar','Santa Rosa','Santiago de Surco','Surquillo','Villa El Salvador','Villa María del Triunfo','Lima'],
+    'Callao':['Bellavista','Callao','Carmen de la Legua Reynoso','La Perla','La Punta','Mi Perú','Ventanilla'],
+  },
   'Callao':{'Callao':['Bellavista','Callao','Carmen de la Legua Reynoso','La Perla','La Punta','Mi Perú','Ventanilla']},
 };
 
@@ -751,7 +754,12 @@ function fillDropdown(id, options, selected) {
 }
 
 function initUbigeo() {
-  fillDropdown('selDept', Object.keys(UBIGEO).sort(), '');
+  // Pre-seleccionar Lima por defecto
+  fillDropdown('selDept', Object.keys(UBIGEO).sort(), 'Lima');
+  document.getElementById('selDept').value = 'Lima';
+  fillDropdown('selProv', UBIGEO['Lima'], 'Lima');
+  document.getElementById('selProv').value = 'Lima';
+  fillDropdown('selDist', DISTRITOS['Lima']['Lima'], '');
 }
 
 function normalize(s) {
@@ -799,9 +807,12 @@ function fillUbigeo(addr) {
   const prov = bestMatch(provs, county) || bestMatch(provs, city) || bestMatch(provs, district);
   fillDropdown('selProv', provs, prov);
 
-  // 3. Distrito — texto libre, autocompletado desde Nominatim
+  // 3. Distrito
+  const dists = (DISTRITOS[dept] && DISTRITOS[dept][prov]) || [];
   const distName = district || (city !== prov ? city : '');
-  if (distName) document.getElementById('selDist').value = distName;
+  const selDist = bestMatch(dists, distName) || bestMatch(dists, suburb) || '';
+  if (dists.length) fillDropdown('selDist', dists, selDist);
+  else fillDropdown('selDist', distName ? [distName] : [], distName);
 }
 
 initUbigeo();
