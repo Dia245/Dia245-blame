@@ -160,13 +160,54 @@
   .coords-box svg { width:18px; height:18px; fill:var(--orange); flex-shrink:0; }
   .coords-text { font-size:0.8rem; color:var(--orange-dark); font-family:monospace; font-weight:600; }
 
-  /* REFERENCE INPUT */
-  .ref-label { font-size:0.82rem; font-weight:600; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
-  .ref-label span { background:var(--orange); color:#fff; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; }
-  .ref-input { width:100%; border:1.5px solid var(--border); border-radius:12px; padding:13px 14px; font-size:0.9rem; color:var(--text); outline:none; transition:border .2s; background:#fafafa; resize:none; font-family:inherit; }
-  .ref-input:focus { border-color:var(--orange); background:#fff; }
-  .ref-input::placeholder { color:#9ca3af; }
-  .char-count { text-align:right; font-size:0.72rem; color:var(--sub); margin-top:4px; margin-bottom:20px; }
+  /* UBIGEO DROPDOWNS */
+  .ubigeo-section { margin-bottom:20px; }
+  .ubigeo-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .ubigeo-field label { display:block; font-size:0.72rem; font-weight:600; color:var(--sub); margin-bottom:5px; text-transform:uppercase; letter-spacing:.4px; }
+  .ubigeo-select {
+    width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:12px;
+    font-size:0.88rem; color:var(--text); background:#fafafa; outline:none;
+    appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center;
+    padding-right:32px; cursor:pointer; transition:border .2s;
+  }
+  .ubigeo-select:focus { border-color:var(--orange); background-color:#fff; }
+
+  /* CHAT BUTTON */
+  .chat-fab {
+    position:fixed; bottom:24px; right:20px; z-index:7000;
+    width:56px; height:56px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(135deg,#FF4E00,#ff7a40);
+    box-shadow:0 4px 16px rgba(255,78,0,.45);
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; transition:transform .2s;
+  }
+  .chat-fab:active { transform:scale(.92); }
+  .chat-panel {
+    position:fixed; bottom:0; left:0; right:0; z-index:7500;
+    background:#fff; border-radius:24px 24px 0 0;
+    box-shadow:0 -4px 32px rgba(0,0,0,.18);
+    transform:translateY(100%); transition:transform .35s cubic-bezier(.25,.8,.25,1);
+    max-height:75vh; display:flex; flex-direction:column;
+  }
+  .chat-panel.open { transform:translateY(0); }
+  .chat-header {
+    padding:16px 20px 12px; display:flex; align-items:center; gap:12px;
+    border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .chat-avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#FF4E00,#ff7a40); display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .chat-info strong { display:block; font-size:0.95rem; font-weight:700; }
+  .chat-info span { font-size:0.75rem; color:#22c55e; font-weight:500; }
+  .chat-close { margin-left:auto; background:none; border:none; font-size:1.4rem; color:var(--sub); cursor:pointer; padding:4px; }
+  .chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .chat-bubble { max-width:80%; padding:10px 14px; border-radius:18px; font-size:0.88rem; line-height:1.45; }
+  .chat-bubble.bot { background:var(--gray); color:var(--text); border-bottom-left-radius:4px; align-self:flex-start; }
+  .chat-bubble.user { background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border-bottom-right-radius:4px; align-self:flex-end; }
+  .chat-input-row { display:flex; gap:8px; padding:12px 16px 20px; border-top:1px solid var(--border); flex-shrink:0; }
+  .chat-input { flex:1; border:1.5px solid var(--border); border-radius:24px; padding:10px 16px; font-size:0.88rem; outline:none; font-family:inherit; }
+  .chat-input:focus { border-color:var(--orange); }
+  .chat-send { width:40px; height:40px; border-radius:50%; background:var(--orange); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .chat-send svg { width:18px; height:18px; fill:#fff; }
 
   /* CONFIRM BTN */
   .confirm-btn {
@@ -329,14 +370,29 @@
         <span class="coords-text" id="coordsText">Coordenadas: esperando GPS...</span>
       </div>
 
-      <!-- REFERENCE -->
-      <div class="ref-label">
-        <span>4</span> Referencia de dirección (opcional)
+      <!-- UBIGEO -->
+      <div class="ubigeo-section">
+        <div class="ubigeo-row">
+          <div class="ubigeo-field">
+            <label>Departamento</label>
+            <select class="ubigeo-select" id="selDept" onchange="onDeptChange()">
+              <option value="">Seleccionar</option>
+            </select>
+          </div>
+          <div class="ubigeo-field">
+            <label>Provincia</label>
+            <select class="ubigeo-select" id="selProv" onchange="onProvChange()">
+              <option value="">Seleccionar</option>
+            </select>
+          </div>
+        </div>
+        <div class="ubigeo-field">
+          <label>Distrito</label>
+          <select class="ubigeo-select" id="selDist">
+            <option value="">Seleccionar</option>
+          </select>
+        </div>
       </div>
-      <textarea class="ref-input" id="refInput" rows="2"
-        placeholder="Ej: Frente al parque, casa con reja azul, al lado de la farmacia..."
-        maxlength="120" oninput="updateCharCount(this)"></textarea>
-      <div class="char-count"><span id="charCount">0</span>/120</div>
 
       <!-- CONFIRM -->
       <button class="confirm-btn disabled" id="confirmBtn" onclick="confirmLocation()">
@@ -351,6 +407,30 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- CHAT FAB -->
+<button class="chat-fab" onclick="toggleChat()">🐱</button>
+
+<!-- CHAT PANEL -->
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <div class="chat-avatar">🐱</div>
+    <div class="chat-info">
+      <strong>Chispa Go IA</strong>
+      <span>● En línea</span>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-bubble bot">¡Hola! 👋 Soy la IA de Chispa Go. ¿En qué puedo ayudarte con tu dirección?</div>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chatInput" type="text" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" onclick="sendChat()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
 
 <script>
 // ── CLOCK ────────────────────────────────────────────────────
@@ -428,10 +508,9 @@ async function reverseGeocode(lat, lng) {
     const data = await res.json();
     if (data && data.display_name) {
       const parts = data.display_name.split(', ');
-      const addr = parts.slice(0, 3).join(', ');
-      const input = document.getElementById('searchInput');
-      input.value = addr;
+      document.getElementById('searchInput').value = parts.slice(0, 3).join(', ');
       document.getElementById('clearBtn').classList.add('visible');
+      if (data.address) fillUbigeo(data.address);
     }
   } catch(e) {}
 }
@@ -580,11 +659,12 @@ async function fetchSuggestions(query) {
     const res = await fetch(url, { signal: searchController.signal, headers: { 'Accept-Language': 'es' } });
     const data = await res.json();
     if (!data.length) { ac.innerHTML = '<div class="ac-item"><div class="ac-text"><span>Sin resultados</span></div></div>'; return; }
-    ac.innerHTML = data.map((r, i) => {
+    ac.innerHTML = data.map(r => {
       const parts = r.display_name.split(', ');
       const main = parts.slice(0, 2).join(', ');
       const sub = parts.slice(2, 4).join(', ');
-      return `<div class="ac-item" onclick="selectResult(${r.lat}, ${r.lon}, '${main.replace(/'/g,"\\'")}', '${sub.replace(/'/g,"\\'")}')">
+      const addr = JSON.stringify(r.address || {});
+      return `<div class="ac-item" onclick='selectResult(${r.lat}, ${r.lon}, ${JSON.stringify(main)}, ${JSON.stringify(sub)}, ${addr})'>
         <div class="ac-icon">📍</div>
         <div class="ac-text"><strong>${main}</strong><span>${sub}</span></div>
       </div>`;
@@ -594,12 +674,126 @@ async function fetchSuggestions(query) {
   }
 }
 
-function selectResult(lat, lng, main, sub) {
+function selectResult(lat, lng, main, sub, addr) {
   document.getElementById('searchInput').value = main;
   closeAutocomplete();
   document.getElementById('clearBtn').classList.add('visible');
   if (!map) initMap(lat, lng);
   map.setView([parseFloat(lat), parseFloat(lng)], 17);
+  if (addr) fillUbigeo(addr);
+}
+
+// ── UBIGEO ────────────────────────────────────────────────────
+const UBIGEO = {
+  'Amazonas':['Chachapoyas','Bagua','Bongará','Condorcanqui','Luya','Rodríguez de Mendoza','Utcubamba'],
+  'Áncash':['Huaraz','Aija','Antonio Raymondi','Asunción','Bolognesi','Carhuaz','Carlos Fermín Fitzcarrald','Casma','Corongo','Huari','Huarmey','Huaylas','Mariscal Luzuriaga','Ocros','Pallasca','Pomabamba','Recuay','Santa','Sihuas','Yungay'],
+  'Apurímac':['Abancay','Andahuaylas','Antabamba','Aymaraes','Cotabambas','Chincheros','Grau'],
+  'Arequipa':['Arequipa','Camaná','Caravelí','Castilla','Caylloma','Condesuyos','Islay','La Unión'],
+  'Ayacucho':['Huamanga','Cangallo','Huanca Sancos','Huanta','La Mar','Lucanas','Parinacochas','Páucar del Sara Sara','Sucre','Víctor Fajardo','Vilcas Huamán'],
+  'Cajamarca':['Cajamarca','Cajabamba','Celendín','Chota','Contumazá','Cutervo','Hualgayoc','Jaén','San Ignacio','San Marcos','San Miguel','San Pablo','Santa Cruz'],
+  'Callao':['Callao'],
+  'Cusco':['Cusco','Acomayo','Anta','Calca','Canas','Canchis','Chumbivilcas','Espinar','La Convención','Paruro','Paucartambo','Quispicanchi','Urubamba'],
+  'Huancavelica':['Huancavelica','Acobamba','Angaraes','Castrovirreyna','Churcampa','Huaytará','Tayacaja'],
+  'Huánuco':['Huánuco','Ambo','Dos de Mayo','Huacaybamba','Huamalíes','Leoncio Prado','Marañón','Pachitea','Puerto Inca','Lauricocha','Yarowilca'],
+  'Ica':['Ica','Chincha','Nasca','Palpa','Pisco'],
+  'Junín':['Huancayo','Chanchamayo','Chupaca','Concepción','Jauja','Junín','Satipo','Tarma','Yauli'],
+  'La Libertad':['Trujillo','Ascope','Bolívar','Chepén','Julcán','Otuzco','Pacasmayo','Pataz','Sánchez Carrión','Santiago de Chuco','Gran Chimú','Virú'],
+  'Lambayeque':['Chiclayo','Ferreñafe','Lambayeque'],
+  'Lima':['Lima','Barranca','Cajatambo','Callao','Canta','Cañete','Huaral','Huarochirí','Huaura','Oyón','Yauyos'],
+  'Loreto':['Maynas','Alto Amazonas','Datem del Marañón','Loreto','Mariscal Ramón Castilla','Putumayo','Requena','Ucayali'],
+  'Madre de Dios':['Tambopata','Manu','Tahuamanu'],
+  'Moquegua':['Mariscal Nieto','General Sánchez Cerro','Ilo'],
+  'Pasco':['Pasco','Daniel Alcides Carrión','Oxapampa'],
+  'Piura':['Piura','Ayabaca','Huancabamba','Morropón','Paita','Sullana','Talara','Sechura'],
+  'Puno':['Puno','Azángaro','Carabaya','Chucuito','El Collao','Huancané','Lampa','Melgar','Moho','San Antonio de Putina','San Román','Sandia','Yunguyo'],
+  'San Martín':['Moyobamba','Bellavista','El Dorado','Huallaga','Lamas','Mariscal Cáceres','Picota','Rioja','San Martín','Tocache'],
+  'Tacna':['Tacna','Candarave','Jorge Basadre','Tarata'],
+  'Tumbes':['Tumbes','Contralmirante Villar','Zarumilla'],
+  'Ucayali':['Coronel Portillo','Atalaya','Padre Abad','Purús']
+};
+
+const DISTRITOS = {
+  'Lima':{'Lima':['Barranco','Breña','Chorrillos','Comas','El Agustino','Independencia','Jesús María','La Molina','La Victoria','Lince','Los Olivos','Lurigancho','Lurín','Magdalena del Mar','Miraflores','Pachacámac','Puente Piedra','Pueblo Libre','Rímac','San Borja','San Isidro','San Juan de Lurigancho','San Juan de Miraflores','San Luis','San Martín de Porres','San Miguel','Santa Anita','Santiago de Surco','Surquillo','Villa El Salvador','Villa María del Triunfo','Lima','Ancón','Ate','Carabayllo']},
+  'Callao':{'Callao':['Bellavista','Callao','Carmen de la Legua Reynoso','La Perla','La Punta','Mi Perú','Ventanilla']},
+};
+
+function fillDropdown(id, options, selected) {
+  const el = document.getElementById(id);
+  el.innerHTML = '<option value="">Seleccionar</option>' +
+    options.map(o => `<option value="${o}"${o===selected?' selected':''}>${o}</option>`).join('');
+}
+
+function initUbigeo() {
+  fillDropdown('selDept', Object.keys(UBIGEO).sort(), '');
+}
+
+function onDeptChange() {
+  const dept = document.getElementById('selDept').value;
+  const provs = dept ? UBIGEO[dept] || [] : [];
+  fillDropdown('selProv', provs, '');
+  fillDropdown('selDist', [], '');
+}
+
+function onProvChange() {
+  const dept = document.getElementById('selDept').value;
+  const prov = document.getElementById('selProv').value;
+  const dists = (DISTRITOS[dept] && DISTRITOS[dept][prov]) || [];
+  fillDropdown('selDist', dists, '');
+}
+
+function fillUbigeo(addr) {
+  // Nominatim fields: state=departamento, county/city_district=provincia, suburb/town=distrito
+  const state = addr.state || addr.region || '';
+  const county = addr.county || addr.city || addr.town || '';
+  const suburb = addr.suburb || addr.village || addr.city_district || addr.quarter || '';
+
+  // Match departamento
+  const depts = Object.keys(UBIGEO);
+  const dept = depts.find(d => state.toLowerCase().includes(d.toLowerCase()) || d.toLowerCase().includes(state.toLowerCase())) || '';
+  if (dept) {
+    document.getElementById('selDept').value = dept;
+    const provs = UBIGEO[dept] || [];
+    fillDropdown('selProv', provs, '');
+    const prov = provs.find(p => county.toLowerCase().includes(p.toLowerCase()) || p.toLowerCase().includes(county.toLowerCase())) || '';
+    if (prov) {
+      document.getElementById('selProv').value = prov;
+      const dists = (DISTRITOS[dept] && DISTRITOS[dept][prov]) || [];
+      fillDropdown('selDist', dists, '');
+      const dist = dists.find(d => suburb.toLowerCase().includes(d.toLowerCase()) || d.toLowerCase().includes(suburb.toLowerCase())) || '';
+      if (dist) document.getElementById('selDist').value = dist;
+    }
+  }
+}
+
+initUbigeo();
+
+// ── CHAT ──────────────────────────────────────────────────────
+const CHAT_REPLIES = [
+  'Puedo ayudarte a encontrar tu dirección exacta. Escribe el nombre de tu calle o zona.',
+  'Para confirmar tu domicilio, arrastra el mapa hasta que el pin verde esté en tu casa.',
+  'Si el GPS no funciona, puedes buscar tu dirección en la barra de búsqueda arriba.',
+  'Selecciona tu departamento, provincia y distrito para completar el registro.',
+  'Una vez que el pin esté en tu ubicación exacta, presiona "Confirmar esta ubicación".',
+];
+let chatIdx = 0;
+
+function toggleChat() {
+  document.getElementById('chatPanel').classList.toggle('open');
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML += `<div class="chat-bubble user">${msg}</div>`;
+  input.value = '';
+  setTimeout(() => {
+    msgs.innerHTML += `<div class="chat-bubble bot">${CHAT_REPLIES[chatIdx % CHAT_REPLIES.length]}</div>`;
+    chatIdx++;
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 700);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 function clearSearch() {
