@@ -534,38 +534,51 @@ function onProvChange() {
 }
 
 function norm(s) {
-  return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
-    .replace(/\b(province|region|provincia|departamento|de|del|la|el)\b/g,'').trim();
+  return (s||'').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\b(province|region|provincia|departamento|department|distrito|district|de|del|la|el|of)\b/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+
+function matchUbigeo(list, googleText) {
+  if (!googleText) return '';
+  const nGoogle = norm(googleText);
+  return list.find(item => {
+    const nItem = norm(item);
+    return nItem === nGoogle || nGoogle.includes(nItem) || nItem.includes(nGoogle);
+  }) || '';
 }
 
 function fillUbigeoFromComponents(components) {
-  // Google Maps address_components
   const get = type => {
     const c = components.find(c => c.types.includes(type));
     return c ? c.long_name : '';
   };
-  const dept   = get('administrative_area_level_1'); // Departamento
-  const prov   = get('administrative_area_level_2'); // Provincia
-  const dist   = get('locality') || get('sublocality_level_1') || get('administrative_area_level_3');
 
-  // Buscar departamento
-  const depts = Object.keys(UBIGEO);
-  const matchDept = depts.find(d => norm(d) === norm(dept) || norm(dept).includes(norm(d))) || '';
+  const deptRaw = get('administrative_area_level_1');
+  const provRaw = get('administrative_area_level_2');
+  const distRaw = get('locality') || get('sublocality_level_1') ||
+                  get('sublocality') || get('administrative_area_level_3') ||
+                  get('neighborhood');
+
+  const depts = Object.keys(UBIGEO).sort();
+  const matchDept = matchUbigeo(depts, deptRaw);
   if (!matchDept) return;
-  fillDropdown('selDept', depts.sort(), matchDept);
+
+  fillDropdown('selDept', depts, matchDept);
   document.getElementById('selDept').value = matchDept;
 
-  // Buscar provincia
   const provs = UBIGEO[matchDept] || [];
-  const matchProv = provs.find(p => norm(p) === norm(prov) || norm(prov).includes(norm(p))) || '';
+  // Si no hay nivel_2 de Google y estamos en Lima, asumir provincia Lima
+  const matchProv = matchUbigeo(provs, provRaw) || (matchDept === 'Lima' ? 'Lima' : '');
   fillDropdown('selProv', provs, matchProv);
-  if (matchProv) document.getElementById('selProv').value = matchProv;
+  document.getElementById('selProv').value = matchProv;
 
-  // Buscar distrito
   let dists = [];
   if (matchDept === 'Lima' && matchProv === 'Lima') dists = LIMA_DISTRITOS;
-  else if (matchProv === 'Callao') dists = CALLAO_DISTRITOS;
-  const matchDist = dists.find(d => norm(d) === norm(dist) || norm(dist).includes(norm(d))) || '';
+  else if (matchDept === 'Callao' || matchProv === 'Callao') dists = CALLAO_DISTRITOS;
+
+  const matchDist = matchUbigeo(dists, distRaw);
   fillDropdown('selDist', dists, matchDist);
   if (matchDist) document.getElementById('selDist').value = matchDist;
 }
