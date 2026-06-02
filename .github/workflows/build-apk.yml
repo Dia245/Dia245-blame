@@ -22,6 +22,20 @@ jobs:
       - name: Install Capacitor dependencies
         run: npm install
 
+      - name: Install sharp for icon generation
+        run: npm install sharp
+
+      - name: Generate app icons from SVG
+        run: |
+          node -e "
+          const sharp = require('sharp');
+          const fs = require('fs');
+          const svg = fs.readFileSync('icon.svg');
+          sharp(svg).resize(512,512).png().toFile('icon-512.png', ()=>{});
+          sharp(svg).resize(192,192).png().toFile('icon-192.png', ()=>{});
+          "
+          sleep 2
+
       - name: Copy web files to www folder
         run: |
           mkdir -p www
@@ -29,11 +43,30 @@ jobs:
           cp domicilio.html www/domicilio.html 2>/dev/null || true
           cp *.css www/ 2>/dev/null || true
           cp manifest.json www/ 2>/dev/null || true
-          cp *.png www/ 2>/dev/null || true
+          cp icon-512.png www/ 2>/dev/null || true
+          cp icon-192.png www/ 2>/dev/null || true
           cp sw.js www/ 2>/dev/null || true
 
       - name: Add Android platform
         run: npx cap add android
+
+      - name: Copy icons to Android resources
+        run: |
+          mkdir -p android/app/src/main/res/mipmap-hdpi
+          mkdir -p android/app/src/main/res/mipmap-mdpi
+          mkdir -p android/app/src/main/res/mipmap-xhdpi
+          mkdir -p android/app/src/main/res/mipmap-xxhdpi
+          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+          node -e "
+          const sharp = require('sharp');
+          const svg = require('fs').readFileSync('icon.svg');
+          const sizes = [{dir:'mipmap-mdpi',size:48},{dir:'mipmap-hdpi',size:72},{dir:'mipmap-xhdpi',size:96},{dir:'mipmap-xxhdpi',size:144},{dir:'mipmap-xxxhdpi',size:192}];
+          sizes.forEach(({dir,size}) => {
+            sharp(svg).resize(size,size).png().toFile('android/app/src/main/res/'+dir+'/ic_launcher.png',()=>{});
+            sharp(svg).resize(size,size).png().toFile('android/app/src/main/res/'+dir+'/ic_launcher_round.png',()=>{});
+          });
+          "
+          sleep 3
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
