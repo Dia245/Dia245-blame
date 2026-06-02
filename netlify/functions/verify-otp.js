@@ -23,7 +23,7 @@ exports.handler = async (event) => {
     const result = await client.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
       .verificationChecks.create({
-        to: `whatsapp:${phone}`,
+        to: phone,
         code
       });
 
