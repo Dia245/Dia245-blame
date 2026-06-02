@@ -25,11 +25,12 @@ jobs:
       - name: Copy web files to www folder
         run: |
           mkdir -p www
-          cp *.html www/ 2>/dev/null || true
+          cp datos.html www/index.html
+          cp domicilio.html www/domicilio.html 2>/dev/null || true
           cp *.css www/ 2>/dev/null || true
-          cp *.js www/ 2>/dev/null || true
-          cp *.json www/ 2>/dev/null || true
+          cp manifest.json www/ 2>/dev/null || true
           cp *.png www/ 2>/dev/null || true
+          cp sw.js www/ 2>/dev/null || true
 
       - name: Add Android platform
         run: npx cap add android
