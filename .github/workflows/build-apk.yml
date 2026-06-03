@@ -46,7 +46,6 @@ jobs:
           python3 - << 'PYEOF'
           import os, re
 
-          # Write network_security_config.xml
           xml_dir = 'android/app/src/main/res/xml'
           os.makedirs(xml_dir, exist_ok=True)
           xml_content = ('<?xml version="1.0" encoding="utf-8"?>\n'
@@ -60,7 +59,6 @@ jobs:
           open(os.path.join(xml_dir, 'network_security_config.xml'), 'w').write(xml_content)
           print('network_security_config.xml written OK')
 
-          # Patch AndroidManifest.xml
           mf = 'android/app/src/main/AndroidManifest.xml'
           content = open(mf).read()
           if 'networkSecurityConfig' not in content:
@@ -78,7 +76,7 @@ jobs:
               print('AndroidManifest patched OK')
           else:
               print('AndroidManifest already patched')
-          print('Verify networkSecurityConfig present:', 'networkSecurityConfig' in open(mf).read())
+          print('Verify:', 'networkSecurityConfig' in open(mf).read())
           PYEOF
 
       - name: Generate and copy icons
@@ -116,16 +114,9 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -100
+          ./gradlew assembleDebug --no-daemon 2>&1 | tail -50
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ChispaGo-debug
-          path: android/app/src/main/../../build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
-
-      - name: Find and upload APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ChispaGo-APK
