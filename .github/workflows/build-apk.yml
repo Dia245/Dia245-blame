@@ -101,6 +101,7 @@ jobs:
           print('Found:', main_activity)
 
           new_imports = (
+              'import android.os.Bundle;\n'
               'import android.webkit.JavascriptInterface;\n'
               'import android.webkit.WebSettings;\n'
               'import android.webkit.WebView;\n'
@@ -150,9 +151,10 @@ jobs:
               'public class MainActivity extends BridgeActivity {\n'
               + http_bridge +
               '    @Override\n'
-              '    public void onStart() {\n'
-              '        super.onStart();\n'
+              '    public void onCreate(Bundle savedInstanceState) {\n'
+              '        super.onCreate(savedInstanceState);\n'
               '        WebView webView = getBridge().getWebView();\n'
+              '        webView.addJavascriptInterface(new HttpBridge(), "NativeBridge");\n'
               '        WebSettings settings = webView.getSettings();\n'
               '        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);\n'
               '        settings.setAllowFileAccessFromFileURLs(true);\n'
@@ -160,19 +162,18 @@ jobs:
               '        settings.setDomStorageEnabled(true);\n'
               '        settings.setJavaScriptEnabled(true);\n'
               '        WebView.setWebContentsDebuggingEnabled(true);\n'
-              '        webView.addJavascriptInterface(new HttpBridge(), "NativeBridge");\n'
               '    }\n'
               '}'
           )
 
-          if 'setMixedContentMode' not in content:
+          if 'NativeBridge' not in content and 'setMixedContentMode' not in content:
               content = content.replace(
                   'public class MainActivity extends BridgeActivity {}',
                   new_class
               )
               print('MainActivity patched OK')
           else:
-              print('Already patched, re-patching with NativeBridge...')
+              print('Re-patching MainActivity with onCreate + NativeBridge...')
               import re as re2
               content = re2.sub(
                   r'public class MainActivity extends BridgeActivity \{.*',
