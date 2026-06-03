@@ -41,42 +41,44 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Write network_security_config.xml
-        run: |
-          mkdir -p android/app/src/main/res/xml
-          cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-  <base-config cleartextTrafficPermitted="true">
-    <trust-anchors>
-      <certificates src="system" />
-    </trust-anchors>
-  </base-config>
-</network-security-config>
-EOF
-
-      - name: Patch AndroidManifest.xml
+      - name: Write network_security_config and patch AndroidManifest
         run: |
           python3 - << 'PYEOF'
-          import re
-          f = 'android/app/src/main/AndroidManifest.xml'
-          content = open(f).read()
+          import os, re
+
+          # Write network_security_config.xml
+          xml_dir = 'android/app/src/main/res/xml'
+          os.makedirs(xml_dir, exist_ok=True)
+          xml_content = ('<?xml version="1.0" encoding="utf-8"?>\n'
+              '<network-security-config>\n'
+              '  <base-config cleartextTrafficPermitted="true">\n'
+              '    <trust-anchors>\n'
+              '      <certificates src="system" />\n'
+              '    </trust-anchors>\n'
+              '  </base-config>\n'
+              '</network-security-config>\n')
+          open(os.path.join(xml_dir, 'network_security_config.xml'), 'w').write(xml_content)
+          print('network_security_config.xml written OK')
+
+          # Patch AndroidManifest.xml
+          mf = 'android/app/src/main/AndroidManifest.xml'
+          content = open(mf).read()
           if 'networkSecurityConfig' not in content:
               patched = content.replace(
                   'android:supportsRtl="true"',
-                  'android:supportsRtl="true"\n        android:networkSecurityConfig="@xml/network_security_config"\n        android:usesCleartextTraffic="true"'
+                  'android:supportsRtl="true" android:networkSecurityConfig="@xml/network_security_config" android:usesCleartextTraffic="true"'
               )
               if patched == content:
                   patched = re.sub(
                       r'(<application\b)',
-                      r'\1\n        android:networkSecurityConfig="@xml/network_security_config"\n        android:usesCleartextTraffic="true"',
+                      r'\1 android:networkSecurityConfig="@xml/network_security_config" android:usesCleartextTraffic="true"',
                       content, count=1
                   )
-              open(f, 'w').write(patched)
-              print('Manifest patched OK')
+              open(mf, 'w').write(patched)
+              print('AndroidManifest patched OK')
           else:
-              print('Already patched')
-          print('CHECK:', 'networkSecurityConfig' in open(f).read())
+              print('AndroidManifest already patched')
+          print('Verify networkSecurityConfig present:', 'networkSecurityConfig' in open(mf).read())
           PYEOF
 
       - name: Generate and copy icons
@@ -95,7 +97,7 @@ EOF
               { dir: 'mipmap-xxxhdpi', size: 192 }
             ];
             for (const { dir, size } of sizes) {
-              const dest = `android/app/src/main/res/${dir}`;
+              const dest = 'android/app/src/main/res/' + dir;
               fs.mkdirSync(dest, { recursive: true });
               const buf = await sharp(svgBuf).resize(size, size).png().toBuffer();
               fs.writeFileSync(path.join(dest, 'ic_launcher.png'), buf);
@@ -120,5 +122,12 @@ EOF
         uses: actions/upload-artifact@v4
         with:
           name: ChispaGo-debug
+          path: android/app/src/main/../../build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: Find and upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChispaGo-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
