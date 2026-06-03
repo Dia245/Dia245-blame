@@ -101,8 +101,14 @@ jobs:
           print('Found:', main_activity)
 
           new_imports = (
+              'import android.webkit.JavascriptInterface;\n'
               'import android.webkit.WebSettings;\n'
               'import android.webkit.WebView;\n'
+              'import java.io.OutputStream;\n'
+              'import java.net.HttpURLConnection;\n'
+              'import java.net.URL;\n'
+              'import java.nio.charset.StandardCharsets;\n'
+              'import java.util.Scanner;\n'
           )
           if 'android.webkit.WebSettings' not in content:
               content = content.replace(
@@ -110,8 +116,39 @@ jobs:
                   'import com.getcapacitor.BridgeActivity;\n' + new_imports
               )
 
+          http_bridge = (
+              '    class HttpBridge {\n'
+              '        @JavascriptInterface\n'
+              '        public String post(String urlStr, String body) {\n'
+              '            try {\n'
+              '                URL url = new URL(urlStr);\n'
+              '                HttpURLConnection conn = (HttpURLConnection) url.openConnection();\n'
+              '                conn.setRequestMethod("POST");\n'
+              '                conn.setRequestProperty("Content-Type", "application/json");\n'
+              '                conn.setDoOutput(true);\n'
+              '                conn.setConnectTimeout(15000);\n'
+              '                conn.setReadTimeout(15000);\n'
+              '                byte[] bytes = body.getBytes(StandardCharsets.UTF_8);\n'
+              '                conn.setFixedLengthStreamingMode(bytes.length);\n'
+              '                OutputStream os = conn.getOutputStream();\n'
+              '                os.write(bytes); os.close();\n'
+              '                int code = conn.getResponseCode();\n'
+              '                java.io.InputStream is = (code >= 200 && code < 300)\n'
+              '                    ? conn.getInputStream() : conn.getErrorStream();\n'
+              '                Scanner sc = new Scanner(is, "UTF-8").useDelimiter("\\\\A");\n'
+              '                String resp = sc.hasNext() ? sc.next() : "{}";\n'
+              '                conn.disconnect();\n'
+              '                return resp;\n'
+              '            } catch (Exception e) {\n'
+              '                return "{\\"error\\":\\"" + e.getMessage() + "\\",\\"_error\\":true}";\n'
+              '            }\n'
+              '        }\n'
+              '    }\n'
+          )
+
           new_class = (
               'public class MainActivity extends BridgeActivity {\n'
+              + http_bridge +
               '    @Override\n'
               '    public void onStart() {\n'
               '        super.onStart();\n'
@@ -123,6 +160,7 @@ jobs:
               '        settings.setDomStorageEnabled(true);\n'
               '        settings.setJavaScriptEnabled(true);\n'
               '        WebView.setWebContentsDebuggingEnabled(true);\n'
+              '        webView.addJavascriptInterface(new HttpBridge(), "NativeBridge");\n'
               '    }\n'
               '}'
           )
@@ -134,7 +172,14 @@ jobs:
               )
               print('MainActivity patched OK')
           else:
-              print('Already patched')
+              print('Already patched, re-patching with NativeBridge...')
+              import re as re2
+              content = re2.sub(
+                  r'public class MainActivity extends BridgeActivity \{.*',
+                  new_class,
+                  content,
+                  flags=re2.DOTALL
+              )
 
           open(main_activity, 'w').write(content)
           print(open(main_activity).read())
