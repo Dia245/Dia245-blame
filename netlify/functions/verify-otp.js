@@ -1,8 +1,19 @@
 const twilio = require('twilio');
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json'
+};
+
 exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: corsHeaders, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   const { phone, code } = JSON.parse(event.body || '{}');
@@ -10,6 +21,7 @@ exports.handler = async (event) => {
   if (!phone || !code) {
     return {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Faltan parámetros.' })
     };
   }
@@ -30,17 +42,20 @@ exports.handler = async (event) => {
     if (result.status === 'approved') {
       return {
         statusCode: 200,
+        headers: corsHeaders,
         body: JSON.stringify({ ok: true, verified: true })
       };
     } else {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Código incorrecto o expirado.' })
       };
     }
   } catch (err) {
     return {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Código incorrecto o expirado.' })
     };
   }

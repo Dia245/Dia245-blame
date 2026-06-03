@@ -1,8 +1,19 @@
 const twilio = require('twilio');
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json'
+};
+
 exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: corsHeaders, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   const { phone } = JSON.parse(event.body || '{}');
@@ -10,6 +21,7 @@ exports.handler = async (event) => {
   if (!phone || !/^\+\d{7,15}$/.test(phone)) {
     return {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Número inválido. Formato: +51987654321' })
     };
   }
@@ -29,11 +41,13 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({ ok: true })
     };
   } catch (err) {
     return {
       statusCode: 400,
+      headers: corsHeaders,
       body: JSON.stringify({
         error: 'No se pudo enviar el SMS. Verifica el número.',
         code: err.code
