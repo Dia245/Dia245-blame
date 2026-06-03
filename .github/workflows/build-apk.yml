@@ -96,6 +96,62 @@ jobs:
           print(open(mf).read())
           PYEOF
 
+      - name: Patch MainActivity for cross-origin WebView access
+        run: |
+          python3 - << 'PYEOF'
+          import os, glob
+
+          # Find MainActivity.java
+          matches = glob.glob('android/app/src/main/java/**/*.java', recursive=True)
+          main_activity = next((f for f in matches if 'MainActivity' in f), None)
+          if not main_activity:
+              print('ERROR: MainActivity.java not found'); exit(1)
+
+          content = open(main_activity).read()
+          print('Found:', main_activity)
+          print('=== ORIGINAL ===')
+          print(content)
+
+          # Add imports
+          new_imports = (
+              'import android.os.Bundle;\n'
+              'import android.webkit.WebSettings;\n'
+              'import android.webkit.WebView;\n'
+          )
+          if 'android.webkit.WebSettings' not in content:
+              content = content.replace(
+                  'import com.getcapacitor.BridgeActivity;',
+                  'import com.getcapacitor.BridgeActivity;\n' + new_imports
+              )
+
+          # Replace empty class body with onCreate override
+          if 'setMixedContentMode' not in content:
+              content = content.replace(
+                  'public class MainActivity extends BridgeActivity {}',
+                  '''public class MainActivity extends BridgeActivity {
+    @Override
+    protected void onStart() {
+        super.onStart();
+        WebView webView = getBridge().getWebView();
+        WebSettings settings = webView.getSettings();
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setDomStorageEnabled(true);
+        settings.setJavaScriptEnabled(true);
+        WebView.setWebContentsDebuggingEnabled(true);
+    }
+}'''
+              )
+              print('MainActivity patched with WebView cross-origin settings')
+          else:
+              print('MainActivity already patched')
+
+          open(main_activity, 'w').write(content)
+          print('=== FINAL ===')
+          print(open(main_activity).read())
+          PYEOF
+
       - name: Generate and copy icons
         run: |
           node << 'JSEOF'
