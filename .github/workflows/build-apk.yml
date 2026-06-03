@@ -113,7 +113,7 @@ jobs:
           new_class = (
               'public class MainActivity extends BridgeActivity {\n'
               '    @Override\n'
-              '    protected void onStart() {\n'
+              '    public void onStart() {\n'
               '        super.onStart();\n'
               '        WebView webView = getBridge().getWebView();\n'
               '        WebSettings settings = webView.getSettings();\n'
@@ -173,9 +173,10 @@ jobs:
 
       - name: Build debug APK
         run: |
+          set -o pipefail
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon 2>&1 | tail -50
+          ./gradlew assembleDebug --no-daemon 2>&1 | tail -100
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
