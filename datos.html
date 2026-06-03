@@ -189,6 +189,7 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
 <div class="toast" id="toast"></div>
 <script>
 const API_BASE='https://jolly-cendol-3f2860.netlify.app';
+function apiPost(url,body){return new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.open('POST',url,true);xhr.setRequestHeader('Content-Type','application/json');xhr.timeout=15000;xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);resolve({ok:xhr.status>=200&&xhr.status<300,status:xhr.status,json:()=>d});}catch(e){reject(new Error('Error de respuesta'));}};xhr.onerror=()=>reject(new Error('Error de red. Verifica tu conexión.'));xhr.ontimeout=()=>reject(new Error('Tiempo de espera agotado.'));xhr.send(JSON.stringify(body));});}
 function updateClock(){const n=new Date();document.getElementById('sbTime').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
 updateClock();setInterval(updateClock,10000);
 const h=new Date().getHours();
@@ -207,8 +208,8 @@ async function iniciarVerificacion(channel){
   const btn=document.getElementById(isSms?'btnVerificarSms':'btnVerificarEmail');
   btn.disabled=true;btn.innerHTML='Enviando<span class="spin"></span>';
   try{
-    const res=await fetch(API_BASE+'/.netlify/functions/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(isSms?{phone:to,channel:'sms'}:{email:to,channel:'email'})});
-    const data=await res.json();
+    const res=await apiPost(API_BASE+'/.netlify/functions/send-otp',isSms?{phone:to,channel:'sms'}:{email:to,channel:'email'});
+    const data=res.json();
     if(!res.ok)throw new Error(data.error||'Error al enviar');
     document.getElementById('otpIcon').textContent=isSms?'📱':'📧';
     document.getElementById('otpTitle').textContent=isSms?'Verificar número':'Verificar correo';
@@ -228,8 +229,8 @@ async function verifyOTP(){
   if(code.length<6){errEl.textContent='Ingresa los 6 dígitos.';return;}
   btn.disabled=true;btn.innerHTML='Verificando<span class="spin"></span>';
   try{
-    const res=await fetch(API_BASE+'/.netlify/functions/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:currentTo,code})});
-    const data=await res.json();
+    const res=await apiPost(API_BASE+'/.netlify/functions/verify-otp',{to:currentTo,code});
+    const data=res.json();
     if(!res.ok)throw new Error(data.error||'Código incorrecto');
     closeModal();clearInterval(resendInterval);
     if(currentChannel==='sms'){
