@@ -41,11 +41,12 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Write network_security_config and patch AndroidManifest
+      - name: Patch AndroidManifest and write network config
         run: |
           python3 - << 'PYEOF'
           import os, re
 
+          # Write network_security_config.xml
           xml_dir = 'android/app/src/main/res/xml'
           os.makedirs(xml_dir, exist_ok=True)
           xml_content = ('<?xml version="1.0" encoding="utf-8"?>\n'
@@ -61,6 +62,19 @@ jobs:
 
           mf = 'android/app/src/main/AndroidManifest.xml'
           content = open(mf).read()
+          print('=== ORIGINAL MANIFEST ===')
+          print(content)
+
+          # Add INTERNET permission if missing
+          if 'android.permission.INTERNET' not in content:
+              content = content.replace(
+                  '<application',
+                  '<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n\n    <application',
+                  1
+              )
+              print('Added INTERNET permission')
+
+          # Add network security config to <application tag
           if 'networkSecurityConfig' not in content:
               patched = content.replace(
                   'android:supportsRtl="true"',
@@ -72,11 +86,14 @@ jobs:
                       r'\1 android:networkSecurityConfig="@xml/network_security_config" android:usesCleartextTraffic="true"',
                       content, count=1
                   )
-              open(mf, 'w').write(patched)
-              print('AndroidManifest patched OK')
+              content = patched
+              print('AndroidManifest patched with networkSecurityConfig')
           else:
-              print('AndroidManifest already patched')
-          print('Verify:', 'networkSecurityConfig' in open(mf).read())
+              print('AndroidManifest already has networkSecurityConfig')
+
+          open(mf, 'w').write(content)
+          print('=== FINAL MANIFEST ===')
+          print(open(mf).read())
           PYEOF
 
       - name: Generate and copy icons
