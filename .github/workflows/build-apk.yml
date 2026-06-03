@@ -46,7 +46,6 @@ jobs:
           python3 - << 'PYEOF'
           import os, re
 
-          # Write network_security_config.xml
           xml_dir = 'android/app/src/main/res/xml'
           os.makedirs(xml_dir, exist_ok=True)
           xml_content = ('<?xml version="1.0" encoding="utf-8"?>\n'
@@ -62,19 +61,14 @@ jobs:
 
           mf = 'android/app/src/main/AndroidManifest.xml'
           content = open(mf).read()
-          print('=== ORIGINAL MANIFEST ===')
-          print(content)
 
-          # Add INTERNET permission if missing
           if 'android.permission.INTERNET' not in content:
               content = content.replace(
                   '<application',
                   '<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n\n    <application',
                   1
               )
-              print('Added INTERNET permission')
 
-          # Add network security config to <application tag
           if 'networkSecurityConfig' not in content:
               patched = content.replace(
                   'android:supportsRtl="true"',
@@ -87,12 +81,9 @@ jobs:
                       content, count=1
                   )
               content = patched
-              print('AndroidManifest patched with networkSecurityConfig')
-          else:
-              print('AndroidManifest already has networkSecurityConfig')
 
           open(mf, 'w').write(content)
-          print('=== FINAL MANIFEST ===')
+          print('Manifest patched OK')
           print(open(mf).read())
           PYEOF
 
@@ -101,7 +92,6 @@ jobs:
           python3 - << 'PYEOF'
           import os, glob
 
-          # Find MainActivity.java
           matches = glob.glob('android/app/src/main/java/**/*.java', recursive=True)
           main_activity = next((f for f in matches if 'MainActivity' in f), None)
           if not main_activity:
@@ -109,12 +99,8 @@ jobs:
 
           content = open(main_activity).read()
           print('Found:', main_activity)
-          print('=== ORIGINAL ===')
-          print(content)
 
-          # Add imports
           new_imports = (
-              'import android.os.Bundle;\n'
               'import android.webkit.WebSettings;\n'
               'import android.webkit.WebView;\n'
           )
@@ -124,31 +110,33 @@ jobs:
                   'import com.getcapacitor.BridgeActivity;\n' + new_imports
               )
 
-          # Replace empty class body with onCreate override
+          new_class = (
+              'public class MainActivity extends BridgeActivity {\n'
+              '    @Override\n'
+              '    protected void onStart() {\n'
+              '        super.onStart();\n'
+              '        WebView webView = getBridge().getWebView();\n'
+              '        WebSettings settings = webView.getSettings();\n'
+              '        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);\n'
+              '        settings.setAllowFileAccessFromFileURLs(true);\n'
+              '        settings.setAllowUniversalAccessFromFileURLs(true);\n'
+              '        settings.setDomStorageEnabled(true);\n'
+              '        settings.setJavaScriptEnabled(true);\n'
+              '        WebView.setWebContentsDebuggingEnabled(true);\n'
+              '    }\n'
+              '}'
+          )
+
           if 'setMixedContentMode' not in content:
               content = content.replace(
                   'public class MainActivity extends BridgeActivity {}',
-                  '''public class MainActivity extends BridgeActivity {
-    @Override
-    protected void onStart() {
-        super.onStart();
-        WebView webView = getBridge().getWebView();
-        WebSettings settings = webView.getSettings();
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        settings.setAllowFileAccessFromFileURLs(true);
-        settings.setAllowUniversalAccessFromFileURLs(true);
-        settings.setDomStorageEnabled(true);
-        settings.setJavaScriptEnabled(true);
-        WebView.setWebContentsDebuggingEnabled(true);
-    }
-}'''
+                  new_class
               )
-              print('MainActivity patched with WebView cross-origin settings')
+              print('MainActivity patched OK')
           else:
-              print('MainActivity already patched')
+              print('Already patched')
 
           open(main_activity, 'w').write(content)
-          print('=== FINAL ===')
           print(open(main_activity).read())
           PYEOF
 
