@@ -14,6 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -22,38 +28,23 @@ jobs:
       - name: Install dependencies
         run: npm install && npm install sharp
 
-      - name: Generate icons
-        run: |
-          node << 'JSEOF'
-          const sharp = require('sharp');
-          const fs = require('fs');
-          async function main() {
-            const svg = fs.readFileSync('icon.svg');
-            await sharp(svg).resize(512,512).png().toFile('icon-512.png');
-            await sharp(svg).resize(192,192).png().toFile('icon-192.png');
-            console.log('Icons OK');
-          }
-          main().catch(e => { console.error(e); process.exit(1); });
-          JSEOF
-
-      - name: Copy web files to www
+      - name: Prepare www folder
         run: |
           mkdir -p www
           cp datos.html www/index.html
-          cp domicilio.html www/domicilio.html 2>/dev/null || true
-          cp *.css www/ 2>/dev/null || true
-          cp manifest.json www/ 2>/dev/null || true
-          cp icon-512.png www/ 2>/dev/null || true
-          cp icon-192.png www/ 2>/dev/null || true
-          cp sw.js www/ 2>/dev/null || true
+          [ -f domicilio.html ] && cp domicilio.html www/domicilio.html || true
+          for f in *.css; do [ -f "$f" ] && cp "$f" www/ || true; done
+          [ -f manifest.json ] && cp manifest.json www/ || true
+          [ -f sw.js ] && cp sw.js www/ || true
+          echo "www contents:"; ls www/
 
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Write network security config
+      - name: Write network_security_config.xml
         run: |
           mkdir -p android/app/src/main/res/xml
-          cat > android/app/src/main/res/xml/network_security_config.xml << 'XMLEOF'
+          cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <base-config cleartextTrafficPermitted="true">
@@ -62,51 +53,59 @@ jobs:
     </trust-anchors>
   </base-config>
 </network-security-config>
-XMLEOF
+EOF
 
-      - name: Patch AndroidManifest
+      - name: Patch AndroidManifest.xml
         run: |
-          python3 << 'PYEOF'
+          python3 - << 'PYEOF'
+          import re
           f = 'android/app/src/main/AndroidManifest.xml'
-          c = open(f).read()
-          print('BEFORE:', c[:500])
-          c = c.replace(
-            'android:supportsRtl="true"',
-            'android:supportsRtl="true" android:networkSecurityConfig="@xml/network_security_config" android:usesCleartextTraffic="true"'
-          )
-          open(f, 'w').write(c)
-          print('AFTER:', open(f).read()[:500])
-          print('AndroidManifest patched OK')
+          content = open(f).read()
+          if 'networkSecurityConfig' not in content:
+              patched = content.replace(
+                  'android:supportsRtl="true"',
+                  'android:supportsRtl="true"\n        android:networkSecurityConfig="@xml/network_security_config"\n        android:usesCleartextTraffic="true"'
+              )
+              if patched == content:
+                  patched = re.sub(
+                      r'(<application\b)',
+                      r'\1\n        android:networkSecurityConfig="@xml/network_security_config"\n        android:usesCleartextTraffic="true"',
+                      content, count=1
+                  )
+              open(f, 'w').write(patched)
+              print('Manifest patched OK')
+          else:
+              print('Already patched')
+          print('CHECK:', 'networkSecurityConfig' in open(f).read())
           PYEOF
 
-      - name: Copy icons to Android resources
+      - name: Generate and copy icons
         run: |
           node << 'JSEOF'
           const sharp = require('sharp');
           const fs = require('fs');
+          const path = require('path');
           async function main() {
-            const svg = fs.readFileSync('icon.svg');
+            const svgBuf = fs.readFileSync('icon.svg');
             const sizes = [
-              {dir:'mipmap-mdpi',s:48},{dir:'mipmap-hdpi',s:72},
-              {dir:'mipmap-xhdpi',s:96},{dir:'mipmap-xxhdpi',s:144},
-              {dir:'mipmap-xxxhdpi',s:192}
+              { dir: 'mipmap-mdpi',    size: 48  },
+              { dir: 'mipmap-hdpi',    size: 72  },
+              { dir: 'mipmap-xhdpi',   size: 96  },
+              { dir: 'mipmap-xxhdpi',  size: 144 },
+              { dir: 'mipmap-xxxhdpi', size: 192 }
             ];
-            for (const {dir, s} of sizes) {
-              const path = `android/app/src/main/res/${dir}`;
-              fs.mkdirSync(path, {recursive:true});
-              await sharp(svg).resize(s,s).png().toFile(`${path}/ic_launcher.png`);
-              await sharp(svg).resize(s,s).png().toFile(`${path}/ic_launcher_round.png`);
+            for (const { dir, size } of sizes) {
+              const dest = `android/app/src/main/res/${dir}`;
+              fs.mkdirSync(dest, { recursive: true });
+              const buf = await sharp(svgBuf).resize(size, size).png().toBuffer();
+              fs.writeFileSync(path.join(dest, 'ic_launcher.png'), buf);
+              fs.writeFileSync(path.join(dest, 'ic_launcher_round.png'), buf);
+              fs.writeFileSync(path.join(dest, 'ic_launcher_foreground.png'), buf);
+              console.log(dir + ' OK');
             }
-            console.log('Icons copied OK');
           }
           main().catch(e => { console.error(e); process.exit(1); });
           JSEOF
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -115,9 +114,9 @@ XMLEOF
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -100
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: ChispaGo-debug
