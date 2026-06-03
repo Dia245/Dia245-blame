@@ -16,9 +16,10 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
-  const { phone, code } = JSON.parse(event.body || '{}');
+  // `to` can be phone (+51...) or email, `code` is the OTP
+  const { to, code } = JSON.parse(event.body || '{}');
 
-  if (!phone || !code) {
+  if (!to || !code) {
     return {
       statusCode: 400,
       headers: corsHeaders,
@@ -34,10 +35,7 @@ exports.handler = async (event) => {
   try {
     const result = await client.verify.v2
       .services(process.env.TWILIO_VERIFY_SERVICE_SID)
-      .verificationChecks.create({
-        to: phone,
-        code
-      });
+      .verificationChecks.create({ to, code });
 
     if (result.status === 'approved') {
       return {
