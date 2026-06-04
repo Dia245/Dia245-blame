@@ -188,7 +188,7 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
 </div>
 <div class="toast" id="toast"></div>
 <script>
-const API_BASE='https://jolly-cendol-3f2860.netlify.app';
+const API_BASE='https://dia245-blame.vercel.app';
 function apiPost(url,body){
   if(window.NativeBridge){
     try{
@@ -217,7 +217,7 @@ async function iniciarVerificacion(channel){
   const btn=document.getElementById(isSms?'btnVerificarSms':'btnVerificarEmail');
   btn.disabled=true;btn.innerHTML='Enviando<span class="spin"></span>';
   try{
-    const res=await apiPost(API_BASE+'/.netlify/functions/send-otp',isSms?{phone:to,channel:'sms'}:{email:to,channel:'email'});
+    const res=await apiPost(API_BASE+'/api/send-otp',isSms?{phone:to,channel:'sms'}:{email:to,channel:'email'});
     const data=res.json();
     if(!res.ok)throw new Error(data.error||'Error al enviar');
     document.getElementById('otpIcon').textContent=isSms?'📱':'📧';
@@ -238,7 +238,7 @@ async function verifyOTP(){
   if(code.length<6){errEl.textContent='Ingresa los 6 dígitos.';return;}
   btn.disabled=true;btn.innerHTML='Verificando<span class="spin"></span>';
   try{
-    const res=await apiPost(API_BASE+'/.netlify/functions/verify-otp',{to:currentTo,code});
+    const res=await apiPost(API_BASE+'/api/verify-otp',{to:currentTo,code});
     const data=res.json();
     if(!res.ok)throw new Error(data.error||'Código incorrecto');
     closeModal();clearInterval(resendInterval);
