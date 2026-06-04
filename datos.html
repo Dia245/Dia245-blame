@@ -71,7 +71,7 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
 .otp-sheet p{text-align:center;font-size:0.84rem;color:var(--sub);line-height:1.5;margin-bottom:24px;}
 .otp-to-display{font-weight:700;color:var(--orange);}
 .otp-row{display:flex;gap:12px;justify-content:center;margin-bottom:24px;}
-.otp-box{width:56px;height:62px;border:2px solid var(--border);border-radius:12px;text-align:center;font-size:24px;font-weight:700;color:var(--text);outline:none;transition:border .2s,box-shadow .2s;-moz-appearance:textfield;background:#fafafa;}
+.otp-box{width:64px;height:68px;border:2px solid var(--border);border-radius:12px;text-align:center;font-size:28px;font-weight:700;color:var(--text);outline:none;transition:border .2s,box-shadow .2s;-moz-appearance:textfield;background:#fafafa;}
 .otp-box::-webkit-outer-spin-button,.otp-box::-webkit-inner-spin-button{-webkit-appearance:none;}
 .otp-box:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,78,0,.12);background:#fff;}
 .otp-box.filled{border-color:var(--orange);background:#fff3ee;}
@@ -93,14 +93,12 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
     <div class="otp-handle"></div>
     <div class="otp-icon" id="otpIcon">📱</div>
     <h2 id="otpTitle">Verificar número</h2>
-    <p id="otpDesc">Enviamos un código de 6 dígitos a<br><span class="otp-to-display" id="otpToDisplay"></span></p>
+    <p id="otpDesc">Enviamos un código de 4 dígitos a<br><span class="otp-to-display" id="otpToDisplay"></span></p>
     <div class="otp-note">
       <span>💡</span>
       <span id="otpNoteText">Revisa tus mensajes de texto. El código llega en segundos.</span>
     </div>
     <div class="otp-row">
-      <input type="number" class="otp-box" maxlength="1">
-      <input type="number" class="otp-box" maxlength="1">
       <input type="number" class="otp-box" maxlength="1">
       <input type="number" class="otp-box" maxlength="1">
       <input type="number" class="otp-box" maxlength="1">
@@ -148,7 +146,7 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
     </div>
     <div class="field-row">
       <div class="field-wrap">
-        <input class="field" type="tel" id="docInput" placeholder="Número de DNI 🪪" maxlength="8" oninput="onDocInput()">
+        <input class="field" type="tel" id="docInput" placeholder="Número de DNI 🪦" maxlength="8" oninput="onDocInput()">
       </div>
       <button class="btn-validar" id="btnValidar" onclick="validarDoc()" disabled>Validar</button>
     </div>
@@ -180,7 +178,7 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
       <button class="civil-btn" onclick="setCivil(this)">Viudo</button>
       <button class="civil-btn" onclick="setCivil(this)">Divorciado</button>
     </div>
-    <button class="continue-btn disabled" id="btnContinue" onclick="continuar()">
+    <button class="continue-btn disabled" id="btnContinue" onclick="continuar()" disabled>
       <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
       Continuar a Documentos
     </button>
@@ -205,7 +203,7 @@ updateClock();setInterval(updateClock,10000);
 const h=new Date().getHours();
 document.getElementById('greeting').textContent=h<12?'¡Buenos días!':h<19?'¡Buenas tardes!':'¡Buenas noches!';
 let phoneVerified=false,emailVerified=false,resendInterval=null,currentChannel=null,currentTo=null;
-function setDocType(type){document.getElementById('optDni').classList.toggle('active',type==='dni');document.getElementById('optCe').classList.toggle('active',type==='ce');const inp=document.getElementById('docInput');inp.placeholder=type==='dni'?'Número de DNI 🪪':'Número de C.E. 🪪';inp.maxLength=type==='dni'?8:12;inp.value='';document.getElementById('dniCard').classList.remove('show');document.getElementById('fullName').value='';document.getElementById('btnValidar').disabled=true;}
+function setDocType(type){document.getElementById('optDni').classList.toggle('active',type==='dni');document.getElementById('optCe').classList.toggle('active',type==='ce');const inp=document.getElementById('docInput');inp.placeholder=type==='dni'?'Número de DNI 🪦':'Número de C.E. 🪦';inp.maxLength=type==='dni'?8:12;inp.value='';document.getElementById('dniCard').classList.remove('show');document.getElementById('fullName').value='';document.getElementById('btnValidar').disabled=true;}
 function onDocInput(){const v=document.getElementById('docInput').value.replace(/\D/g,'');document.getElementById('docInput').value=v;const isDni=document.getElementById('optDni').classList.contains('active');document.getElementById('btnValidar').disabled=v.length<(isDni?8:6);document.getElementById('dniCard').classList.remove('show');document.getElementById('fullName').value='';}
 async function validarDoc(){const num=document.getElementById('docInput').value.trim();const btn=document.getElementById('btnValidar');btn.disabled=true;btn.innerHTML='Validando<span class="spin"></span>';try{await new Promise(r=>setTimeout(r,1400));const nombre='JUAN CARLOS PÉREZ QUISPE';document.getElementById('fullName').value=nombre;document.getElementById('dniName').textContent=nombre;document.getElementById('dniSub').textContent=`DNI ${num} • Datos verificados ✅`;document.getElementById('dniCard').classList.add('show');showToast('✅ Datos encontrados');}catch(e){showToast('❌ No se pudo validar');}finally{btn.textContent='Validar';btn.disabled=false;}}
 function onPhoneInput(){const v=document.getElementById('phoneInput').value.replace(/\D/g,'');document.getElementById('phoneInput').value=v;document.getElementById('btnVerificarSms').disabled=v.length<9;if(phoneVerified){phoneVerified=false;document.getElementById('phoneVerifiedBadge').classList.remove('show');document.getElementById('btnVerificarSms').style.display='block';document.getElementById('phoneInput').classList.remove('verified');checkFormReady();}}
@@ -223,7 +221,7 @@ async function iniciarVerificacion(channel){
     if(!res.ok)throw new Error(data.error||'Error al enviar');
     document.getElementById('otpIcon').textContent=isSms?'📱':'📧';
     document.getElementById('otpTitle').textContent=isSms?'Verificar número':'Verificar correo';
-    document.getElementById('otpDesc').innerHTML=`Enviamos un código de 6 dígitos ${isSms?'por SMS':'al correo'} a<br><span class="otp-to-display">${to}</span>`;
+    document.getElementById('otpDesc').innerHTML=`Enviamos un código de 4 dígitos ${isSms?'por SMS':'al correo'} a<br><span class="otp-to-display">${to}</span>`;
     document.getElementById('otpNoteText').textContent=isSms?'Revisa tus mensajes de texto. El código llega en segundos.':'Revisa tu bandeja de entrada (y spam). El código llega en segundos.';
     openModal();setupOtpInputs();startResendTimer(60);
     showToast(isSms?'📱 Código enviado por SMS':'📧 Código enviado al correo');
@@ -236,7 +234,7 @@ async function verifyOTP(){
   const errEl=document.getElementById('otpError');
   const btn=document.getElementById('btnConfirmOtp');
   errEl.textContent='';
-  if(code.length<6){errEl.textContent='Ingresa los 6 dígitos.';return;}
+  if(code.length<4){errEl.textContent='Ingresa los 4 dígitos.';return;}
   btn.disabled=true;btn.innerHTML='Verificando<span class="spin"></span>';
   try{
     const res=await apiPost(API_BASE+'/api/verify-otp',{to:currentTo,code});
@@ -265,7 +263,7 @@ async function verifyOTP(){
 }
 async function resendCode(){closeModal();await iniciarVerificacion(currentChannel);}
 function startResendTimer(sec){const btn=document.getElementById('btnResend');const timer=document.getElementById('resendTimer');let left=sec;btn.disabled=true;timer.textContent=`(${left}s)`;resendInterval=setInterval(()=>{left--;timer.textContent=`(${left}s)`;if(left<=0){clearInterval(resendInterval);btn.disabled=false;timer.textContent='';}},1000);}
-function setupOtpInputs(){const boxes=document.querySelectorAll('.otp-box');boxes.forEach((box,i)=>{box.value='';box.classList.remove('filled');box.oninput=()=>{box.value=box.value.replace(/\D/g,'').slice(-1);box.classList.toggle('filled',box.value!=='');if(box.value&&i<boxes.length-1)boxes[i+1].focus();};box.onkeydown=e=>{if(e.key==='Backspace'&&!box.value&&i>0){boxes[i-1].value='';boxes[i-1].classList.remove('filled');boxes[i-1].focus();}};box.addEventListener('paste',e=>{e.preventDefault();const txt=e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);txt.split('').forEach((ch,j)=>{if(boxes[j]){boxes[j].value=ch;boxes[j].classList.add('filled');}});boxes[Math.min(txt.length,boxes.length-1)].focus();});});setTimeout(()=>boxes[0].focus(),300);}
+function setupOtpInputs(){const boxes=document.querySelectorAll('.otp-box');boxes.forEach((box,i)=>{box.value='';box.classList.remove('filled');box.oninput=()=>{box.value=box.value.replace(/\D/g,'').slice(-1);box.classList.toggle('filled',box.value!=='');if(box.value&&i<boxes.length-1)boxes[i+1].focus();};box.onkeydown=e=>{if(e.key==='Backspace'&&!box.value&&i>0){boxes[i-1].value='';boxes[i-1].classList.remove('filled');boxes[i-1].focus();}};box.addEventListener('paste',e=>{e.preventDefault();const txt=e.clipboardData.getData('text').replace(/\D/g,'').slice(0,4);txt.split('').forEach((ch,j)=>{if(boxes[j]){boxes[j].value=ch;boxes[j].classList.add('filled');}});boxes[Math.min(txt.length,boxes.length-1)].focus();});});setTimeout(()=>boxes[0].focus(),300);}
 function openModal(){document.getElementById('otpModal').classList.add('show');}
 function closeModal(){document.getElementById('otpModal').classList.remove('show');}
 document.getElementById('otpModal').addEventListener('click',e=>{if(e.target===document.getElementById('otpModal'))closeModal();});
@@ -276,10 +274,12 @@ function checkFormReady(){
   const phone=document.getElementById('phoneInput').value.trim();
   const email=document.getElementById('emailInput').value.trim();
   const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&email.includes('@')&&emailVerified;
-  document.getElementById('btnContinue').classList.toggle('disabled',!ready);
+  const btnC=document.getElementById('btnContinue');
+  btnC.classList.toggle('disabled',!ready);
+  btnC.disabled=!ready;
 }
 ['docInput','fullName','phoneInput','emailInput'].forEach(id=>{document.getElementById(id).addEventListener('input',checkFormReady);});
-function continuar(){if(document.getElementById('btnContinue').classList.contains('disabled'))return;const datos={doc:document.getElementById('docInput').value.trim(),nombre:document.getElementById('fullName').value.trim(),phone:'+51'+document.getElementById('phoneInput').value.trim(),email:document.getElementById('emailInput').value.trim(),civil:document.querySelector('.civil-btn.active').textContent};localStorage.setItem('chispago_datos',JSON.stringify(datos));showToast('Cargando siguiente paso...');setTimeout(()=>{window.location.href='index.html';},800);}
+function continuar(){if(document.getElementById('btnContinue').disabled)return;const datos={doc:document.getElementById('docInput').value.trim(),nombre:document.getElementById('fullName').value.trim(),phone:'+51'+document.getElementById('phoneInput').value.trim(),email:document.getElementById('emailInput').value.trim(),civil:document.querySelector('.civil-btn.active').textContent};localStorage.setItem('chispago_datos',JSON.stringify(datos));showToast('Cargando siguiente paso...');setTimeout(()=>{window.location.href='index.html';},800);}
 let toastT;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
