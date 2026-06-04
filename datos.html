@@ -193,7 +193,8 @@ function apiPost(url,body){
   if(window.NativeBridge){
     try{
       const raw=window.NativeBridge.post(url,JSON.stringify(body));
-      const d=JSON.parse(raw);
+      let d;
+      try{d=JSON.parse(raw);}catch(e){return Promise.reject(new Error('Servidor: '+raw.substring(0,80)));}
       if(d._error)return Promise.resolve({ok:false,status:400,json:()=>d});
       return Promise.resolve({ok:true,status:200,json:()=>d});
     }catch(e){return Promise.reject(new Error('Error nativo: '+e.message));}
