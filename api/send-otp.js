@@ -1,6 +1,6 @@
 const https = require('https');
 
-function cors(res) {
+function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -14,7 +14,7 @@ function twilioRequest(path, body) {
   return new Promise((resolve, reject) => {
     const req = https.request({
       hostname: 'verify.twilio.com',
-      path: path,
+      path,
       method: 'POST',
       headers: {
         'Authorization': 'Basic ' + auth,
@@ -33,26 +33,38 @@ function twilioRequest(path, body) {
 }
 
 module.exports = async (req, res) => {
-  cors(res);
+  setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const { phone, email, channel } = req.body || {};
-  const sid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
-  if (!sid) return res.status(500).json({ error: 'Config error: missing TWILIO_VERIFY_SERVICE_SID' });
+  if (channel === 'email') {
+    if (!email || !email.includes('@'))
+      return res.status(400).json({ error: 'Correo electrónico inválido.' });
+    try {
+      const result = await twilioRequest(
+        `/v2/Services/${serviceSid}/Verifications`,
+        { To: email, Channel: 'email' }
+      );
+      if (result.status >= 400)
+        return res.status(400).json({ error: 'No se pudo enviar el código al correo.', detail: result.body });
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
 
-  const to = channel === 'email' ? email : phone;
-  const ch = channel === 'email' ? 'email' : 'sms';
-
-  if (!to) return res.status(400).json({ error: ch === 'email' ? 'Correo inválido.' : 'Número inválido.' });
-
+  if (!phone || !/^\+\d{7,15}$/.test(phone))
+    return res.status(400).json({ error: 'Número inválido. Formato: +51987654321' });
   try {
     const result = await twilioRequest(
-      `/v2/Services/${sid}/Verifications`,
-      { To: to, Channel: ch }
+      `/v2/Services/${serviceSid}/Verifications`,
+      { To: phone, Channel: 'sms' }
     );
-    if (result.status >= 400) return res.status(400).json({ error: result.body.message || 'Error al enviar' });
+    if (result.status >= 400)
+      return res.status(400).json({ error: 'No se pudo enviar el SMS.', detail: result.body });
     return res.status(200).json({ ok: true });
   } catch (err) {
     return res.status(500).json({ error: err.message });
