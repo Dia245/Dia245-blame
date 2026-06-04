@@ -1,7 +1,6 @@
 {
   "name": "chispago",
   "version": "1.0.0",
-  "description": "Chispa Go App",
   "dependencies": {
     "twilio": "^4.23.0"
   }
