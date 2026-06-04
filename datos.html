@@ -159,7 +159,7 @@ input.field.verified{border-color:var(--green);background:#f0fdf4;}
     </div>
     <div class="field-wrap" style="margin-bottom:14px">
       <div class="input-action-wrap">
-        <input class="field" type="tel" id="phoneInput" placeholder="Número de Celular" maxlength="9" style="padding-right:120px" oninput="onPhoneInput()">
+        <input class="field" type="tel" id="phoneInput" placeholder="Número de Celular (9 dígitos)" maxlength="9" style="padding-right:120px" oninput="onPhoneInput()">
         <button class="btn-verificar-inline" id="btnVerificarSms" onclick="iniciarVerificacion('sms')" disabled>Verificar SMS</button>
         <div class="verified-badge" id="phoneVerifiedBadge">✅ Verificado</div>
       </div>
@@ -198,6 +198,7 @@ function apiPost(url,body){
     }catch(e){return Promise.reject(new Error('Error nativo: '+e.message));}
   }
   return new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.open('POST',url,true);xhr.setRequestHeader('Content-Type','application/json');xhr.timeout=15000;xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);resolve({ok:xhr.status>=200&&xhr.status<300,status:xhr.status,json:()=>d});}catch(e){reject(new Error('Error de respuesta'));}};xhr.onerror=()=>reject(new Error('Error de red. Verifica tu conexión.'));xhr.ontimeout=()=>reject(new Error('Tiempo de espera agotado.'));xhr.send(JSON.stringify(body));});}
+function validarEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);}
 function updateClock(){const n=new Date();document.getElementById('sbTime').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
 updateClock();setInterval(updateClock,10000);
 const h=new Date().getHours();
@@ -206,8 +207,8 @@ let phoneVerified=false,emailVerified=false,resendInterval=null,currentChannel=n
 function setDocType(type){document.getElementById('optDni').classList.toggle('active',type==='dni');document.getElementById('optCe').classList.toggle('active',type==='ce');const inp=document.getElementById('docInput');inp.placeholder=type==='dni'?'Número de DNI 🪦':'Número de C.E. 🪦';inp.maxLength=type==='dni'?8:12;inp.value='';document.getElementById('dniCard').classList.remove('show');document.getElementById('fullName').value='';document.getElementById('btnValidar').disabled=true;}
 function onDocInput(){const v=document.getElementById('docInput').value.replace(/\D/g,'');document.getElementById('docInput').value=v;const isDni=document.getElementById('optDni').classList.contains('active');document.getElementById('btnValidar').disabled=v.length<(isDni?8:6);document.getElementById('dniCard').classList.remove('show');document.getElementById('fullName').value='';}
 async function validarDoc(){const num=document.getElementById('docInput').value.trim();const btn=document.getElementById('btnValidar');btn.disabled=true;btn.innerHTML='Validando<span class="spin"></span>';try{await new Promise(r=>setTimeout(r,1400));const nombre='JUAN CARLOS PÉREZ QUISPE';document.getElementById('fullName').value=nombre;document.getElementById('dniName').textContent=nombre;document.getElementById('dniSub').textContent=`DNI ${num} • Datos verificados ✅`;document.getElementById('dniCard').classList.add('show');showToast('✅ Datos encontrados');}catch(e){showToast('❌ No se pudo validar');}finally{btn.textContent='Validar';btn.disabled=false;}}
-function onPhoneInput(){const v=document.getElementById('phoneInput').value.replace(/\D/g,'');document.getElementById('phoneInput').value=v;document.getElementById('btnVerificarSms').disabled=v.length<9;if(phoneVerified){phoneVerified=false;document.getElementById('phoneVerifiedBadge').classList.remove('show');document.getElementById('btnVerificarSms').style.display='block';document.getElementById('phoneInput').classList.remove('verified');checkFormReady();}}
-function onEmailInput(){const v=document.getElementById('emailInput').value.trim();document.getElementById('btnVerificarEmail').disabled=!v.includes('@')||v.length<5;if(emailVerified){emailVerified=false;document.getElementById('emailVerifiedBadge').classList.remove('show');document.getElementById('btnVerificarEmail').style.display='block';document.getElementById('emailInput').classList.remove('verified');checkFormReady();}}
+function onPhoneInput(){const v=document.getElementById('phoneInput').value.replace(/\D/g,'');document.getElementById('phoneInput').value=v;document.getElementById('btnVerificarSms').disabled=v.length!==9;if(phoneVerified){phoneVerified=false;document.getElementById('phoneVerifiedBadge').classList.remove('show');document.getElementById('btnVerificarSms').style.display='block';document.getElementById('phoneInput').classList.remove('verified');checkFormReady();}checkFormReady();}
+function onEmailInput(){const v=document.getElementById('emailInput').value.trim();document.getElementById('btnVerificarEmail').disabled=!validarEmail(v);if(emailVerified){emailVerified=false;document.getElementById('emailVerifiedBadge').classList.remove('show');document.getElementById('btnVerificarEmail').style.display='block';document.getElementById('emailInput').classList.remove('verified');checkFormReady();}checkFormReady();}
 async function iniciarVerificacion(channel){
   currentChannel=channel;
   const isSms=channel==='sms';
@@ -273,7 +274,7 @@ function checkFormReady(){
   const name=document.getElementById('fullName').value.trim();
   const phone=document.getElementById('phoneInput').value.trim();
   const email=document.getElementById('emailInput').value.trim();
-  const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&email.includes('@')&&emailVerified;
+  const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&validarEmail(email)&&emailVerified;
   const btnC=document.getElementById('btnContinue');
   btnC.classList.toggle('disabled',!ready);
   btnC.disabled=!ready;
