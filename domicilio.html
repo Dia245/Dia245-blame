@@ -371,7 +371,7 @@ const CALLAO_DISTRITOS = ['Bellavista','Callao','Carmen de la Legua Reynoso','La
 function fillDropdown(id, options, selected) {
   const el = document.getElementById(id);
   el.innerHTML = '<option value="">Seleccionar</option>' +
-    options.map(o => `<option value="${o}"${o===selected?' selected':''}>${o}</option>`).join('');
+    options.map(o => `<option value="${o}"${o===selected?' selected':''}}>${o}</option>`).join('');
 }
 function initUbigeo() {
   fillDropdown('selDept', Object.keys(UBIGEO).sort(), 'Lima');
@@ -426,12 +426,16 @@ initUbigeo();
 
 function confirmLocation() {
   if (document.getElementById('confirmBtn').classList.contains('disabled')) return;
+  const dept = document.getElementById('selDept').value;
+  const prov = document.getElementById('selProv').value;
+  const dist = document.getElementById('selDist').value;
+  localStorage.setItem('chispago_ubigeo', JSON.stringify({dept, prov, dist, lat: currentLat, lng: currentLng}));
   document.getElementById('successCoords').textContent = `Lat ${currentLat.toFixed(5)}, Lng ${currentLng.toFixed(5)}`;
   document.getElementById('successOverlay').classList.add('show');
 }
 function goNext() {
   document.getElementById('successOverlay').classList.remove('show');
-  window.location.href = 'index.html';
+  window.location.href = 'plan.html';
 }
 </script>
 </body>

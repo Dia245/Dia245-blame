@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FF4E00">
+<title>Chispa Go – Plan</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--orange:#FF4E00;--orange-dark:#e04300;--orange-light:#fff3ee;--green:#22c55e;--green-light:#dcfce7;--gray:#f5f5f5;--text:#1a1a1a;--sub:#6b7280;--border:#e5e7eb;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#fff;}
+body{overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#app{min-height:100%;display:flex;flex-direction:column;}
+.status-bar{height:44px;background:var(--orange);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;position:sticky;top:0;z-index:100;}
+.sb-time{color:#fff;font-size:0.85rem;font-weight:700;}
+.topbar{background:var(--orange);padding:0 16px 16px;flex-shrink:0;position:sticky;top:44px;z-index:99;}
+.topbar-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.back-btn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;flex-shrink:0;}
+.back-btn svg{width:20px;height:20px;fill:#fff;}
+.topbar-title{color:#fff;font-size:1rem;font-weight:700;flex:1;}
+.steps{display:flex;gap:6px;align-items:center;}
+.step-dot{height:4px;border-radius:2px;background:rgba(255,255,255,.35);transition:all .3s;flex:1;}
+.step-dot.done{background:#fff;}
+.step-dot.active{background:#fff;flex:2;}
+.content-inner{padding:20px 16px 40px;}
+.step-label{font-size:0.75rem;color:var(--orange);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;}
+.step-title{font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.step-desc{font-size:0.85rem;color:var(--sub);line-height:1.5;margin-bottom:24px;}
+.section-label{font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:10px;margin-top:4px;}
+.moto-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.moto-card{border:2px solid var(--border);border-radius:14px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa;}
+.moto-card.active{border-color:var(--orange);background:var(--orange-light);}
+.moto-card .moto-icon{font-size:2rem;margin-bottom:6px;}
+.moto-card .moto-name{font-size:0.82rem;font-weight:700;color:var(--text);}
+.moto-card .moto-sub{font-size:0.72rem;color:var(--sub);margin-top:2px;}
+.field-wrap{margin-bottom:16px;}
+.field-label{font-size:0.78rem;font-weight:600;color:var(--sub);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.4px;}
+.input-money{position:relative;}
+.input-money span{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:0.93rem;font-weight:600;}
+input.field{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-size:0.93rem;color:var(--text);outline:none;transition:border .2s,box-shadow .2s;background:#fafafa;font-family:inherit;}
+input.field:focus{border-color:var(--orange);background:#fff;box-shadow:0 0 0 3px rgba(255,78,0,.08);}
+input.field.with-prefix{padding-left:32px;}
+.cuotas-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:24px;}
+.cuota-card{border:2px solid var(--border);border-radius:14px;padding:16px 8px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa;}
+.cuota-card.active{border-color:var(--orange);background:var(--orange-light);}
+.cuota-card .cuota-num{font-size:1.6rem;font-weight:800;color:var(--orange);}
+.cuota-card .cuota-label{font-size:0.72rem;color:var(--sub);margin-top:2px;font-weight:600;}
+.resumen-box{background:var(--gray);border-radius:14px;padding:16px;margin-bottom:24px;display:none;}
+.resumen-box.show{display:block;}
+.resumen-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);}
+.resumen-row:last-child{border-bottom:none;}
+.resumen-row span:first-child{font-size:0.82rem;color:var(--sub);}
+.resumen-row span:last-child{font-size:0.85rem;font-weight:600;color:var(--text);}
+.resumen-row.highlight span{font-weight:700;color:var(--orange);}
+.continue-btn{width:100%;padding:17px;background:linear-gradient(135deg,#FF4E00,#ff7a40);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(255,78,0,.35);display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;transition:all .2s;}
+.continue-btn:active{transform:scale(.98);}
+.continue-btn.disabled{background:#d1d5db;box-shadow:none;cursor:not-allowed;}
+.continue-btn svg{width:20px;height:20px;fill:#fff;}
+#successOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;}
+#successOverlay.show{display:flex;}
+.success-card{background:#fff;border-radius:24px;padding:36px 24px;max-width:340px;width:100%;text-align:center;}
+.success-icon{width:80px;height:80px;border-radius:50%;background:var(--green-light);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:2.8rem;}
+.success-card h3{font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:8px;}
+.success-card p{font-size:0.85rem;color:var(--sub);line-height:1.5;margin-bottom:20px;}
+.success-detail{background:var(--gray);border-radius:12px;padding:14px;text-align:left;margin-bottom:20px;}
+.success-detail div{display:flex;justify-content:space-between;padding:4px 0;font-size:0.82rem;}
+.success-detail div span:first-child{color:var(--sub);}
+.success-detail div span:last-child{font-weight:700;color:var(--text);}
+.btn-finish{width:100%;padding:15px;background:linear-gradient(135deg,#FF4E00,#ff7a40);color:#fff;border:none;border-radius:14px;font-size:0.95rem;font-weight:700;cursor:pointer;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:24px;font-size:0.82rem;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:8000;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+@keyframes spinA{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="successOverlay">
+  <div class="success-card">
+    <div class="success-icon">🎉</div>
+    <h3>¡Solicitud enviada!</h3>
+    <p>Tu plan ha sido registrado correctamente. Un asesor te contactará pronto.</p>
+    <div class="success-detail" id="successDetail"></div>
+    <button class="btn-finish" onclick="finalizarApp()">Finalizar</button>
+  </div>
+</div>
+<div id="app">
+  <div class="status-bar">
+    <span class="sb-time" id="sbTime">00:00</span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#fff"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+    </div>
+  </div>
+  <div class="topbar">
+    <div class="topbar-row">
+      <button class="back-btn" onclick="history.back()">
+        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      </button>
+      <span class="topbar-title">CHISPA GO</span>
+    </div>
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:5px">
+      <span style="color:rgba(255,255,255,.75);font-size:0.72rem;">Paso 5 de 5</span>
+    </div>
+  </div>
+  <div class="content-inner">
+    <div class="step-label">Paso 5 de 5</div>
+    <div class="step-title">Elige tu plan</div>
+    <div class="step-desc">Selecciona el modelo de moto, ingresa tus datos financieros y elige tus cuotas semanales.</div>
+    <div class="section-label">Modelo de moto</div>
+    <div class="moto-grid">
+      <div class="moto-card active" onclick="selectMoto(this,'Sport 150cc')">
+        <div class="moto-icon">🏘️</div>
+        <div class="moto-name">Sport 150cc</div>
+        <div class="moto-sub">Deportiva urbana</div>
+      </div>
+      <div class="moto-card" onclick="selectMoto(this,'Cargo 200cc')">
+        <div class="moto-icon">🛵</div>
+        <div class="moto-name">Cargo 200cc</div>
+        <div class="moto-sub">Para delivery</div>
+      </div>
+      <div class="moto-card" onclick="selectMoto(this,'Clásica 125cc')">
+        <div class="moto-icon">🏘️</div>
+        <div class="moto-name">Clásica 125cc</div>
+        <div class="moto-sub">Económica</div>
+      </div>
+      <div class="moto-card" onclick="selectMoto(this,'Todo Terreno 250cc')">
+        <div class="moto-icon">🏕️</div>
+        <div class="moto-name">Todo Terreno 250cc</div>
+        <div class="moto-sub">Campo y ciudad</div>
+      </div>
+    </div>
+    <div class="field-wrap">
+      <label class="field-label">Ingreso mensual (S/)</label>
+      <div class="input-money">
+        <span>S/</span>
+        <input class="field with-prefix" type="number" id="ingresoInput" placeholder="0.00" min="0" oninput="calcular()">
+      </div>
+    </div>
+    <div class="field-wrap">
+      <label class="field-label">Cuota inicial (S/)</label>
+      <div class="input-money">
+        <span>S/</span>
+        <input class="field with-prefix" type="number" id="inicialInput" placeholder="0.00" min="0" oninput="calcular()">
+      </div>
+    </div>
+    <div class="section-label">Número de cuotas semanales</div>
+    <div class="cuotas-grid">
+      <div class="cuota-card" onclick="selectCuota(this,52)">
+        <div class="cuota-num">52</div>
+        <div class="cuota-label">cuotas<br>~1 año</div>
+      </div>
+      <div class="cuota-card active" onclick="selectCuota(this,74)">
+        <div class="cuota-num">74</div>
+        <div class="cuota-label">cuotas<br>~1.5 años</div>
+      </div>
+      <div class="cuota-card" onclick="selectCuota(this,102)">
+        <div class="cuota-num">102</div>
+        <div class="cuota-label">cuotas<br>~2 años</div>
+      </div>
+    </div>
+    <div class="resumen-box" id="resumenBox">
+      <div class="resumen-row"><span>Moto seleccionada</span><span id="rMoto">—</span></div>
+      <div class="resumen-row"><span>Ingreso mensual</span><span id="rIngreso">—</span></div>
+      <div class="resumen-row"><span>Cuota inicial</span><span id="rInicial">—</span></div>
+      <div class="resumen-row"><span>N° cuotas</span><span id="rCuotas">—</span></div>
+      <div class="resumen-row highlight"><span>Cuota semanal est.</span><span id="rCuotaSem">—</span></div>
+    </div>
+    <button class="continue-btn disabled" id="btnConfirmar" onclick="confirmar()" disabled>
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      Confirmar solicitud
+    </button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+function updateClock(){const n=new Date();document.getElementById('sbTime').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
+updateClock();setInterval(updateClock,10000);
+let motoSeleccionada='Sport 150cc',cuotasSeleccionadas=74;
+function selectMoto(el,nombre){document.querySelectorAll('.moto-card').forEach(c=>c.classList.remove('active'));el.classList.add('active');motoSeleccionada=nombre;calcular();}
+function selectCuota(el,n){document.querySelectorAll('.cuota-card').forEach(c=>c.classList.remove('active'));el.classList.add('active');cuotasSeleccionadas=n;calcular();}
+function fmt(n){return 'S/ '+parseFloat(n).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function calcular(){
+  const ingreso=parseFloat(document.getElementById('ingresoInput').value)||0;
+  const inicial=parseFloat(document.getElementById('inicialInput').value)||0;
+  const ok=ingreso>0;
+  const btn=document.getElementById('btnConfirmar');
+  btn.disabled=!ok;btn.classList.toggle('disabled',!ok);
+  if(!ok){document.getElementById('resumenBox').classList.remove('show');return;}
+  const financiado=Math.max(0,8500-inicial);
+  const cuotaSem=(financiado/cuotasSeleccionadas).toFixed(2);
+  document.getElementById('rMoto').textContent=motoSeleccionada;
+  document.getElementById('rIngreso').textContent=fmt(ingreso);
+  document.getElementById('rInicial').textContent=fmt(inicial);
+  document.getElementById('rCuotas').textContent=cuotasSeleccionadas+' semanas';
+  document.getElementById('rCuotaSem').textContent=fmt(cuotaSem)+'/sem';
+  document.getElementById('resumenBox').classList.add('show');
+}
+function confirmar(){
+  if(document.getElementById('btnConfirmar').disabled)return;
+  const ingreso=parseFloat(document.getElementById('ingresoInput').value);
+  const inicial=parseFloat(document.getElementById('inicialInput').value)||0;
+  const financiado=Math.max(0,8500-inicial);
+  const cuotaSem=(financiado/cuotasSeleccionadas).toFixed(2);
+  const datos=JSON.parse(localStorage.getItem('chispago_datos')||'{}');
+  const plan={moto:motoSeleccionada,ingreso,inicial,cuotas:cuotasSeleccionadas,cuotaSemanal:cuotaSem};
+  localStorage.setItem('chispago_plan',JSON.stringify(plan));
+  const det=document.getElementById('successDetail');
+  det.innerHTML=`<div><span>Nombre</span><span>${datos.nombre||'—'}</span></div><div><span>Moto</span><span>${motoSeleccionada}</span></div><div><span>Cuota inicial</span><span>${fmt(inicial)}</span></div><div><span>Cuotas</span><span>${cuotasSeleccionadas} semanas</span></div><div><span>Cuota semanal</span><span>${fmt(cuotaSem)}</span></div>`;
+  document.getElementById('successOverlay').classList.add('show');
+}
+function finalizarApp(){showToast('¡Gracias por usar Chispa Go!');setTimeout(()=>{window.location.href='index.html';},1200);}
+let toastT;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);}
+</script>
+</body>
+</html>
