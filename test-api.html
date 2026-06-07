@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consola API – Chispa Go</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:monospace;background:#0f0f0f;color:#e0e0e0;min-height:100vh;padding:16px;}
+h1{color:#FF4E00;font-size:1rem;margin-bottom:16px;border-bottom:1px solid #333;padding-bottom:8px;}
+.panel{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:16px;margin-bottom:16px;}
+.panel h2{color:#aaa;font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+label{display:block;font-size:0.75rem;color:#888;margin-bottom:4px;}
+input,select,textarea{width:100%;background:#0f0f0f;border:1px solid #444;border-radius:4px;color:#e0e0e0;font-family:monospace;font-size:0.85rem;padding:8px 10px;margin-bottom:10px;outline:none;}
+input:focus,textarea:focus{border-color:#FF4E00;}
+textarea{resize:vertical;min-height:80px;}
+.row{display:flex;gap:8px;}
+.row input{flex:1;}
+select{cursor:pointer;}
+button{background:#FF4E00;color:#fff;border:none;border-radius:4px;padding:10px 20px;font-family:monospace;font-size:0.85rem;font-weight:700;cursor:pointer;transition:background .2s;}
+button:hover{background:#e04300;}
+button.sec{background:#333;color:#e0e0e0;}
+button.sec:hover{background:#444;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+#log{background:#000;border:1px solid #333;border-radius:8px;padding:12px;min-height:200px;max-height:400px;overflow-y:auto;font-size:0.78rem;line-height:1.6;}
+.log-req{color:#60a5fa;}
+.log-res{color:#4ade80;}
+.log-err{color:#f87171;}
+.log-info{color:#facc15;}
+.log-sep{color:#444;margin:4px 0;}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:0.7rem;font-weight:700;margin-left:6px;}
+.b-200{background:#166534;color:#4ade80;}
+.b-4xx{background:#7f1d1d;color:#f87171;}
+.b-5xx{background:#78350f;color:#fbbf24;}
+</style>
+</head>
+<body>
+<h1>⚡ CHISPA GO — Consola de prueba de APIs</h1>
+
+<div class="panel">
+  <h2>Configuración del request</h2>
+  <label>Método + URL</label>
+  <div class="row">
+    <select id="method" style="width:100px;flex:none;">
+      <option>GET</option>
+      <option>POST</option>
+      <option>PUT</option>
+      <option>DELETE</option>
+    </select>
+    <input id="url" type="text" placeholder="https://api.ejemplo.com/dni/12345678">
+  </div>
+  <label>Headers (uno por línea, formato: Clave: Valor)</label>
+  <textarea id="headers" placeholder="Authorization: Bearer TU_TOKEN&#10;Content-Type: application/json"></textarea>
+  <label>Body (JSON) — solo para POST/PUT</label>
+  <textarea id="body" placeholder='{"dni": "12345678"}'></textarea>
+  <div class="btn-row">
+    <button onclick="enviar()">&#9654; Enviar request</button>
+    <button class="sec" onclick="limpiarLog()">&#128465; Limpiar log</button>
+    <button class="sec" onclick="cargarEjemploDni()">&#128203; Ejemplo DNI</button>
+    <button class="sec" onclick="cargarEjemploTwilio()">&#128203; Ejemplo Twilio</button>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Log de respuestas</h2>
+  <div id="log"><span class="log-info">Listo. Configura un request y presiona Enviar.</span></div>
+</div>
+
+<div class="panel">
+  <h2>Variables guardadas (localStorage)</h2>
+  <div id="storage" style="font-size:0.75rem;color:#888;"></div>
+  <br>
+  <button class="sec" onclick="verStorage()">&#128260; Refrescar</button>
+</div>
+
+<script>
+function log(html){
+  const el=document.getElementById('log');
+  el.innerHTML+=html+'<div class="log-sep">─────────────────────────────</div>';
+  el.scrollTop=el.scrollHeight;
+}
+function limpiarLog(){document.getElementById('log').innerHTML='';}
+
+function parseHeaders(txt){
+  const h={};
+  txt.split('\n').forEach(line=>{
+    const i=line.indexOf(':');
+    if(i>0){h[line.slice(0,i).trim()]=line.slice(i+1).trim();}
+  });
+  return h;
+}
+
+async function enviar(){
+  const method=document.getElementById('method').value;
+  const url=document.getElementById('url').value.trim();
+  const headersRaw=document.getElementById('headers').value.trim();
+  const bodyRaw=document.getElementById('body').value.trim();
+
+  if(!url){log('<span class="log-err">❌ Ingresa una URL</span>');return;}
+
+  const headers=parseHeaders(headersRaw);
+  if(bodyRaw&&!headers['Content-Type'])headers['Content-Type']='application/json';
+
+  log(`<span class="log-req">→ ${method} ${url}</span>\n<span class="log-info">Headers: ${JSON.stringify(headers)}</span>${bodyRaw?'\n<span class="log-info">Body: '+bodyRaw+'</span>':``);
+
+  const t0=Date.now();
+  try{
+    const opts={method,headers};
+    if(bodyRaw&&(method==='POST'||method==='PUT'))opts.body=bodyRaw;
+    const res=await fetch(url,opts);
+    const ms=Date.now()-t0;
+    const statusClass=res.status<300?'b-200':res.status<500?'b-4xx':'b-5xx';
+    let text=await res.text();
+    let pretty=text;
+    try{pretty=JSON.stringify(JSON.parse(text),null,2);}catch(e){}
+    log(`<span class="log-res">← ${res.status} ${res.statusText}</span><span class="badge ${statusClass}">${res.status}</span> <span style="color:#888">${ms}ms</span>\n<pre style="color:#e0e0e0;white-space:pre-wrap;word-break:break-all">${escHtml(pretty)}</pre>`);
+  }catch(err){
+    log(`<span class="log-err">❌ Error: ${escHtml(err.message)}</span>`);
+  }
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function cargarEjemploDni(){
+  document.getElementById('method').value='GET';
+  document.getElementById('url').value='https://api.ejemplo.com/v1/dni/12345678';
+  document.getElementById('headers').value='Authorization: Bearer TU_API_KEY';
+  document.getElementById('body').value='';
+}
+
+function cargarEjemploTwilio(){
+  document.getElementById('method').value='POST';
+  document.getElementById('url').value='https://dia245-blame.vercel.app/api/send-otp';
+  document.getElementById('headers').value='Content-Type: application/json';
+  document.getElementById('body').value='{"phone":"+51987654321","channel":"sms"}';
+}
+
+function verStorage(){
+  const el=document.getElementById('storage');
+  const keys=['chispago_datos','chispago_ubigeo','chispago_plan'];
+  let html='';
+  keys.forEach(k=>{
+    const v=localStorage.getItem(k);
+    if(v){
+      html+=`<div style="margin-bottom:8px"><span style="color:#FF4E00">${k}</span><br><pre style="color:#aaa;white-space:pre-wrap">${escHtml(JSON.stringify(JSON.parse(v),null,2))}</pre></div>`;
+    }else{
+      html+=`<div style="color:#555;margin-bottom:4px">${k}: <em>vacío</em></div>`;
+    }
+  });
+  el.innerHTML=html||'<span style="color:#555">Sin datos guardados</span>';
+}
+
+verStorage();
+document.getElementById('url').addEventListener('keydown',e=>{if(e.key==='Enter')enviar();});
+</script>
+</body>
+</html>
