@@ -274,13 +274,13 @@ function checkFormReady(){
   const name=document.getElementById('fullName').value.trim();
   const phone=document.getElementById('phoneInput').value.trim();
   const email=document.getElementById('emailInput').value.trim();
-  const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&validarEmail(email)&&emailVerified;
+  const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&validarEmail(email);
   const btnC=document.getElementById('btnContinue');
   btnC.classList.toggle('disabled',!ready);
   btnC.disabled=!ready;
 }
 ['docInput','fullName','phoneInput','emailInput'].forEach(id=>{document.getElementById(id).addEventListener('input',checkFormReady);});
-function continuar(){if(document.getElementById('btnContinue').disabled)return;const datos={doc:document.getElementById('docInput').value.trim(),nombre:document.getElementById('fullName').value.trim(),phone:'+51'+document.getElementById('phoneInput').value.trim(),email:document.getElementById('emailInput').value.trim(),civil:document.querySelector('.civil-btn.active').textContent};localStorage.setItem('chispago_datos',JSON.stringify(datos));showToast('Cargando siguiente paso...');setTimeout(()=>{window.location.href='index.html';},800);}
+function continuar(){if(document.getElementById('btnContinue').disabled)return;const datos={doc:document.getElementById('docInput').value.trim(),nombre:document.getElementById('fullName').value.trim(),phone:'+51'+document.getElementById('phoneInput').value.trim(),email:document.getElementById('emailInput').value.trim(),civil:document.querySelector('.civil-btn.active').textContent};localStorage.setItem('chispago_datos',JSON.stringify(datos));showToast('Cargando siguiente paso...');setTimeout(()=>{window.location.href='domicilio.html';},800);}
 let toastT;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
