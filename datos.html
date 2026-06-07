@@ -274,7 +274,7 @@ function checkFormReady(){
   const name=document.getElementById('fullName').value.trim();
   const phone=document.getElementById('phoneInput').value.trim();
   const email=document.getElementById('emailInput').value.trim();
-  const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&validarEmail(email);
+  const ready=doc.length>=8&&name.length>=3&&phone.length===9&&phoneVerified&&validarEmail(email)&&emailVerified;
   const btnC=document.getElementById('btnContinue');
   btnC.classList.toggle('disabled',!ready);
   btnC.disabled=!ready;
