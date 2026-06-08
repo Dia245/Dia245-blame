@@ -170,7 +170,7 @@
         <div class="search-wrap">
           <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
           <input type="text" id="searchInput" placeholder="Busca tu calle, condominio o zona..." autocomplete="off">
-          <button class="search-clear" id="clearBtn" onclick="clearSearch()">✕</button>
+          <button class="search-clear" id="clearBtn" onclick="clearSearch()">&#x2715;</button>
         </div>
       </div>
 
@@ -223,6 +223,14 @@
           <label>Distrito</label>
           <select class="ubigeo-select" id="selDist"><option value="">Seleccionar</option></select>
         </div>
+      </div>
+
+      <div class="ubigeo-field" style="margin-bottom:20px;">
+        <label style="display:block;font-size:0.72rem;font-weight:600;color:var(--sub);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;">Dirección exacta (opcional)</label>
+        <input type="text" id="dirInput" placeholder="Ej: Av. Los Olivos 234, Piso 2" autocomplete="street-address"
+          style="width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:12px;font-size:0.88rem;color:var(--text);background:#fafafa;outline:none;font-family:inherit;transition:border .2s;"
+          onfocus="this.style.borderColor='var(--orange)';this.style.background='#fff'"
+          onblur="this.style.borderColor='var(--border)';this.style.background='#fafafa'">
       </div>
 
       <button class="confirm-btn disabled" id="confirmBtn" onclick="confirmLocation()">
@@ -364,14 +372,14 @@ function centerOnGPS() {
   );
 }
 
-const UBIGEO = {'Amazonas':['Chachapoyas','Bagua','Bongará','Condorcanqui','Luya','Rodríguez de Mendoza','Utcubamba'],'Áncash':['Huaraz','Aija','Antonio Raymondi','Asunción','Bolognesi','Carhuaz','Carlos Fermín Fitzcarrald','Casma','Corongo','Huari','Huarmey','Huaylas','Mariscal Luzuriaga','Ocros','Pallasca','Pomabamba','Recuay','Santa','Sihuas','Yungay'],'Apurímac':['Abancay','Andahuaylas','Antabamba','Aymaraes','Cotabambas','Chincheros','Grau'],'Arequipa':['Arequipa','Camaná','Cavelí','Castilla','Caylloma','Condesuyos','Islay','La Unión'],'Ayacucho':['Huamanga','Cangallo','Huanca Sancos','Huanta','La Mar','Lucanas','Parinacochas','Páucar del Sara Sara','Sucre','Víctor Fajardo','Vilcas Huamán'],'Cajamarca':['Cajamarca','Cajabamba','Celedín','Chota','Contumazá','Cutervo','Hualgayoc','Jaén','San Ignacio','San Marcos','San Miguel','San Pablo','Santa Cruz'],'Callao':['Callao'],'Cusco':['Cusco','Acomayo','Anta','Calca','Canas','Canchis','Chumbivilcas','Espinar','La Convención','Paruro','Paucartambo','Quispicanchi','Urubamba'],'Huancavelica':['Huancavelica','Acobamba','Angaraes','Castrovirreyna','Churcampa','Huaytará','Tayacaja'],'Huánuco':['Huánuco','Ambo','Dos de Mayo','Huacaybamba','Huamalíes','Leoncio Prado','Marañón','Pachitea','Puerto Inca','Lauricocha','Yarowilca'],'Ica':['Ica','Chincha','Nasca','Palpa','Pisco'],'Junín':['Huancayo','Chanchamayo','Chupaca','Concepción','Jauja','Junín','Satipo','Tarma','Yauli'],'La Libertad':['Trujillo','Ascope','Bolívar','Chepén','Julcán','Otuzco','Pacasmayo','Pataz','Sánchez Carrión','Santiago de Chuco','Gran Chimú','Virú'],'Lambayeque':['Chiclayo','Ferreñafe','Lambayeque'],'Lima':['Lima','Barranca','Cajatambo','Canta','Cañete','Huaral','Huarochirí','Huaura','Oyón','Yauyos'],'Loreto':['Maynas','Alto Amazonas','Datem del Marañón','Loreto','Mariscal Ramón Castilla','Putumayo','Requena','Ucayali'],'Madre de Dios':['Tambopata','Manu','Tahuamanu'],'Moquegua':['Mariscal Nieto','General Sánchez Cerro','Ilo'],'Pasco':['Pasco','Daniel Alcides Carrión','Oxapampa'],'Piura':['Piura','Ayabaca','Huancabamba','Morropón','Paita','Sullana','Talara','Sechura'],'Puno':['Puno','Azángaro','Carabaya','Chucuito','El Collao','Huancané','Lampa','Melgar','Moho','San Antonio de Putina','San Román','Sandia','Yunguyo'],'San Martín':['Moyobamba','Bellavista','El Dorado','Huallaga','Lamas','Mariscal Cáceres','Picota','Rioja','San Martín','Tocache'],'Tacna':['Tacna','Candarave','Jorge Basadre','Tarata'],'Tumbes':['Tumbes','Contralmirante Villar','Zarumilla'],'Ucayali':['Coronel Portillo','Atalaya','Padre Abad','Purús']};
+const UBIGEO = {'Amazonas':['Chachapoyas','Bagua','Bongará','Condorcanqui','Luya','Rodríguez de Mendoza','Utcubamba'],'Áncash':['Huaraz','Aija','Antonio Raymondi','Asunción','Bolognesi','Carhuaz','Carlos Fermín Fitzcarrald','Casma','Corongo','Huari','Huarmey','Huaylas','Mariscal Luzuriaga','Ocros','Pallasca','Pomabamba','Recuay','Santa','Sihuas','Yungay'],'Apurímac':['Abancay','Andahuaylas','Antabamba','Aymaraes','Cotabambas','Chincheros','Grau'],'Arequipa':['Arequipa','Camaná','Cavelí','Castilla','Caylloma','Condesuyos','Islay','La Unión'],'Ayacucho':['Huamanga','Cangallo','Huanca Sancos','Huanta','La Mar','Lucanas','Parinacochas','Páucar del Sara Sara','Sucre','Víctor Fajardo','Vilcas Huamán'],'Cajamarca':['Cajamarca','Cajabamba','Celedín','Chota','Contumazá','Cutervo','Hualgayoc','Jaén','San Ignacio','San Marcos','San Miguel','San Pablo','Santa Cruz'],'Callao':['Callao'],'Cusco':['Cusco','Acomayo','Anta','Calca','Canas','Canchis','Chumbivilcas','Espinar','La Convención','Paruro','Paucartambo','Quispicanchi','Urubamba'],'Huancavelica':['Huancavelica','Acobamba','Angaraes','Castrovirreyna','Churcampa','Huaytará','Tayacaja'],'Huánuco':['Huánuco','Ambo','Dos de Mayo','Huacaybamba','Huamalîes','Leoncio Prado','Marañón','Pachitea','Puerto Inca','Lauricocha','Yarowilca'],'Ica':['Ica','Chincha','Nasca','Palpa','Pisco'],'Junín':['Huancayo','Chanchamayo','Chupaca','Concepción','Jauja','Junín','Satipo','Tarma','Yauli'],'La Libertad':['Trujillo','Ascope','Bolívar','Chepén','Julcán','Otuzco','Pacasmayo','Pataz','Sánchez Carrión','Santiago de Chuco','Gran Chimú','Virú'],'Lambayeque':['Chiclayo','Ferreñafe','Lambayeque'],'Lima':['Lima','Barranca','Cajatambo','Canta','Cañete','Huaral','Huarochirí','Huaura','Oyón','Yauyos'],'Loreto':['Maynas','Alto Amazonas','Datem del Marañón','Loreto','Mariscal Ramón Castilla','Putumayo','Requena','Ucayali'],'Madre de Dios':['Tambopata','Manu','Tahuamanu'],'Moquegua':['Mariscal Nieto','General Sánchez Cerro','Ilo'],'Pasco':['Pasco','Daniel Alcides Carrión','Oxapampa'],'Piura':['Piura','Ayabaca','Huancabamba','Morropón','Paita','Sullana','Talara','Sechura'],'Puno':['Puno','Azángaro','Carabaya','Chucuito','El Collao','Huancané','Lampa','Melgar','Moho','San Antonio de Putina','San Román','Sandia','Yunguyo'],'San Martín':['Moyobamba','Bellavista','El Dorado','Huallaga','Lamas','Mariscal Cáceres','Picota','Rioja','San Martín','Tocache'],'Tacna':['Tacna','Candarave','Jorge Basadre','Tarata'],'Tumbes':['Tumbes','Contralmirante Villar','Zarumilla'],'Ucayali':['Coronel Portillo','Atalaya','Padre Abad','Purús']};
 const LIMA_DISTRITOS = ['Ancón','Ate','Barranco','Breña','Carabayllo','Chaclacayo','Chorrillos','Cieneguilla','Comas','El Agustino','Independencia','Jesús María','La Molina','La Victoria','Lince','Los Olivos','Lurigancho','Lurín','Magdalena del Mar','Miraflores','Pachacámac','Pucusana','Pueblo Libre','Puente Piedra','Punta Hermosa','Punta Negra','Rímac','San Bartolo','San Borja','San Isidro','San Juan de Lurigancho','San Juan de Miraflores','San Luis','San Martín de Porres','San Miguel','Santa Anita','Santa María del Mar','Santa Rosa','Santiago de Surco','Surquillo','Villa El Salvador','Villa María del Triunfo','Lima'];
 const CALLAO_DISTRITOS = ['Bellavista','Callao','Carmen de la Legua Reynoso','La Perla','La Punta','Mi Perú','Ventanilla'];
 
 function fillDropdown(id, options, selected) {
   const el = document.getElementById(id);
   el.innerHTML = '<option value="">Seleccionar</option>' +
-    options.map(o => `<option value="${o}"${o===selected?' selected':''}}>${o}</option>`).join('');
+    options.map(o => `<option value="${o}"${o===selected?' selected':''}>${o}</option>`).join('');
 }
 function initUbigeo() {
   fillDropdown('selDept', Object.keys(UBIGEO).sort(), 'Lima');
@@ -429,7 +437,8 @@ function confirmLocation() {
   const dept = document.getElementById('selDept').value;
   const prov = document.getElementById('selProv').value;
   const dist = document.getElementById('selDist').value;
-  localStorage.setItem('chispago_ubigeo', JSON.stringify({dept, prov, dist, lat: currentLat, lng: currentLng}));
+  const dir = document.getElementById('dirInput').value.trim();
+  localStorage.setItem('chispago_ubigeo', JSON.stringify({dept, prov, dist, dir, lat: currentLat, lng: currentLng}));
   document.getElementById('successCoords').textContent = `Lat ${currentLat.toFixed(5)}, Lng ${currentLng.toFixed(5)}`;
   document.getElementById('successOverlay').classList.add('show');
 }
