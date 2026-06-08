@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CHISPA GO – Paso 3</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif}
+body{background:#eef1f5;min-height:100vh}
+.header{background:#fff;border-bottom:1px solid #dde1e7;display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
+.header .back{font-size:1.4rem;color:#1b3a5c;cursor:pointer;background:none;border:none}
+.header .logo{font-size:1.15rem;font-weight:700;color:#c0392b}
+.header .greet{font-size:.8rem;color:#6b7280}
+.progress{background:#fff;padding:10px 16px;display:flex;gap:6px}
+.seg{height:5px;border-radius:3px;flex:1}
+.seg.done{background:#1b3a5c}
+.seg.active{background:#c0392b}
+.seg.inactive{background:#dde1e7}
+.content{padding:20px 16px}
+.title{font-size:1.05rem;font-weight:700;color:#1b3a5c;margin-bottom:10px}
+.divider{border:none;border-top:1px solid #dde1e7;margin:12px 0}
+.desc{font-size:.85rem;color:#6b7280;margin-bottom:16px;line-height:1.5}
+.card{background:#fff;border:1.5px solid #dde1e7;border-radius:14px;margin-bottom:14px;overflow:hidden;cursor:pointer;transition:border-color .2s,background .2s}
+.card.validated{border-color:#a8e6be;background:#e8f8ee}
+.card-body{display:flex;align-items:center;gap:14px;padding:16px}
+.card-icon{width:48px;height:48px;border-radius:50%;background:#eef1f5;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
+.card.validated .card-icon{background:#d0f0dc}
+.card-info .name{font-size:.95rem;font-weight:700;color:#1b3a5c}
+.card-info .desc2{font-size:.8rem;color:#6b7280;margin-top:2px}
+.card-footer{padding:10px 16px;border-top:1px solid #dde1e7;font-size:.82rem;color:#6b7280;background:rgba(0,0,0,.02)}
+.card.validated .card-footer{border-top-color:#a8e6be;color:#27ae60;font-weight:600}
+.warning{background:#fffbea;border:1.5px solid #f0c040;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:.85rem;color:#7a5c00;line-height:1.5}
+.btn-main{width:100%;padding:15px;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer}
+.btn-main.on{background:#c0392b;color:#fff}
+.btn-main.off{background:#dde1e7;color:#6b7280;cursor:not-allowed}
+.spinner{display:none;text-align:center;padding:10px;font-size:.85rem;color:#6b7280}
+</style>
+</head>
+<body>
+<div class="header">
+  <button class="back" onclick="history.back()">&#8592;</button>
+  <span class="logo">CHISPA GO</span>
+  <span class="greet">&#161;Buen d&#237;a!</span>
+</div>
+<div class="progress">
+  <div class="seg done"></div>
+  <div class="seg done"></div>
+  <div class="seg active"></div>
+  <div class="seg inactive"></div>
+  <div class="seg inactive"></div>
+</div>
+<div class="content">
+  <div class="title">Paso 3 de 5: Adjuntar Documentos</div>
+  <hr class="divider">
+  <div class="desc">Adjunta los documentos solicitados para verificar tu identidad y domicilio. Toca cada tarjeta para cargar la imagen.</div>
+
+  <div class="card" id="card0" onclick="triggerUpload(0)">
+    <div class="card-body">
+      <div class="card-icon">&#x1F4C4;</div>
+      <div class="card-info">
+        <div class="name">DNI Frontal</div>
+        <div class="desc2">Parte delantera de tu DNI</div>
+      </div>
+    </div>
+    <div class="card-footer" id="footer0">&#x2B06; Toca para adjuntar</div>
+  </div>
+
+  <div class="card" id="card1" onclick="triggerUpload(1)">
+    <div class="card-body">
+      <div class="card-icon">&#x1F4C4;</div>
+      <div class="card-info">
+        <div class="name">DNI Reverso</div>
+        <div class="desc2">Parte trasera de tu DNI</div>
+      </div>
+    </div>
+    <div class="card-footer" id="footer1">&#x2B06; Toca para adjuntar</div>
+  </div>
+
+  <div class="card" id="card2" onclick="triggerUpload(2)">
+    <div class="card-body">
+      <div class="card-icon">&#x1F4A7;</div>
+      <div class="card-info">
+        <div class="name">Adjuntar Recibo de Servicios (Luz o Agua) &#x1F4A7;&#x26A1;</div>
+        <div class="desc2">Comprobante crucial para corroborar la direcci&#243;n f&#237;sica frente a Photon</div>
+      </div>
+    </div>
+    <div class="card-footer" id="footer2">&#x2B06; Toca para adjuntar</div>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleFile(event)">
+
+  <div class="warning">&#x26A0;&#xFE0F; Es obligatorio adjuntar los 3 documentos solicitados (DNI Frontal/Reverso del titular y Recibo de Servicios) para consolidar tu expediente.</div>
+
+  <button id="btnCont" class="btn-main off" onclick="continuar()">Validar y Continuar</button>
+</div>
+
+<script>
+const labels=['DEPARTAMENTO LIMA &#x2014; UBIGEO REGISTRO','REVERSO DNI &#x2014; UBIGEO REGISTRO','CORROBORACI&#xD3;N RESIDENCIAL DE LIMA'];
+let validated=[false,false,false];
+let currentCard=-1;
+
+function triggerUpload(idx){
+  if(validated[idx])return;
+  currentCard=idx;
+  document.getElementById('fileInput').value='';
+  document.getElementById('fileInput').click();
+}
+
+function handleFile(e){
+  if(!e.target.files||!e.target.files[0])return;
+  let idx=currentCard;
+  let card=document.getElementById('card'+idx);
+  let footer=document.getElementById('footer'+idx);
+  footer.textContent='&#x23F3; Procesando OCR...';
+  setTimeout(function(){
+    validated[idx]=true;
+    card.classList.add('validated');
+    footer.innerHTML='&#x2705; OCR Validado: '+labels[idx];
+    checkAll();
+  },1200);
+}
+
+function checkAll(){
+  let all=validated.every(Boolean);
+  let b=document.getElementById('btnCont');
+  b.className='btn-main '+(all?'on':'off');
+}
+
+function continuar(){
+  if(!validated.every(Boolean))return;
+  localStorage.setItem('chispago_docs',JSON.stringify({validated:true}));
+  window.location.href='domicilio.html';
+}
+</script>
+</body>
+</html>

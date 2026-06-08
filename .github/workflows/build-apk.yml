@@ -33,6 +33,7 @@ jobs:
           mkdir -p www
           cp datos.html www/index.html
           [ -f domicilio.html ] && cp domicilio.html www/domicilio.html || true
+          [ -f documentos.html ] && cp documentos.html www/documentos.html || true
           [ -f plan.html ] && cp plan.html www/plan.html || true
           for f in *.css; do [ -f "$f" ] && cp "$f" www/ || true; done
           [ -f manifest.json ] && cp manifest.json www/ || true

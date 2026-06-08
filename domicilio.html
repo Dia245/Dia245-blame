@@ -2,450 +2,216 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#FF4E00">
-<title>Chispa Go – Domicilio</title>
-<link rel="manifest" href="manifest.json">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CHISPA GO – Paso 4</title>
 <style>
-  :root {
-    --orange:#FF4E00; --orange-dark:#e04300; --orange-light:#fff3ee;
-    --green:#22c55e; --green-light:#dcfce7;
-    --gray:#f5f5f5; --text:#1a1a1a; --sub:#6b7280; --border:#e5e7eb;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { height:100%; overflow:hidden; font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:#fff; }
-
-  #permOverlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.6); backdrop-filter:blur(6px); display:flex; align-items:flex-end; justify-content:center; animation:fadeIn .3s ease; }
-  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-  .perm-sheet { background:#fff; border-radius:24px 24px 0 0; padding:28px 24px 40px; width:100%; max-width:480px; animation:slideUp .35s cubic-bezier(.25,.8,.25,1); }
-  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-  .perm-handle { width:40px; height:4px; background:#e5e7eb; border-radius:2px; margin:0 auto 24px; }
-  .perm-icon-wrap { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#FF4E00,#ff7a40); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:32px; box-shadow:0 8px 24px rgba(255,78,0,.35); }
-  .perm-sheet h2 { text-align:center; font-size:1.25rem; color:var(--text); margin-bottom:8px; font-weight:700; }
-  .perm-sheet p { text-align:center; font-size:0.88rem; color:var(--sub); line-height:1.55; margin-bottom:28px; }
-  .perm-benefits { display:flex; gap:12px; margin-bottom:28px; }
-  .perm-benefit { flex:1; background:var(--orange-light); border-radius:12px; padding:12px 8px; text-align:center; }
-  .perm-benefit .bi { font-size:1.4rem; margin-bottom:4px; }
-  .perm-benefit span { font-size:0.72rem; color:var(--orange); font-weight:600; display:block; }
-  .btn-allow { width:100%; padding:16px; background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border:none; border-radius:14px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(255,78,0,.4); margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .btn-deny { width:100%; padding:13px; background:transparent; color:var(--sub); border:1.5px solid var(--border); border-radius:14px; font-size:0.9rem; cursor:pointer; }
-
-  #app { height:100%; display:flex; flex-direction:column; }
-  .status-bar { height:44px; background:var(--orange); display:flex; align-items:center; justify-content:space-between; padding:0 16px; flex-shrink:0; }
-  .sb-time { color:#fff; font-size:0.85rem; font-weight:700; }
-  .sb-icons { display:flex; gap:6px; align-items:center; }
-  .sb-icons svg { width:16px; height:16px; fill:#fff; }
-  .topbar { background:var(--orange); padding:0 16px 16px; flex-shrink:0; }
-  .topbar-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
-  .back-btn { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; border:none; cursor:pointer; flex-shrink:0; }
-  .back-btn svg { width:20px; height:20px; fill:#fff; }
-  .topbar h1 { color:#fff; font-size:1rem; font-weight:700; flex:1; }
-  .steps { display:flex; gap:6px; align-items:center; }
-  .step-dot { height:4px; border-radius:2px; background:rgba(255,255,255,.35); transition:all .3s; }
-  .step-dot.done { background:#fff; }
-  .step-dot.active { background:#fff; flex:2; }
-
-  .search-wrap { background:#fff; border-radius:14px; display:flex; align-items:center; gap:10px; padding:0 14px; box-shadow:0 2px 12px rgba(0,0,0,.12); }
-  .search-wrap svg { width:20px; height:20px; fill:var(--sub); flex-shrink:0; }
-  #searchInput { flex:1; border:none; outline:none; font-size:0.9rem; color:var(--text); padding:13px 0; background:transparent; width:100%; }
-  #searchInput::placeholder { color:#9ca3af; }
-  .search-clear { width:22px; height:22px; border-radius:50%; background:var(--gray); border:none; cursor:pointer; display:none; align-items:center; justify-content:center; font-size:0.75rem; color:var(--sub); }
-  .search-clear.visible { display:flex; }
-  .pac-container { border-radius:0 0 14px 14px !important; box-shadow:0 8px 24px rgba(0,0,0,.12) !important; border:none !important; font-family:inherit !important; margin-top:4px; }
-  .pac-item { padding:10px 16px !important; font-size:0.85rem !important; cursor:pointer; }
-  .pac-item:hover { background:var(--gray) !important; }
-  .pac-item-query { font-size:0.85rem !important; color:var(--text) !important; }
-
-  .content { flex:1; overflow-y:auto; overflow-x:hidden; }
-  .content-inner { padding:20px 16px; }
-  .step-label { font-size:0.75rem; color:var(--orange); font-weight:700; letter-spacing:.5px; text-transform:uppercase; margin-bottom:4px; }
-  .step-title { font-size:1.15rem; font-weight:700; color:var(--text); margin-bottom:6px; }
-  .step-desc { font-size:0.85rem; color:var(--sub); line-height:1.5; margin-bottom:20px; }
-
-  .map-wrap { position:relative; border-radius:18px; overflow:hidden; border:2.5px solid var(--green); box-shadow:0 4px 20px rgba(34,197,94,.2); height:300px; margin-bottom:14px; }
-  #map { height:100%; width:100%; }
-  .map-overlay-top { position:absolute; top:10px; left:10px; right:10px; z-index:700; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
-  .map-btn { pointer-events:all; background:#fff; border:none; border-radius:10px; padding:8px 12px; font-size:0.78rem; font-weight:600; color:var(--text); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.12); display:flex; align-items:center; gap:5px; }
-  .map-zoom { display:flex; flex-direction:column; gap:2px; }
-  .zoom-btn { width:36px; height:36px; background:#fff; border:none; border-radius:8px; font-size:1.1rem; font-weight:700; color:var(--text); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.12); display:flex; align-items:center; justify-content:center; }
-  .center-pin { position:absolute; left:50%; top:50%; z-index:600; transform:translate(-50%,-100%); pointer-events:none; transition:transform .15s; }
-  .center-pin.dragging { transform:translate(-50%,-120%) scale(1.1); }
-  .gps-btn { position:absolute; bottom:14px; right:14px; z-index:700; width:44px; height:44px; border-radius:50%; background:#fff; border:none; cursor:pointer; box-shadow:0 3px 12px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; }
-  .gps-btn svg { width:22px; height:22px; }
-  .gps-btn.loading svg { animation:spin .8s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-
-  .coords-box { display:flex; align-items:center; gap:8px; background:var(--orange-light); border-radius:10px; padding:10px 14px; margin-bottom:20px; }
-  .coords-box svg { width:18px; height:18px; fill:var(--orange); flex-shrink:0; }
-  .coords-text { font-size:0.8rem; color:var(--orange-dark); font-family:monospace; font-weight:600; }
-
-  .ubigeo-section { margin-bottom:20px; }
-  .ubigeo-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
-  .ubigeo-field label { display:block; font-size:0.72rem; font-weight:600; color:var(--sub); margin-bottom:5px; text-transform:uppercase; letter-spacing:.4px; }
-  .ubigeo-select { width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:12px; font-size:0.88rem; color:var(--text); background:#fafafa; outline:none; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; cursor:pointer; transition:border .2s; }
-  .ubigeo-select:focus { border-color:var(--orange); background-color:#fff; }
-
-  .confirm-btn { width:100%; padding:17px; background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border:none; border-radius:16px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(255,78,0,.35); display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px; transition:all .2s; }
-  .confirm-btn.disabled { background:#d1d5db; box-shadow:none; cursor:not-allowed; }
-  .confirm-btn svg { width:20px; height:20px; fill:#fff; }
-  .skip-link { text-align:center; font-size:0.82rem; color:var(--sub); padding-bottom:8px; cursor:pointer; }
-
-  .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); background:#1a1a1a; color:#fff; padding:10px 20px; border-radius:24px; font-size:0.82rem; opacity:0; transition:all .3s; pointer-events:none; white-space:nowrap; z-index:8000; }
-  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-  #successOverlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9998; display:none; align-items:center; justify-content:center; }
-  #successOverlay.show { display:flex; }
-  .success-card { background:#fff; border-radius:24px; padding:36px 28px; max-width:320px; width:90%; text-align:center; animation:slideUp .3s ease; }
-  .success-icon { width:72px; height:72px; border-radius:50%; background:var(--green-light); margin:0 auto 16px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
-  .success-card h3 { font-size:1.2rem; font-weight:700; margin-bottom:8px; }
-  .success-card p { font-size:0.85rem; color:var(--sub); line-height:1.5; margin-bottom:24px; }
-  .success-coords { background:var(--green-light); border-radius:10px; padding:10px 14px; font-family:monospace; font-size:0.78rem; color:#16a34a; margin-bottom:24px; }
-  .btn-next { width:100%; padding:15px; background:linear-gradient(135deg,#FF4E00,#ff7a40); color:#fff; border:none; border-radius:14px; font-size:0.95rem; font-weight:700; cursor:pointer; }
-
-  .gmnoprint, .gm-style-cc, a[href*="maps.google.com"] { display:none !important; }
-  .gm-bundled-control { display:none !important; }
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif}
+body{background:#eef1f5;min-height:100vh}
+.header{background:#fff;border-bottom:1px solid #dde1e7;display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
+.header .back{font-size:1.4rem;color:#1b3a5c;cursor:pointer;background:none;border:none}
+.header .logo{font-size:1.15rem;font-weight:700;color:#c0392b}
+.header .greet{font-size:.8rem;color:#6b7280}
+.progress{background:#fff;padding:10px 16px;display:flex;gap:6px}
+.seg{height:5px;border-radius:3px;flex:1}
+.seg.done{background:#1b3a5c}
+.seg.active{background:#c0392b}
+.seg.inactive{background:#dde1e7}
+.content{padding:20px 16px}
+.title{font-size:1.05rem;font-weight:700;color:#1b3a5c;margin-bottom:10px}
+.divider{border:none;border-top:1px solid #dde1e7;margin:14px 0}
+.desc{font-size:.85rem;color:#6b7280;margin-bottom:14px;line-height:1.5}
+.search-bar{position:relative;margin-bottom:14px}
+.search-bar input{width:100%;padding:12px 14px 12px 38px;border:1.5px solid #dde1e7;border-radius:12px;font-size:.9rem;background:#fff;color:#1b3a5c}
+.search-bar input:focus{outline:none;border-color:#1b3a5c}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#6b7280;font-size:1rem}
+.pac-container{z-index:9999!important;border-radius:10px;border:1px solid #dde1e7;margin-top:2px}
+.map-wrap{position:relative;border:2px solid #1b3a5c;border-radius:14px;overflow:hidden;height:280px;margin-bottom:10px}
+#map{height:100%;width:100%}
+.map-pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);pointer-events:none;z-index:5}
+.pin-pulse{position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);width:16px;height:8px;border-radius:50%;background:rgba(192,57,43,.4);animation:pulse 1.5s ease-out infinite}
+@keyframes pulse{0%{transform:translateX(-50%) scale(1);opacity:.6}100%{transform:translateX(-50%) scale(2.5);opacity:0}}
+.map-ctrl{position:absolute;z-index:10}
+.btn-sat{top:10px;left:10px;background:#fff;border:1px solid #dde1e7;border-radius:8px;padding:6px 10px;font-size:.8rem;color:#1b3a5c;cursor:pointer}
+.zoom-btns{top:10px;right:10px;display:flex;flex-direction:column;gap:4px}
+.zoom-btns button{background:#fff;border:1px solid #dde1e7;border-radius:8px;width:32px;height:32px;font-size:1.1rem;cursor:pointer;color:#1b3a5c}
+.gps-btn{bottom:10px;right:10px;background:#1b3a5c;border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.coords{font-size:.78rem;color:#c0392b;margin-bottom:12px;padding:0 2px}
+.panel{background:#fff;border:1.5px solid #dde1e7;border-radius:14px;padding:16px;margin-bottom:14px}
+.panel-title{font-size:.9rem;font-weight:700;color:#1b3a5c;margin-bottom:10px}
+.warn-box{background:#fdf0f0;border:1.5px solid #f5b8b8;border-radius:10px;padding:12px 14px;font-size:.85rem}
+.warn-box .wt{font-weight:700;color:#c0392b}
+.warn-box .ws{font-size:.8rem;color:#6b7280;margin-top:4px}
+.ok-box{background:#e8f8ee;border:1.5px solid #a8e6be;border-radius:10px;padding:12px 14px;font-size:.85rem;color:#27ae60;font-weight:600}
+.lbl{font-size:.9rem;font-weight:700;color:#1b3a5c;margin-bottom:4px}
+.lbl-sub{font-size:.78rem;color:#6b7280;margin-bottom:8px;line-height:1.4}
+textarea{width:100%;padding:12px 14px;border:1.5px solid #dde1e7;border-radius:12px;font-size:.9rem;background:#fff;color:#1b3a5c;min-height:70px;resize:vertical;margin-bottom:14px}
+textarea:focus{outline:none;border-color:#1b3a5c}
+.btn-main{width:100%;padding:15px;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;background:#1b3a5c;color:#fff}
+.btn-main:disabled{background:#dde1e7;color:#6b7280;cursor:not-allowed}
+/* GPS overlay */
+.gps-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center}
+.gps-overlay.show{display:flex}
+.gps-card{background:#fff;border-radius:16px;padding:28px 20px;max-width:320px;width:90%;text-align:center}
+.gps-card h3{color:#1b3a5c;margin-bottom:10px}
+.gps-card p{font-size:.85rem;color:#6b7280;margin-bottom:18px}
+.gps-card button{padding:12px 24px;background:#c0392b;color:#fff;border:none;border-radius:10px;font-size:.95rem;cursor:pointer}
 </style>
 </head>
 <body>
+<div class="header">
+  <button class="back" onclick="history.back()">&#8592;</button>
+  <span class="logo">CHISPA GO</span>
+  <span class="greet">&#161;Buen d&#237;a!</span>
+</div>
+<div class="progress">
+  <div class="seg done"></div>
+  <div class="seg done"></div>
+  <div class="seg done"></div>
+  <div class="seg active"></div>
+  <div class="seg inactive"></div>
+</div>
+<div class="content">
+  <div class="title">Paso 4 de 5: Confirmar Domicilio</div>
+  <hr class="divider">
+  <div class="desc">Por favor, fija tu ubicaci&#243;n exacta en el mapa flotante. El Pin del centro marcar&#225; tu residencia. Puedes buscar tu calle arriba, arrastrar el mapa con tu dedo, o usar el bot&#243;n GPS.</div>
 
-<div id="permOverlay">
-  <div class="perm-sheet">
-    <div class="perm-handle"></div>
-    <div class="perm-icon-wrap">📍</div>
-    <h2>Activar ubicación GPS</h2>
-    <p>Para confirmar tu domicilio necesitamos acceder a tu ubicación exacta y colocar el pin en el lugar correcto.</p>
-    <div class="perm-benefits">
-      <div class="perm-benefit"><div class="bi">🎯</div><span>Precisión exacta</span></div>
-      <div class="perm-benefit"><div class="bi">⚡</div><span>Detección rápida</span></div>
-      <div class="perm-benefit"><div class="bi">🔒</div><span>100% seguro</span></div>
+  <div class="search-bar">
+    <span class="search-icon">&#x1F50D;</span>
+    <input id="searchInput" type="text" placeholder="Busca tu calle, condominio o zona...">
+  </div>
+
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-pin">
+      <svg width="36" height="50" viewBox="0 0 36 50">
+        <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 32 18 32S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="#c0392b"/>
+        <circle cx="18" cy="18" r="7" fill="white"/>
+        <circle cx="18" cy="18" r="3.5" fill="#c0392b"/>
+      </svg>
+      <div class="pin-pulse"></div>
     </div>
-    <button class="btn-allow" onclick="requestGPS()">
-      <svg viewBox="0 0 24 24" fill="white" style="width:20px;height:20px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-      Permitir acceso a ubicación
+    <button class="map-ctrl btn-sat" onclick="toggleSat()">Ver Sat&#233;lite</button>
+    <div class="map-ctrl zoom-btns">
+      <button onclick="zoomIn()">+</button>
+      <button onclick="zoomOut()">&#8722;</button>
+    </div>
+    <button class="map-ctrl gps-btn" onclick="goGPS()" style="bottom:10px;right:10px;position:absolute">
+      <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
     </button>
-    <button class="btn-deny" onclick="denyGPS()">Ahora no</button>
   </div>
+
+  <div class="coords" id="coordsText">&#x1F4CD; Coordenadas de Financiamiento: cargando...</div>
+
+  <div class="panel">
+    <div class="panel-title">Domicilio georreferenciado por sat&#233;lite:</div>
+    <div id="statusBox" class="warn-box">
+      <div class="wt">&#x26A0; Alinea el PIN central en el mapa de Lima</div>
+      <div class="ws" id="districtText">Distrito Resolutivo: &mdash;</div>
+    </div>
+  </div>
+
+  <div class="lbl">Escribe tu direcci&#243;n manuscrita exacta (conforme a tu recibo de luz/agua):</div>
+  <div class="lbl-sub">La direcci&#243;n escrita puede discrepar libremente del GPS del mapa por fines de facturaci&#243;n y despacho.</div>
+  <textarea id="dirManual" placeholder="Escribe tu direcci&#243;n manuscrita aqu&#237;..."></textarea>
+
+  <button class="btn-main" id="btnConf" onclick="confirmLocation()" disabled>Confirmar Direcci&#243;n de Financiamiento &#x1F680;</button>
 </div>
 
-<div id="successOverlay">
-  <div class="success-card">
-    <div class="success-icon">✅</div>
-    <h3>¡Domicilio confirmado!</h3>
-    <p>Tu ubicación ha sido guardada correctamente.</p>
-    <div class="success-coords" id="successCoords">Lat —, Lng —</div>
-    <button class="btn-next" onclick="goNext()">Continuar al paso 5 →</button>
+<!-- GPS permission overlay -->
+<div class="gps-overlay" id="gpsOverlay">
+  <div class="gps-card">
+    <h3>Permiso de Ubicaci&#243;n</h3>
+    <p>Necesitamos acceso a tu GPS para geolocalizar tu domicilio en Lima Metropolitana.</p>
+    <button onclick="requestGPS()">Permitir GPS</button>
   </div>
 </div>
-
-<div id="app">
-  <div class="status-bar">
-    <span class="sb-time" id="sbTime">00:00</span>
-    <div class="sb-icons">
-      <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
-      <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
-    </div>
-  </div>
-  <div class="topbar">
-    <div class="topbar-row">
-      <button class="back-btn" onclick="history.back()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-      <h1>CHISPA GO</h1>
-    </div>
-    <div class="steps">
-      <div class="step-dot done" style="flex:1"></div>
-      <div class="step-dot done" style="flex:1"></div>
-      <div class="step-dot done" style="flex:1"></div>
-      <div class="step-dot active" style="flex:1"></div>
-      <div class="step-dot" style="flex:1"></div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;margin-top:5px">
-      <span style="color:rgba(255,255,255,.75);font-size:0.72rem;">Paso 4 de 5</span>
-    </div>
-  </div>
-
-  <div class="content">
-    <div class="content-inner">
-      <div style="position:relative;margin-bottom:18px;">
-        <div class="search-wrap">
-          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-          <input type="text" id="searchInput" placeholder="Busca tu calle, condominio o zona..." autocomplete="off">
-          <button class="search-clear" id="clearBtn" onclick="clearSearch()">&#x2715;</button>
-        </div>
-      </div>
-
-      <div class="step-label">Paso 4 de 5</div>
-      <div class="step-title">Fija tu ubicación exacta</div>
-      <div class="step-desc">Arrastra el mapa para centrar el pin en tu residencia. Escribe tu dirección arriba o usa el botón GPS.</div>
-
-      <div class="map-wrap" id="mapWrap">
-        <div id="map"></div>
-        <div class="map-overlay-top">
-          <button class="map-btn" id="satBtn" onclick="toggleSatellite()">
-            <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#555"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-            <span id="satLabel">Ver Satélite</span>
-          </button>
-          <div class="map-zoom">
-            <button class="zoom-btn" onclick="zoomIn()">+</button>
-            <button class="zoom-btn" onclick="zoomOut()">−</button>
-          </div>
-        </div>
-        <div class="center-pin" id="centerPin">
-          <svg width="38" height="52" viewBox="0 0 38 52">
-            <ellipse cx="19" cy="49" rx="8" ry="3" fill="rgba(0,0,0,0.2)"/>
-            <path d="M19 0C8.51 0 0 8.51 0 19c0 14.25 19 33 19 33S38 33.25 38 19C38 8.51 29.49 0 19 0z" fill="#22c55e"/>
-            <circle cx="19" cy="19" r="8" fill="white"/>
-            <circle cx="19" cy="19" r="4" fill="#22c55e"/>
-          </svg>
-        </div>
-        <button class="gps-btn" id="gpsBtn" onclick="centerOnGPS()">
-          <svg viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" fill="#FF4E00"/></svg>
-        </button>
-      </div>
-
-      <div class="coords-box">
-        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-        <span class="coords-text" id="coordsText">Coordenadas: esperando GPS...</span>
-      </div>
-
-      <div class="ubigeo-section">
-        <div class="ubigeo-row">
-          <div class="ubigeo-field">
-            <label>Departamento</label>
-            <select class="ubigeo-select" id="selDept" onchange="onDeptChange()"><option value="">Seleccionar</option></select>
-          </div>
-          <div class="ubigeo-field">
-            <label>Provincia</label>
-            <select class="ubigeo-select" id="selProv" onchange="onProvChange()"><option value="">Seleccionar</option></select>
-          </div>
-        </div>
-        <div class="ubigeo-field">
-          <label>Distrito</label>
-          <select class="ubigeo-select" id="selDist"><option value="">Seleccionar</option></select>
-        </div>
-      </div>
-
-      <div class="ubigeo-field" style="margin-bottom:20px;">
-        <label style="display:block;font-size:0.72rem;font-weight:600;color:var(--sub);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;">Dirección exacta (opcional)</label>
-        <input type="text" id="dirInput" placeholder="Ej: Av. Los Olivos 234, Piso 2" autocomplete="street-address"
-          style="width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:12px;font-size:0.88rem;color:var(--text);background:#fafafa;outline:none;font-family:inherit;transition:border .2s;"
-          onfocus="this.style.borderColor='var(--orange)';this.style.background='#fff'"
-          onblur="this.style.borderColor='var(--border)';this.style.background='#fafafa'">
-      </div>
-
-      <button class="confirm-btn disabled" id="confirmBtn" onclick="confirmLocation()">
-        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-        Confirmar esta ubicación
-      </button>
-      <div class="skip-link" onclick="denyGPS()">Ingresar dirección manualmente</div>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnEh4IPccVKlkQfaLdShBafuXFyvzWm9c&libraries=places&language=es&region=PE&callback=initGoogleMaps" async defer></script>
 
 <script>
-const DEFAULT_LAT = -12.04318, DEFAULT_LNG = -77.02824;
-let map, geocoder, isSat = false;
-let currentLat = DEFAULT_LAT, currentLng = DEFAULT_LNG;
-let hasGPS = false, mapReady = false;
+const GMAPS_KEY='AIzaSyBnEh4IPccVKlkQfaLdShBafuXFyvzWm9c';
+let map,geocoder,autocomplete;
+let currentLat=-12.0464,currentLng=-77.0428;
+let mapReady=false;
+let satellite=false;
 
-function updateClock() {
-  const n = new Date();
-  document.getElementById('sbTime').textContent =
-    n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
-}
-updateClock(); setInterval(updateClock, 10000);
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-function initGoogleMaps() {
-  geocoder = new google.maps.Geocoder();
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: DEFAULT_LAT, lng: DEFAULT_LNG },
-    zoom: 15,
-    mapTypeId: 'roadmap',
-    disableDefaultUI: true,
-    gestureHandling: 'greedy',
-    styles: [{ featureType:'poi', stylers:[{visibility:'off'}] }]
+function initMap(){
+  map=new google.maps.Map(document.getElementById('map'),{
+    center:{lat:currentLat,lng:currentLng},zoom:15,
+    disableDefaultUI:true,gestureHandling:'greedy'
   });
-  google.maps.event.addListener(map, 'center_changed', updateCenterCoords);
-  google.maps.event.addListener(map, 'dragstart', () =>
-    document.getElementById('centerPin').classList.add('dragging'));
-  google.maps.event.addListener(map, 'idle', () => {
-    document.getElementById('centerPin').classList.remove('dragging');
-    updateCenterCoords();
+  geocoder=new google.maps.Geocoder();
+  autocomplete=new google.maps.places.Autocomplete(
+    document.getElementById('searchInput'),
+    {componentRestrictions:{country:'pe'},fields:['geometry','name']}
+  );
+  autocomplete.addListener('place_changed',function(){
+    let p=autocomplete.getPlace();
+    if(p.geometry){
+      map.setCenter(p.geometry.location);
+      map.setZoom(16);
+    }
   });
-  const input = document.getElementById('searchInput');
-  const ac = new google.maps.places.Autocomplete(input, {
-    componentRestrictions: { country: 'pe' },
-    fields: ['geometry', 'name', 'formatted_address', 'address_components'],
-    language: 'es'
-  });
-  ac.addListener('place_changed', () => {
-    const place = ac.getPlace();
-    if (!place.geometry) return;
-    document.getElementById('clearBtn').classList.add('visible');
-    map.setCenter(place.geometry.location);
-    map.setZoom(17);
-    if (place.address_components) fillUbigeoFromComponents(place.address_components);
-  });
-  input.addEventListener('input', () => {
-    document.getElementById('clearBtn').classList.toggle('visible', input.value.length > 0);
-  });
-  mapReady = true;
-  updateCenterCoords();
+  map.addListener('idle',onMapIdle);
+  mapReady=true;
+  document.getElementById('btnConf').disabled=false;
+  onMapIdle();
 }
 
-function updateCenterCoords() {
-  if (!map) return;
-  const c = map.getCenter();
-  currentLat = c.lat(); currentLng = c.lng();
-  document.getElementById('coordsText').textContent =
-    `Lat ${currentLat.toFixed(5)}, Lng ${currentLng.toFixed(5)}`;
-  document.getElementById('confirmBtn').classList.remove('disabled');
-  document.getElementById('successCoords').textContent =
-    `Lat ${currentLat.toFixed(5)}, Lng ${currentLng.toFixed(5)}`;
+function onMapIdle(){
+  let c=map.getCenter();
+  currentLat=c.lat();currentLng=c.lng();
+  document.getElementById('coordsText')='&#x1F4CD; Coordenadas de Financiamiento: Lat '+currentLat.toFixed(5)+', Lng '+currentLng.toFixed(5);
+  document.getElementById('coordsText').textContent='📍 Coordenadas de Financiamiento: Lat '+currentLat.toFixed(5)+', Lng '+currentLng.toFixed(5);
+  reverseGeocode(currentLat,currentLng);
+  checkLima(currentLat,currentLng);
 }
 
-function zoomIn()  { if (map) map.setZoom(map.getZoom()+1); }
-function zoomOut() { if (map) map.setZoom(map.getZoom()-1); }
-function toggleSatellite() {
-  isSat = !isSat;
-  map.setMapTypeId(isSat ? 'satellite' : 'roadmap');
-  document.getElementById('satLabel').textContent = isSat ? 'Ver Mapa' : 'Ver Satélite';
-}
-function clearSearch() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('clearBtn').classList.remove('visible');
+function checkLima(lat,lng){
+  let inLima=lat>=-12.5&&lat<=-11.5&&lng>=-77.5&&lng<=-76.5;
+  let box=document.getElementById('statusBox');
+  if(inLima){
+    box.className='ok-box';
+    box.innerHTML='&#x2705; Direcci&#243;n georreferenciada con &#233;xito en Lima Metropolitana para expedici&#243;n de entrega.';
+  } else {
+    box.className='warn-box';
+    box.innerHTML='<div class="wt">&#x26A0; Alinea el PIN central en el mapa de Lima</div><div class="ws" id="districtText">Distrito Resolutivo: &mdash;</div>';
+  }
 }
 
-function applyLocation(lat, lng) {
-  hasGPS = true; currentLat = lat; currentLng = lng;
-  if (map) { map.setCenter({ lat, lng }); map.setZoom(17); }
-  document.getElementById('gpsBtn').classList.remove('loading');
-  document.getElementById('confirmBtn').classList.remove('disabled');
-  reverseGeocode(lat, lng);
-}
-function reverseGeocode(lat, lng) {
-  if (!geocoder) return;
-  geocoder.geocode({ location: { lat, lng }, language: 'es' }, (results, status) => {
-    if (status === 'OK' && results[0]) {
-      document.getElementById('searchInput').value = results[0].formatted_address;
-      document.getElementById('clearBtn').classList.add('visible');
-      fillUbigeoFromComponents(results[0].address_components);
+function reverseGeocode(lat,lng){
+  if(!geocoder)return;
+  geocoder.geocode({location:{lat,lng}},function(results,status){
+    if(status==='OK'&&results[0]){
+      let comps=results[0].address_components;
+      let district=comps.find(c=>c.types.includes('locality')||c.types.includes('sublocality'));
+      let dEl=document.getElementById('districtText');
+      if(dEl&&district)dEl.textContent='Distrito Resolutivo: '+district.long_name;
     }
   });
 }
-function gpsManualFallback() {
-  document.getElementById('gpsBtn').classList.remove('loading');
-  document.getElementById('coordsText').textContent = 'Arrastra el mapa para fijar tu ubicación';
-  document.getElementById('confirmBtn').classList.remove('disabled');
-}
-function requestGPS() {
-  document.getElementById('permOverlay').style.display = 'none';
-  document.getElementById('gpsBtn').classList.add('loading');
-  if (window.AndroidGPS) { window.AndroidGPS.getLocation(); return; }
-  if (!navigator.geolocation) { gpsManualFallback(); return; }
-  let done = false;
-  const wid = navigator.geolocation.watchPosition(
-    pos => { if (done) return; done = true; navigator.geolocation.clearWatch(wid); applyLocation(pos.coords.latitude, pos.coords.longitude); },
-    err => { if (done) return; done = true; navigator.geolocation.clearWatch(wid); navigator.geolocation.getCurrentPosition(pos => applyLocation(pos.coords.latitude, pos.coords.longitude), () => gpsManualFallback(), { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 }); },
-    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-  );
-}
-function denyGPS() { document.getElementById('permOverlay').style.display = 'none'; }
-function centerOnGPS() {
-  document.getElementById('gpsBtn').classList.add('loading');
-  if (window.AndroidGPS) { window.AndroidGPS.getLocation(); return; }
-  if (!navigator.geolocation) { document.getElementById('gpsBtn').classList.remove('loading'); return; }
-  navigator.geolocation.getCurrentPosition(
-    pos => applyLocation(pos.coords.latitude, pos.coords.longitude),
-    () => { document.getElementById('gpsBtn').classList.remove('loading'); showToast('No se pudo obtener GPS'); },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
-  );
-}
 
-const UBIGEO = {'Amazonas':['Chachapoyas','Bagua','Bongará','Condorcanqui','Luya','Rodríguez de Mendoza','Utcubamba'],'Áncash':['Huaraz','Aija','Antonio Raymondi','Asunción','Bolognesi','Carhuaz','Carlos Fermín Fitzcarrald','Casma','Corongo','Huari','Huarmey','Huaylas','Mariscal Luzuriaga','Ocros','Pallasca','Pomabamba','Recuay','Santa','Sihuas','Yungay'],'Apurímac':['Abancay','Andahuaylas','Antabamba','Aymaraes','Cotabambas','Chincheros','Grau'],'Arequipa':['Arequipa','Camaná','Cavelí','Castilla','Caylloma','Condesuyos','Islay','La Unión'],'Ayacucho':['Huamanga','Cangallo','Huanca Sancos','Huanta','La Mar','Lucanas','Parinacochas','Páucar del Sara Sara','Sucre','Víctor Fajardo','Vilcas Huamán'],'Cajamarca':['Cajamarca','Cajabamba','Celedín','Chota','Contumazá','Cutervo','Hualgayoc','Jaén','San Ignacio','San Marcos','San Miguel','San Pablo','Santa Cruz'],'Callao':['Callao'],'Cusco':['Cusco','Acomayo','Anta','Calca','Canas','Canchis','Chumbivilcas','Espinar','La Convención','Paruro','Paucartambo','Quispicanchi','Urubamba'],'Huancavelica':['Huancavelica','Acobamba','Angaraes','Castrovirreyna','Churcampa','Huaytará','Tayacaja'],'Huánuco':['Huánuco','Ambo','Dos de Mayo','Huacaybamba','Huamalîes','Leoncio Prado','Marañón','Pachitea','Puerto Inca','Lauricocha','Yarowilca'],'Ica':['Ica','Chincha','Nasca','Palpa','Pisco'],'Junín':['Huancayo','Chanchamayo','Chupaca','Concepción','Jauja','Junín','Satipo','Tarma','Yauli'],'La Libertad':['Trujillo','Ascope','Bolívar','Chepén','Julcán','Otuzco','Pacasmayo','Pataz','Sánchez Carrión','Santiago de Chuco','Gran Chimú','Virú'],'Lambayeque':['Chiclayo','Ferreñafe','Lambayeque'],'Lima':['Lima','Barranca','Cajatambo','Canta','Cañete','Huaral','Huarochirí','Huaura','Oyón','Yauyos'],'Loreto':['Maynas','Alto Amazonas','Datem del Marañón','Loreto','Mariscal Ramón Castilla','Putumayo','Requena','Ucayali'],'Madre de Dios':['Tambopata','Manu','Tahuamanu'],'Moquegua':['Mariscal Nieto','General Sánchez Cerro','Ilo'],'Pasco':['Pasco','Daniel Alcides Carrión','Oxapampa'],'Piura':['Piura','Ayabaca','Huancabamba','Morropón','Paita','Sullana','Talara','Sechura'],'Puno':['Puno','Azángaro','Carabaya','Chucuito','El Collao','Huancané','Lampa','Melgar','Moho','San Antonio de Putina','San Román','Sandia','Yunguyo'],'San Martín':['Moyobamba','Bellavista','El Dorado','Huallaga','Lamas','Mariscal Cáceres','Picota','Rioja','San Martín','Tocache'],'Tacna':['Tacna','Candarave','Jorge Basadre','Tarata'],'Tumbes':['Tumbes','Contralmirante Villar','Zarumilla'],'Ucayali':['Coronel Portillo','Atalaya','Padre Abad','Purús']};
-const LIMA_DISTRITOS = ['Ancón','Ate','Barranco','Breña','Carabayllo','Chaclacayo','Chorrillos','Cieneguilla','Comas','El Agustino','Independencia','Jesús María','La Molina','La Victoria','Lince','Los Olivos','Lurigancho','Lurín','Magdalena del Mar','Miraflores','Pachacámac','Pucusana','Pueblo Libre','Puente Piedra','Punta Hermosa','Punta Negra','Rímac','San Bartolo','San Borja','San Isidro','San Juan de Lurigancho','San Juan de Miraflores','San Luis','San Martín de Porres','San Miguel','Santa Anita','Santa María del Mar','Santa Rosa','Santiago de Surco','Surquillo','Villa El Salvador','Villa María del Triunfo','Lima'];
-const CALLAO_DISTRITOS = ['Bellavista','Callao','Carmen de la Legua Reynoso','La Perla','La Punta','Mi Perú','Ventanilla'];
-
-function fillDropdown(id, options, selected) {
-  const el = document.getElementById(id);
-  el.innerHTML = '<option value="">Seleccionar</option>' +
-    options.map(o => `<option value="${o}"${o===selected?' selected':''}>${o}</option>`).join('');
+function toggleSat(){
+  satellite=!satellite;
+  map.setMapTypeId(satellite?google.maps.MapTypeId.SATELLITE:google.maps.MapTypeId.ROADMAP);
 }
-function initUbigeo() {
-  fillDropdown('selDept', Object.keys(UBIGEO).sort(), 'Lima');
-  document.getElementById('selDept').value = 'Lima';
-  fillDropdown('selProv', UBIGEO['Lima'], 'Lima');
-  document.getElementById('selProv').value = 'Lima';
-  fillDropdown('selDist', LIMA_DISTRITOS, '');
+function zoomIn(){map.setZoom(map.getZoom()+1);}
+function zoomOut(){map.setZoom(map.getZoom()-1);}
+function goGPS(){
+  if(!navigator.geolocation){alert('GPS no disponible');return;}
+  document.getElementById('gpsOverlay').classList.add('show');
 }
-function onDeptChange() {
-  const dept = document.getElementById('selDept').value;
-  fillDropdown('selProv', dept ? UBIGEO[dept] || [] : [], '');
-  fillDropdown('selDist', [], '');
+function requestGPS(){
+  document.getElementById('gpsOverlay').classList.remove('show');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    let lat=pos.coords.latitude,lng=pos.coords.longitude;
+    map.setCenter({lat,lng});map.setZoom(17);
+  },function(){alert('No se pudo obtener la ubicación.');});
 }
-function onProvChange() {
-  const dept = document.getElementById('selDept').value;
-  const prov = document.getElementById('selProv').value;
-  let dists = [];
-  if (dept === 'Lima' && prov === 'Lima') dists = LIMA_DISTRITOS;
-  else if (dept === 'Callao' || prov === 'Callao') dists = CALLAO_DISTRITOS;
-  fillDropdown('selDist', dists, '');
-}
-function norm(s) {
-  return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\b(province|region|provincia|departamento|department|distrito|district|de|del|la|el|of)\b/g,'').replace(/\s+/g,' ').trim();
-}
-function matchUbigeo(list, googleText) {
-  if (!googleText) return '';
-  const nGoogle = norm(googleText);
-  return list.find(item => { const nItem = norm(item); return nItem === nGoogle || nGoogle.includes(nItem) || nItem.includes(nGoogle); }) || '';
-}
-function fillUbigeoFromComponents(components) {
-  const get = type => { const c = components.find(c => c.types.includes(type)); return c ? c.long_name : ''; };
-  const deptRaw = get('administrative_area_level_1');
-  const provRaw = get('administrative_area_level_2');
-  const distRaw = get('locality') || get('sublocality_level_1') || get('sublocality') || get('administrative_area_level_3') || get('neighborhood');
-  const depts = Object.keys(UBIGEO).sort();
-  const matchDept = matchUbigeo(depts, deptRaw);
-  if (!matchDept) return;
-  fillDropdown('selDept', depts, matchDept);
-  document.getElementById('selDept').value = matchDept;
-  const provs = UBIGEO[matchDept] || [];
-  const matchProv = matchUbigeo(provs, provRaw) || (matchDept === 'Lima' ? 'Lima' : '');
-  fillDropdown('selProv', provs, matchProv);
-  document.getElementById('selProv').value = matchProv;
-  let dists = [];
-  if (matchDept === 'Lima' && matchProv === 'Lima') dists = LIMA_DISTRITOS;
-  else if (matchDept === 'Callao' || matchProv === 'Callao') dists = CALLAO_DISTRITOS;
-  const matchDist = matchUbigeo(dists, distRaw);
-  fillDropdown('selDist', dists, matchDist);
-  if (matchDist) document.getElementById('selDist').value = matchDist;
-}
-initUbigeo();
-
-function confirmLocation() {
-  if (document.getElementById('confirmBtn').classList.contains('disabled')) return;
-  const dept = document.getElementById('selDept').value;
-  const prov = document.getElementById('selProv').value;
-  const dist = document.getElementById('selDist').value;
-  const dir = document.getElementById('dirInput').value.trim();
-  localStorage.setItem('chispago_ubigeo', JSON.stringify({dept, prov, dist, dir, lat: currentLat, lng: currentLng}));
-  document.getElementById('successCoords').textContent = `Lat ${currentLat.toFixed(5)}, Lng ${currentLng.toFixed(5)}`;
-  document.getElementById('successOverlay').classList.add('show');
-}
-function goNext() {
-  document.getElementById('successOverlay').classList.remove('show');
-  window.location.href = 'plan.html';
+function confirmLocation(){
+  let dir=document.getElementById('dirManual').value.trim();
+  localStorage.setItem('chispago_ubigeo',JSON.stringify({lat:currentLat,lng:currentLng,dir}));
+  window.location.href='plan.html';
 }
 </script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnEh4IPccVKlkQfaLdShBafuXFyvzWm9c&libraries=places&callback=initMap"></script>
 </body>
 </html>
