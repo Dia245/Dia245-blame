@@ -34,7 +34,7 @@ body{background:#eef1f5;min-height:100vh}
 .btn-sat{top:10px;left:10px;background:#fff;border:1px solid #dde1e7;border-radius:8px;padding:6px 10px;font-size:.8rem;color:#1b3a5c;cursor:pointer}
 .zoom-btns{top:10px;right:10px;display:flex;flex-direction:column;gap:4px}
 .zoom-btns button{background:#fff;border:1px solid #dde1e7;border-radius:8px;width:32px;height:32px;font-size:1.1rem;cursor:pointer;color:#1b3a5c}
-.gps-btn{bottom:10px;right:10px;background:#1b3a5c;border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.gps-btn{bottom:10px;right:10px;background:#1b3a5c;border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:absolute}
 .coords{font-size:.78rem;color:#c0392b;margin-bottom:12px;padding:0 2px}
 .panel{background:#fff;border:1.5px solid #dde1e7;border-radius:14px;padding:16px;margin-bottom:14px}
 .panel-title{font-size:.9rem;font-weight:700;color:#1b3a5c;margin-bottom:10px}
@@ -72,7 +72,7 @@ textarea:focus{outline:none;border-color:#1b3a5c}
 <div class="content">
   <div class="title">Paso 4 de 5: Confirmar Domicilio</div>
   <hr class="divider">
-  <div class="desc">Por favor, fija tu ubicaci&#243;n exacta en el mapa flotante. El Pin del centro marcar&#225; tu residencia. Puedes buscar tu calle arriba, arrastrar el mapa con tu dedo, o usar el bot&#243;n GPS.</div>
+  <div class="desc">Por favor, fija tu ubicaci&#243;n exacta en el mapa. El pin rojo del centro marcar&#225; tu residencia. Busca tu calle, arrastra el mapa o usa el GPS.</div>
 
   <div class="search-bar">
     <span class="search-icon">&#x1F50D;</span>
@@ -94,29 +94,28 @@ textarea:focus{outline:none;border-color:#1b3a5c}
       <button onclick="zoomIn()">+</button>
       <button onclick="zoomOut()">&#8722;</button>
     </div>
-    <button class="map-ctrl gps-btn" onclick="goGPS()" style="bottom:10px;right:10px;position:absolute">
+    <button class="gps-btn" onclick="goGPS()">
       <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
     </button>
   </div>
 
-  <div class="coords" id="coordsText">&#x1F4CD; Coordenadas de Financiamiento: cargando...</div>
+  <div class="coords" id="coordsText">&#x1F4CD; Coordenadas: cargando...</div>
 
   <div class="panel">
     <div class="panel-title">Domicilio georreferenciado por sat&#233;lite:</div>
-    <!-- Only one of these two boxes is visible at a time -->
     <div id="warnBox" class="warn-box">
       <div class="wt">&#x26A0; Alinea el PIN central en el mapa de Lima</div>
       <div class="ws" id="districtText">Distrito Resolutivo: &mdash;</div>
     </div>
     <div id="okBox" class="ok-box" style="display:none">
       <span>&#x2705;</span>
-      <span>Direcci&#243;n georreferenciada con &#233;xito en Lima Metropolitana para expedici&#243;n de entrega.</span>
+      <span id="okText">Direcci&#243;n georreferenciada con &#233;xito en Lima Metropolitana.</span>
     </div>
   </div>
 
-  <div class="lbl">Escribe tu direcci&#243;n manuscrita exacta (conforme a tu recibo de luz/agua):</div>
-  <div class="lbl-sub">La direcci&#243;n escrita puede discrepar libremente del GPS del mapa por fines de facturaci&#243;n y despacho.</div>
-  <textarea id="dirManual" placeholder="Escribe tu direcci&#243;n manuscrita aqu&#237;..."></textarea>
+  <div class="lbl">Direcci&#243;n detectada (editable):</div>
+  <div class="lbl-sub">Se autocompleta con el GPS/mapa. Puedes corregirla manualmente seg&#250;n tu recibo de luz/agua.</div>
+  <textarea id="dirManual" placeholder="Mueve el mapa o usa GPS para autocompletar..."></textarea>
 
   <button class="btn-main" id="btnConf" onclick="confirmLocation()" disabled>Confirmar Direcci&#243;n de Financiamiento &#x1F680;</button>
 </div>
@@ -130,7 +129,6 @@ textarea:focus{outline:none;border-color:#1b3a5c}
 </div>
 
 <script>
-const GMAPS_KEY='AIzaSyBnEh4IPccVKlkQfaLdShBafuXFyvzWm9c';
 let map,geocoder,autocomplete;
 let currentLat=-12.0464,currentLng=-77.0428;
 let satellite=false;
@@ -143,11 +141,17 @@ function initMap(){
   geocoder=new google.maps.Geocoder();
   autocomplete=new google.maps.places.Autocomplete(
     document.getElementById('searchInput'),
-    {componentRestrictions:{country:'pe'},fields:['geometry','name']}
+    {componentRestrictions:{country:'pe'},fields:['geometry','formatted_address','name']}
   );
   autocomplete.addListener('place_changed',function(){
     let p=autocomplete.getPlace();
-    if(p.geometry){map.setCenter(p.geometry.location);map.setZoom(16);}
+    if(p.geometry){
+      map.setCenter(p.geometry.location);
+      map.setZoom(17);
+      if(p.formatted_address){
+        document.getElementById('dirManual').value=p.formatted_address;
+      }
+    }
   });
   map.addListener('idle',onMapIdle);
   document.getElementById('btnConf').disabled=false;
@@ -158,8 +162,8 @@ function onMapIdle(){
   let c=map.getCenter();
   currentLat=c.lat();currentLng=c.lng();
   document.getElementById('coordsText').textContent='📍 Coordenadas de Financiamiento: Lat '+currentLat.toFixed(5)+', Lng '+currentLng.toFixed(5);
-  reverseGeocode(currentLat,currentLng);
   checkLima(currentLat,currentLng);
+  reverseGeocode(currentLat,currentLng);
 }
 
 function checkLima(lat,lng){
@@ -173,9 +177,18 @@ function reverseGeocode(lat,lng){
   geocoder.geocode({location:{lat,lng}},function(results,status){
     if(status==='OK'&&results[0]){
       let comps=results[0].address_components;
-      let district=comps.find(c=>c.types.includes('locality')||c.types.includes('sublocality'));
+      // District for warn box
+      let district=comps.find(c=>c.types.includes('sublocality_level_1')||c.types.includes('locality'));
       let dEl=document.getElementById('districtText');
       if(dEl&&district)dEl.textContent='Distrito Resolutivo: '+district.long_name;
+      // Auto-fill address textarea
+      let formatted=results[0].formatted_address||'';
+      // Strip country suffix if present
+      formatted=formatted.replace(/,\s*Perú\s*$/i,'').trim();
+      let textarea=document.getElementById('dirManual');
+      textarea.value=formatted;
+      // Update ok box text
+      document.getElementById('okText').textContent='✅ Dirección georreferenciada: '+formatted;
     }
   });
 }
@@ -195,7 +208,9 @@ function requestGPS(){
   navigator.geolocation.getCurrentPosition(function(pos){
     let lat=pos.coords.latitude,lng=pos.coords.longitude;
     map.setCenter({lat,lng});map.setZoom(17);
-  },function(){alert('No se pudo obtener la ubicación.');});
+  },function(err){
+    alert('No se pudo obtener la ubicación. Verifica los permisos de GPS.');
+  },{enableHighAccuracy:true,timeout:15000});
 }
 function confirmLocation(){
   let dir=document.getElementById('dirManual').value.trim();
