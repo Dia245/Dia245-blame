@@ -38,7 +38,6 @@ body{background:#eef1f5;min-height:100vh}
 .btn-main{width:100%;padding:15px;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:4px}
 .btn-main.on{background:#c0392b;color:#fff}
 .btn-main.off{background:#dde1e7;color:#6b7280;cursor:not-allowed}
-/* Modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:flex-end;justify-content:center}
 .overlay.show{display:flex}
 .sheet{background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:480px}
@@ -48,7 +47,9 @@ body{background:#eef1f5;min-height:100vh}
 .otp-box{width:54px;height:60px;border:2px solid #dde1e7;border-radius:12px;font-size:1.5rem;text-align:center;color:#1b3a5c}
 .otp-box:focus{outline:none;border-color:#c0392b}
 .btn-confirm{width:100%;padding:14px;background:#c0392b;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px}
-.btn-resend{width:100%;padding:12px;background:#fff;color:#1b3a5c;border:1.5px solid #1b3a5c;border-radius:12px;font-size:.9rem;cursor:pointer}
+.btn-resend{width:100%;padding:12px;background:#fff;color:#1b3a5c;border:1.5px solid #1b3a5c;border-radius:12px;font-size:.9rem;cursor:pointer;margin-bottom:8px}
+.btn-cancel{width:100%;padding:11px;background:none;color:#6b7280;border:none;font-size:.9rem;cursor:pointer}
+.status-msg{text-align:center;font-size:.85rem;margin-bottom:10px;min-height:20px}
 </style>
 </head>
 <body>
@@ -79,7 +80,7 @@ body{background:#eef1f5;min-height:100vh}
 
   <div class="row">
     <input id="phone" class="field" type="tel" maxlength="9" placeholder="Celular (9 d&#237;gitos)" oninput="this.value=this.value.replace(/\D/g,'');checkForm()">
-    <button id="btnPhone" class="val-btn disabled" onclick="openOtp('phone')">Validar por WhatsApp</button>
+    <button id="btnPhone" class="val-btn disabled" onclick="openOtp('sms')">Validar por WhatsApp</button>
     <span id="phoneOk" class="badge-ok" style="display:none">&#x2705; Verificado</span>
   </div>
   <div class="row">
@@ -103,28 +104,48 @@ body{background:#eef1f5;min-height:100vh}
 <div class="overlay" id="otpOverlay">
   <div class="sheet">
     <h3 id="otpTitle">C&#243;digo de Verificaci&#243;n</h3>
-    <p id="otpDesc">Ingresa el c&#243;digo enviado</p>
+    <p id="otpDesc">Enviando c&#243;digo...</p>
+    <div class="status-msg" id="statusMsg"></div>
     <div class="otp-row">
-      <input class="otp-box" id="o1" maxlength="1" oninput="otpMove(this,'o2')">
-      <input class="otp-box" id="o2" maxlength="1" oninput="otpMove(this,'o3')">
-      <input class="otp-box" id="o3" maxlength="1" oninput="otpMove(this,'o4')">
-      <input class="otp-box" id="o4" maxlength="1" oninput="otpDone()">
+      <input class="otp-box" id="o1" maxlength="1" oninput="otpMove(this,'o2')" type="tel">
+      <input class="otp-box" id="o2" maxlength="1" oninput="otpMove(this,'o3')" type="tel">
+      <input class="otp-box" id="o3" maxlength="1" oninput="otpMove(this,'o4')" type="tel">
+      <input class="otp-box" id="o4" maxlength="1" oninput="otpDone()" type="tel">
     </div>
-    <button class="btn-confirm" onclick="confirmOtp()">Confirmar C&#243;digo</button>
-    <button class="btn-resend" onclick="closeOtp()">Cancelar</button>
+    <button class="btn-confirm" id="btnConfirmOtp" onclick="confirmOtp()">Confirmar C&#243;digo</button>
+    <button class="btn-resend" onclick="resendOtp()">&#x21BB; Reenviar c&#243;digo</button>
+    <button class="btn-cancel" onclick="closeOtp()">Cancelar</button>
   </div>
 </div>
 
 <script>
 const API_BASE='https://dia245-blame.vercel.app';
-let docType='DNI',civilState='Soltero',phoneVerified=false,emailVerified=false,otpTarget='';
+let docType='DNI',civilState='Soltero',phoneVerified=false,emailVerified=false,otpChannel='';
+
+function apiPost(path,body){
+  return new Promise(function(resolve){
+    if(window.NativeBridge){
+      try{resolve(JSON.parse(window.NativeBridge.post(API_BASE+path,JSON.stringify(body))));}catch(e){resolve({error:e.message,_error:true});}
+      return;
+    }
+    var xhr=new XMLHttpRequest();
+    xhr.open('POST',API_BASE+path,true);
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.onreadystatechange=function(){
+      if(xhr.readyState===4){
+        try{resolve(JSON.parse(xhr.responseText));}catch(e){resolve({error:xhr.responseText,_error:true});}
+      }
+    };
+    xhr.onerror=function(){resolve({error:'Network error',_error:true});};
+    xhr.send(JSON.stringify(body));
+  });
+}
 
 function setDoc(t){
   docType=t;
   document.getElementById('btnDNI').classList.toggle('active',t==='DNI');
   document.getElementById('btnCE').classList.toggle('active',t==='CE');
-  let pl=t==='DNI'?'Número de DNI 📎':'Número de CE';
-  document.getElementById('nDoc').placeholder=pl;
+  document.getElementById('nDoc').placeholder=t==='DNI'?'Número de DNI 📄':'Número de CE';
   document.getElementById('nDoc').maxLength=t==='DNI'?8:12;
 }
 function setCivil(el,v){
@@ -142,26 +163,75 @@ function checkForm(){
   document.getElementById('btnPhone').className='val-btn '+(phOk&&!phoneVerified?'enabled':'disabled');
   document.getElementById('btnEmail').className='val-btn '+(emOk&&!emailVerified?'enabled':'disabled');
   let ready=doc.length>=8&&name.length>=3&&ph.length===9&&phoneVerified&&emOk&&emailVerified;
-  let b=document.getElementById('btnCont');
-  b.className='btn-main '+(ready?'on':'off');
+  document.getElementById('btnCont').className='btn-main '+(ready?'on':'off');
 }
-function openOtp(target){
-  otpTarget=target;
-  let isPhone=target==='phone';
-  document.getElementById('otpTitle').textContent=isPhone?'Verificar WhatsApp':'Verificar Correo';
+
+async function openOtp(channel){
+  otpChannel=channel;
+  let isPhone=channel==='sms';
   let val=isPhone?document.getElementById('phone').value:document.getElementById('email').value;
-  document.getElementById('otpDesc').textContent='Código enviado a: '+val;
-  ['o1','o2','o3','o4'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('otpTitle').textContent=isPhone?'Verificar WhatsApp':'Verificar Correo';
+  document.getElementById('otpDesc').textContent='Enviando código a: '+val+'...';
+  document.getElementById('statusMsg').textContent='';
+  ['o1','o2','o3','o4'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('otpOverlay').classList.add('show');
-  document.getElementById('o1').focus();
+
+  let body=isPhone?{phone:'+51'+val,channel:'sms'}:{phone:document.getElementById('phone').value?'+51'+document.getElementById('phone').value:'+51000000000',channel:'email',email:val};
+  let res=await apiPost('/api/send-otp',body);
+  if(res._error||res.error){
+    document.getElementById('otpDesc').textContent='Error al enviar. Intenta de nuevo.';
+    document.getElementById('statusMsg').style.color='#c0392b';
+    document.getElementById('statusMsg').textContent=res.error||'Error desconocido';
+  } else {
+    document.getElementById('otpDesc').textContent='Código enviado a: '+val;
+    document.getElementById('statusMsg').style.color='#27ae60';
+    document.getElementById('statusMsg').textContent='✅ Código enviado correctamente';
+    document.getElementById('o1').focus();
+  }
 }
+
+async function resendOtp(){
+  document.getElementById('statusMsg').textContent='';
+  document.getElementById('otpDesc').textContent='Reenviando...';
+  let isPhone=otpChannel==='sms';
+  let val=isPhone?document.getElementById('phone').value:document.getElementById('email').value;
+  let body=isPhone?{phone:'+51'+val,channel:'sms'}:{phone:document.getElementById('phone').value?'+51'+document.getElementById('phone').value:'+51000000000',channel:'email',email:val};
+  let res=await apiPost('/api/send-otp',body);
+  if(res._error||res.error){
+    document.getElementById('statusMsg').style.color='#c0392b';
+    document.getElementById('statusMsg').textContent='Error: '+( res.error||'desconocido');
+  } else {
+    document.getElementById('otpDesc').textContent='Código reenviado a: '+val;
+    document.getElementById('statusMsg').style.color='#27ae60';
+    document.getElementById('statusMsg').textContent='✅ Reenviado correctamente';
+  }
+}
+
 function closeOtp(){document.getElementById('otpOverlay').classList.remove('show');}
 function otpMove(el,nextId){if(el.value.length===1)document.getElementById(nextId).focus();}
 function otpDone(){}
-function confirmOtp(){
+
+async function confirmOtp(){
   let code=['o1','o2','o3','o4'].map(id=>document.getElementById(id).value).join('');
-  if(code.length<4){alert('Ingresa los 4 dígitos');return;}
-  if(otpTarget==='phone'){
+  if(code.length<4){document.getElementById('statusMsg').style.color='#c0392b';document.getElementById('statusMsg').textContent='Ingresa los 4 dígitos';return;}
+
+  let isPhone=otpChannel==='sms';
+  let val=isPhone?document.getElementById('phone').value:document.getElementById('email').value;
+  document.getElementById('statusMsg').style.color='#6b7280';
+  document.getElementById('statusMsg').textContent='Verificando...';
+  document.getElementById('btnConfirmOtp').disabled=true;
+
+  let body=isPhone?{phone:'+51'+val,channel:'sms',code}:{phone:document.getElementById('phone').value?'+51'+document.getElementById('phone').value:'+51000000000',channel:'email',email:val,code};
+  let res=await apiPost('/api/verify-otp',body);
+  document.getElementById('btnConfirmOtp').disabled=false;
+
+  if(res._error||res.error||res.valid===false||res.status==='pending'||res.status==='canceled'||res.status==='failed'){
+    document.getElementById('statusMsg').style.color='#c0392b';
+    document.getElementById('statusMsg').textContent='❌ Código incorrecto. Inténtalo de nuevo.';
+    return;
+  }
+
+  if(isPhone){
     phoneVerified=true;
     document.getElementById('btnPhone').style.display='none';
     document.getElementById('phoneOk').style.display='inline';
@@ -172,9 +242,9 @@ function confirmOtp(){
   }
   closeOtp();checkForm();
 }
+
 function continuar(){
-  let b=document.getElementById('btnCont');
-  if(b.classList.contains('off'))return;
+  if(document.getElementById('btnCont').classList.contains('off'))return;
   let data={
     docType,nDoc:document.getElementById('nDoc').value,
     nombre:document.getElementById('nombre').value,
