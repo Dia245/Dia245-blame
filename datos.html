@@ -80,7 +80,7 @@ body{background:#eef1f5;min-height:100vh}
 
   <div class="row">
     <input id="phone" class="field" type="tel" maxlength="9" placeholder="Celular (9 d&#237;gitos)" oninput="this.value=this.value.replace(/\D/g,'');checkForm()">
-    <button id="btnPhone" class="val-btn disabled" onclick="openOtp('sms')">Validar por WhatsApp</button>
+    <button id="btnPhone" class="val-btn disabled" onclick="openOtp('sms')">Validar por SMS</button>
     <span id="phoneOk" class="badge-ok" style="display:none">&#x2705; Verificado</span>
   </div>
   <div class="row">
@@ -121,6 +121,8 @@ body{background:#eef1f5;min-height:100vh}
 <script>
 const API_BASE='https://dia245-blame.vercel.app';
 let docType='DNI',civilState='Soltero',phoneVerified=false,emailVerified=false,otpChannel='';
+// Store the exact "to" value used when sending, to reuse it on verify
+let otpTo='';
 
 function apiPost(path,body){
   return new Promise(function(resolve){
@@ -169,21 +171,29 @@ function checkForm(){
 async function openOtp(channel){
   otpChannel=channel;
   let isPhone=channel==='sms';
-  let val=isPhone?document.getElementById('phone').value:document.getElementById('email').value;
-  document.getElementById('otpTitle').textContent=isPhone?'Verificar WhatsApp':'Verificar Correo';
-  document.getElementById('otpDesc').textContent='Enviando código a: '+val+'...';
+  let phoneVal=document.getElementById('phone').value;
+  let emailVal=document.getElementById('email').value;
+
+  // "to" must match exactly what verify-otp.js will use
+  otpTo=isPhone?'+51'+phoneVal:emailVal;
+
+  document.getElementById('otpTitle').textContent=isPhone?'Verificar SMS':'Verificar Correo';
+  document.getElementById('otpDesc').textContent='Enviando código a: '+otpTo+'...';
   document.getElementById('statusMsg').textContent='';
   ['o1','o2','o3','o4'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('otpOverlay').classList.add('show');
 
-  let body=isPhone?{phone:'+51'+val,channel:'sms'}:{phone:document.getElementById('phone').value?'+51'+document.getElementById('phone').value:'+51000000000',channel:'email',email:val};
-  let res=await apiPost('/api/send-otp',body);
+  let sendBody=isPhone
+    ?{phone:otpTo,channel:'sms'}
+    :{phone:'+51'+phoneVal,channel:'email',email:emailVal};
+
+  let res=await apiPost('/api/send-otp',sendBody);
   if(res._error||res.error){
     document.getElementById('otpDesc').textContent='Error al enviar. Intenta de nuevo.';
     document.getElementById('statusMsg').style.color='#c0392b';
     document.getElementById('statusMsg').textContent=res.error||'Error desconocido';
   } else {
-    document.getElementById('otpDesc').textContent='Código enviado a: '+val;
+    document.getElementById('otpDesc').textContent='Código enviado a: '+otpTo;
     document.getElementById('statusMsg').style.color='#27ae60';
     document.getElementById('statusMsg').textContent='✅ Código enviado correctamente';
     document.getElementById('o1').focus();
@@ -194,14 +204,17 @@ async function resendOtp(){
   document.getElementById('statusMsg').textContent='';
   document.getElementById('otpDesc').textContent='Reenviando...';
   let isPhone=otpChannel==='sms';
-  let val=isPhone?document.getElementById('phone').value:document.getElementById('email').value;
-  let body=isPhone?{phone:'+51'+val,channel:'sms'}:{phone:document.getElementById('phone').value?'+51'+document.getElementById('phone').value:'+51000000000',channel:'email',email:val};
-  let res=await apiPost('/api/send-otp',body);
+  let phoneVal=document.getElementById('phone').value;
+  let emailVal=document.getElementById('email').value;
+  let sendBody=isPhone
+    ?{phone:otpTo,channel:'sms'}
+    :{phone:'+51'+phoneVal,channel:'email',email:emailVal};
+  let res=await apiPost('/api/send-otp',sendBody);
   if(res._error||res.error){
     document.getElementById('statusMsg').style.color='#c0392b';
-    document.getElementById('statusMsg').textContent='Error: '+( res.error||'desconocido');
+    document.getElementById('statusMsg').textContent='Error: '+(res.error||'desconocido');
   } else {
-    document.getElementById('otpDesc').textContent='Código reenviado a: '+val;
+    document.getElementById('otpDesc').textContent='Código reenviado a: '+otpTo;
     document.getElementById('statusMsg').style.color='#27ae60';
     document.getElementById('statusMsg').textContent='✅ Reenviado correctamente';
   }
@@ -213,34 +226,34 @@ function otpDone(){}
 
 async function confirmOtp(){
   let code=['o1','o2','o3','o4'].map(id=>document.getElementById(id).value).join('');
-  if(code.length<4){document.getElementById('statusMsg').style.color='#c0392b';document.getElementById('statusMsg').textContent='Ingresa los 4 dígitos';return;}
-
-  let isPhone=otpChannel==='sms';
-  let val=isPhone?document.getElementById('phone').value:document.getElementById('email').value;
+  if(code.length<4){
+    document.getElementById('statusMsg').style.color='#c0392b';
+    document.getElementById('statusMsg').textContent='Ingresa los 4 dígitos';
+    return;
+  }
   document.getElementById('statusMsg').style.color='#6b7280';
   document.getElementById('statusMsg').textContent='Verificando...';
   document.getElementById('btnConfirmOtp').disabled=true;
 
-  let body=isPhone?{phone:'+51'+val,channel:'sms',code}:{phone:document.getElementById('phone').value?'+51'+document.getElementById('phone').value:'+51000000000',channel:'email',email:val,code};
-  let res=await apiPost('/api/verify-otp',body);
+  // verify-otp.js expects { to, code } — "to" must match exactly what was used to send
+  let res=await apiPost('/api/verify-otp',{to:otpTo,code});
   document.getElementById('btnConfirmOtp').disabled=false;
 
-  if(res._error||res.error||res.valid===false||res.status==='pending'||res.status==='canceled'||res.status==='failed'){
-    document.getElementById('statusMsg').style.color='#c0392b';
-    document.getElementById('statusMsg').textContent='❌ Código incorrecto. Inténtalo de nuevo.';
-    return;
-  }
-
-  if(isPhone){
-    phoneVerified=true;
-    document.getElementById('btnPhone').style.display='none';
-    document.getElementById('phoneOk').style.display='inline';
+  if(res.ok&&res.verified){
+    if(otpChannel==='sms'){
+      phoneVerified=true;
+      document.getElementById('btnPhone').style.display='none';
+      document.getElementById('phoneOk').style.display='inline';
+    } else {
+      emailVerified=true;
+      document.getElementById('btnEmail').style.display='none';
+      document.getElementById('emailOk').style.display='inline';
+    }
+    closeOtp();checkForm();
   } else {
-    emailVerified=true;
-    document.getElementById('btnEmail').style.display='none';
-    document.getElementById('emailOk').style.display='inline';
+    document.getElementById('statusMsg').style.color='#c0392b';
+    document.getElementById('statusMsg').textContent='❌ '+(res.error||'Código incorrecto o expirado.');
   }
-  closeOtp();checkForm();
 }
 
 function continuar(){
