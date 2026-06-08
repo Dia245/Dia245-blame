@@ -31,8 +31,8 @@ body{background:#eef1f5;min-height:100vh;padding-bottom:40px}
 .salary-input{width:100%;padding:13px 14px;border:1.5px solid #dde1e7;border-radius:12px;font-size:1rem;background:#fff;color:#1b3a5c}
 .salary-input:focus{outline:none;border-color:#1b3a5c}
 .inicial-display{font-size:1.8rem;font-weight:700;color:#1b3a5c;text-align:center;margin:10px 0 8px}
-.slider-wrap{position:relative;margin-bottom:8px}
-input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:#dde1e7;outline:none}
+.slider-wrap{position:relative;margin-bottom:8px;direction:ltr}
+input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:#dde1e7;outline:none;direction:ltr}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#c0392b;cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .range-row{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:10px}
 .range-min{color:#c0392b;font-weight:600}
@@ -43,12 +43,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 .plazo-btn{flex:1;padding:10px 4px;border:1.5px solid #1b3a5c;border-radius:12px;background:#fff;color:#1b3a5c;font-size:.85rem;cursor:pointer;font-weight:600;text-align:center}
 .plazo-btn.sel{background:#1b3a5c;color:#fff}
 .summary{background:#f0f2f5;border-radius:12px;padding:16px;margin-top:14px}
-.sum-label{font-size:.85rem;color:#6b7280;margin-bottom:6px}
+.sum-label{font-size:.85rem;color:#6b7280;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
 .sum-amount{font-size:1.5rem;font-weight:700;color:#c0392b;margin-bottom:4px}
+.sum-week{font-size:.9rem;color:#c0392b;font-weight:600;margin-bottom:6px}
 .sum-formula{font-size:.78rem;color:#6b7280}
 .sum-detail{font-size:.75rem;color:#6b7280;margin-top:4px}
 .btn-main{width:100%;padding:15px;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;background:#c0392b;color:#fff;margin-top:16px}
-/* Overlay */
+.btn-sec{width:100%;padding:14px;border:2px solid #1b3a5c;border-radius:14px;font-size:.95rem;font-weight:700;cursor:pointer;background:#fff;color:#1b3a5c;margin-top:10px}
+.sticky-bar{position:fixed;bottom:0;left:0;right:0;background:#c0392b;color:#fff;text-align:center;padding:14px;font-size:.95rem;font-weight:700;z-index:50;display:none}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:none;align-items:center;justify-content:center}
 .overlay.show{display:flex}
 .ov-card{background:#fff;border-radius:18px;padding:30px 22px;max-width:340px;width:90%;text-align:center}
@@ -72,6 +74,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   <div class="seg active"></div>
 </div>
 <div class="content">
+  <p style="font-size:1.05rem;font-weight:700;color:#1b3a5c;margin-bottom:16px">Paso 5 de 5: Pre-Aprobaci&#243;n Express</p>
   <div class="card">
     <div class="card-head">Simulador de Cr&#233;dito Global Go</div>
     <div class="card-desc">Ingresa tu sueldo mensual neto y ajusta tu cuota inicial. Las tasas semanales var&#237;an din&#225;micamente seg&#250;n las restricciones SBS y el tipo de documento validado.</div>
@@ -105,7 +108,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <div class="inicial-display" id="inicialDisplay">S/. 0.00</div>
 
     <div class="slider-wrap">
-      <input type="range" id="inicialSlider" oninput="onSlider()">
+      <input type="range" id="inicialSlider" dir="ltr" oninput="onSlider()">
     </div>
     <div class="range-row">
       <span class="range-min" id="rangeMin"></span>
@@ -126,17 +129,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     </div>
 
     <div id="summaryBox" style="display:none" class="summary">
-      <div class="sum-label">Cuota Semanal Estimada:</div>
+      <div class="sum-label">Cuota Semanal Estimada</div>
       <div class="sum-amount" id="cuotaWeekly">S/. 0.00</div>
+      <div class="sum-week" id="cuotaWeekLabel"></div>
       <div class="sum-formula" id="sumFormula"></div>
       <div class="sum-detail" id="sumDetail"></div>
     </div>
 
-    <button class="btn-main" onclick="solicitar()">Solicitar Pre-Aprobaci&#243;n</button>
+    <button class="btn-main" onclick="solicitar()">Enviar Solicitud a Evaluaci&#243;n</button>
+    <button class="btn-sec" onclick="window.location.href='index.html'">Volver al Portal de Ingreso</button>
   </div>
 </div>
 
-<!-- Success overlay -->
+<div class="sticky-bar" id="stickyBar"></div>
+
 <div class="overlay" id="successOverlay">
   <div class="ov-card">
     <div class="ov-icon">&#x2705;</div>
@@ -197,17 +203,22 @@ function onSalaryChange(){calcSummary();}
 function calcSummary(){
   let sal=parseFloat(document.getElementById('salaryInput').value)||0;
   let box=document.getElementById('summaryBox');
-  if(sal<=0){box.style.display='none';return;}
+  let sticky=document.getElementById('stickyBar');
+  if(sal<=0){box.style.display='none';sticky.style.display='none';return;}
   box.style.display='block';
   let saldo=price-inicialVal;
   let cuota=saldo/plazo;
   document.getElementById('cuotaWeekly').textContent=fmt(cuota);
-  document.getElementById('sumFormula').textContent='= ('+fmt(price)+' - '+fmt(inicialVal)+') / '+plazo+' cuotas';
-  document.getElementById('sumDetail').textContent='Precio total: '+fmt(price)+' | Inicial: '+fmt(inicialVal)+' | Saldo: '+fmt(saldo);
+  document.getElementById('cuotaWeekLabel').textContent='x semana';
+  document.getElementById('sumFormula').textContent='Amortizado a '+plazo+' semanas con seguro de garantía prendaria';
+  document.getElementById('sumDetail').textContent='Precio: '+fmt(price)+' | Inicial: '+fmt(inicialVal)+' | Saldo: '+fmt(saldo);
+  sticky.style.display='block';
+  sticky.textContent='Pago Aproximado: '+fmt(cuota)+' por semana';
 }
 
 function solicitar(){
   let sal=parseFloat(document.getElementById('salaryInput').value)||0;
+  if(sal<=0){alert('Por favor ingresa tu sueldo mensual.');return;}
   let modelName=document.getElementById('modelName').textContent;
   let saldo=price-inicialVal;
   let cuota=saldo/plazo;
@@ -222,7 +233,6 @@ function finalizar(){
   window.location.href='index.html';
 }
 
-// Init
 updateSlider();
 </script>
 </body>

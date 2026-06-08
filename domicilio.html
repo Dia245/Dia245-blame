@@ -41,14 +41,13 @@ body{background:#eef1f5;min-height:100vh}
 .warn-box{background:#fdf0f0;border:1.5px solid #f5b8b8;border-radius:10px;padding:12px 14px;font-size:.85rem}
 .warn-box .wt{font-weight:700;color:#c0392b}
 .warn-box .ws{font-size:.8rem;color:#6b7280;margin-top:4px}
-.ok-box{background:#e8f8ee;border:1.5px solid #a8e6be;border-radius:10px;padding:12px 14px;font-size:.85rem;color:#27ae60;font-weight:600}
+.ok-box{background:#e8f8ee;border:1.5px solid #a8e6be;border-radius:10px;padding:12px 14px;font-size:.85rem;color:#27ae60;font-weight:600;display:flex;align-items:flex-start;gap:8px}
 .lbl{font-size:.9rem;font-weight:700;color:#1b3a5c;margin-bottom:4px}
 .lbl-sub{font-size:.78rem;color:#6b7280;margin-bottom:8px;line-height:1.4}
 textarea{width:100%;padding:12px 14px;border:1.5px solid #dde1e7;border-radius:12px;font-size:.9rem;background:#fff;color:#1b3a5c;min-height:70px;resize:vertical;margin-bottom:14px}
 textarea:focus{outline:none;border-color:#1b3a5c}
 .btn-main{width:100%;padding:15px;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;background:#1b3a5c;color:#fff}
 .btn-main:disabled{background:#dde1e7;color:#6b7280;cursor:not-allowed}
-/* GPS overlay */
 .gps-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center}
 .gps-overlay.show{display:flex}
 .gps-card{background:#fff;border-radius:16px;padding:28px 20px;max-width:320px;width:90%;text-align:center}
@@ -104,9 +103,14 @@ textarea:focus{outline:none;border-color:#1b3a5c}
 
   <div class="panel">
     <div class="panel-title">Domicilio georreferenciado por sat&#233;lite:</div>
-    <div id="statusBox" class="warn-box">
+    <!-- Only one of these two boxes is visible at a time -->
+    <div id="warnBox" class="warn-box">
       <div class="wt">&#x26A0; Alinea el PIN central en el mapa de Lima</div>
       <div class="ws" id="districtText">Distrito Resolutivo: &mdash;</div>
+    </div>
+    <div id="okBox" class="ok-box" style="display:none">
+      <span>&#x2705;</span>
+      <span>Direcci&#243;n georreferenciada con &#233;xito en Lima Metropolitana para expedici&#243;n de entrega.</span>
     </div>
   </div>
 
@@ -117,7 +121,6 @@ textarea:focus{outline:none;border-color:#1b3a5c}
   <button class="btn-main" id="btnConf" onclick="confirmLocation()" disabled>Confirmar Direcci&#243;n de Financiamiento &#x1F680;</button>
 </div>
 
-<!-- GPS permission overlay -->
 <div class="gps-overlay" id="gpsOverlay">
   <div class="gps-card">
     <h3>Permiso de Ubicaci&#243;n</h3>
@@ -130,7 +133,6 @@ textarea:focus{outline:none;border-color:#1b3a5c}
 const GMAPS_KEY='AIzaSyBnEh4IPccVKlkQfaLdShBafuXFyvzWm9c';
 let map,geocoder,autocomplete;
 let currentLat=-12.0464,currentLng=-77.0428;
-let mapReady=false;
 let satellite=false;
 
 function initMap(){
@@ -145,13 +147,9 @@ function initMap(){
   );
   autocomplete.addListener('place_changed',function(){
     let p=autocomplete.getPlace();
-    if(p.geometry){
-      map.setCenter(p.geometry.location);
-      map.setZoom(16);
-    }
+    if(p.geometry){map.setCenter(p.geometry.location);map.setZoom(16);}
   });
   map.addListener('idle',onMapIdle);
-  mapReady=true;
   document.getElementById('btnConf').disabled=false;
   onMapIdle();
 }
@@ -159,7 +157,6 @@ function initMap(){
 function onMapIdle(){
   let c=map.getCenter();
   currentLat=c.lat();currentLng=c.lng();
-  document.getElementById('coordsText')='&#x1F4CD; Coordenadas de Financiamiento: Lat '+currentLat.toFixed(5)+', Lng '+currentLng.toFixed(5);
   document.getElementById('coordsText').textContent='📍 Coordenadas de Financiamiento: Lat '+currentLat.toFixed(5)+', Lng '+currentLng.toFixed(5);
   reverseGeocode(currentLat,currentLng);
   checkLima(currentLat,currentLng);
@@ -167,14 +164,8 @@ function onMapIdle(){
 
 function checkLima(lat,lng){
   let inLima=lat>=-12.5&&lat<=-11.5&&lng>=-77.5&&lng<=-76.5;
-  let box=document.getElementById('statusBox');
-  if(inLima){
-    box.className='ok-box';
-    box.innerHTML='&#x2705; Direcci&#243;n georreferenciada con &#233;xito en Lima Metropolitana para expedici&#243;n de entrega.';
-  } else {
-    box.className='warn-box';
-    box.innerHTML='<div class="wt">&#x26A0; Alinea el PIN central en el mapa de Lima</div><div class="ws" id="districtText">Distrito Resolutivo: &mdash;</div>';
-  }
+  document.getElementById('warnBox').style.display=inLima?'none':'block';
+  document.getElementById('okBox').style.display=inLima?'flex':'none';
 }
 
 function reverseGeocode(lat,lng){
