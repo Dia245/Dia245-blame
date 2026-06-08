@@ -42,14 +42,14 @@ body{background:#eef1f5;min-height:100vh}
 .overlay.show{display:flex}
 .sheet{background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:480px}
 .sheet h3{text-align:center;color:#1b3a5c;margin-bottom:6px}
-.sheet p{text-align:center;font-size:.85rem;color:#6b7280;margin-bottom:18px}
-.otp-row{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
-.otp-box{width:54px;height:60px;border:2px solid #dde1e7;border-radius:12px;font-size:1.5rem;text-align:center;color:#1b3a5c}
+.sheet p{text-align:center;font-size:.85rem;color:#6b7280;margin-bottom:6px}
+.otp-row{display:flex;gap:8px;justify-content:center;margin:14px 0 20px}
+.otp-box{width:44px;height:54px;border:2px solid #dde1e7;border-radius:12px;font-size:1.4rem;text-align:center;color:#1b3a5c}
 .otp-box:focus{outline:none;border-color:#c0392b}
 .btn-confirm{width:100%;padding:14px;background:#c0392b;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px}
 .btn-resend{width:100%;padding:12px;background:#fff;color:#1b3a5c;border:1.5px solid #1b3a5c;border-radius:12px;font-size:.9rem;cursor:pointer;margin-bottom:8px}
 .btn-cancel{width:100%;padding:11px;background:none;color:#6b7280;border:none;font-size:.9rem;cursor:pointer}
-.status-msg{text-align:center;font-size:.85rem;margin-bottom:10px;min-height:20px}
+.status-msg{text-align:center;font-size:.85rem;margin-bottom:6px;min-height:20px}
 </style>
 </head>
 <body>
@@ -100,17 +100,20 @@ body{background:#eef1f5;min-height:100vh}
   <button id="btnCont" class="btn-main off" onclick="continuar()">Continuar a Documentos</button>
 </div>
 
-<!-- OTP Modal -->
+<!-- OTP Modal: 6 cajas para código Twilio de 6 dígitos -->
 <div class="overlay" id="otpOverlay">
   <div class="sheet">
     <h3 id="otpTitle">C&#243;digo de Verificaci&#243;n</h3>
     <p id="otpDesc">Enviando c&#243;digo...</p>
+    <p style="font-size:.78rem;color:#c0392b;font-weight:600">Ingresa los 6 d&#237;gitos del c&#243;digo recibido</p>
     <div class="status-msg" id="statusMsg"></div>
     <div class="otp-row">
       <input class="otp-box" id="o1" maxlength="1" oninput="otpMove(this,'o2')" type="tel">
       <input class="otp-box" id="o2" maxlength="1" oninput="otpMove(this,'o3')" type="tel">
       <input class="otp-box" id="o3" maxlength="1" oninput="otpMove(this,'o4')" type="tel">
-      <input class="otp-box" id="o4" maxlength="1" oninput="otpDone()" type="tel">
+      <input class="otp-box" id="o4" maxlength="1" oninput="otpMove(this,'o5')" type="tel">
+      <input class="otp-box" id="o5" maxlength="1" oninput="otpMove(this,'o6')" type="tel">
+      <input class="otp-box" id="o6" maxlength="1" oninput="otpDone()" type="tel">
     </div>
     <button class="btn-confirm" id="btnConfirmOtp" onclick="confirmOtp()">Confirmar C&#243;digo</button>
     <button class="btn-resend" onclick="resendOtp()">&#x21BB; Reenviar c&#243;digo</button>
@@ -121,7 +124,6 @@ body{background:#eef1f5;min-height:100vh}
 <script>
 const API_BASE='https://dia245-blame.vercel.app';
 let docType='DNI',civilState='Soltero',phoneVerified=false,emailVerified=false,otpChannel='';
-// Store the exact "to" value used when sending, to reuse it on verify
 let otpTo='';
 
 function apiPost(path,body){
@@ -173,14 +175,12 @@ async function openOtp(channel){
   let isPhone=channel==='sms';
   let phoneVal=document.getElementById('phone').value;
   let emailVal=document.getElementById('email').value;
-
-  // "to" must match exactly what verify-otp.js will use
   otpTo=isPhone?'+51'+phoneVal:emailVal;
 
   document.getElementById('otpTitle').textContent=isPhone?'Verificar SMS':'Verificar Correo';
   document.getElementById('otpDesc').textContent='Enviando código a: '+otpTo+'...';
   document.getElementById('statusMsg').textContent='';
-  ['o1','o2','o3','o4'].forEach(id=>{document.getElementById(id).value='';});
+  ['o1','o2','o3','o4','o5','o6'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('otpOverlay').classList.add('show');
 
   let sendBody=isPhone
@@ -195,7 +195,7 @@ async function openOtp(channel){
   } else {
     document.getElementById('otpDesc').textContent='Código enviado a: '+otpTo;
     document.getElementById('statusMsg').style.color='#27ae60';
-    document.getElementById('statusMsg').textContent='✅ Código enviado correctamente';
+    document.getElementById('statusMsg').textContent='✅ Código enviado (6 dígitos)';
     document.getElementById('o1').focus();
   }
 }
@@ -216,26 +216,27 @@ async function resendOtp(){
   } else {
     document.getElementById('otpDesc').textContent='Código reenviado a: '+otpTo;
     document.getElementById('statusMsg').style.color='#27ae60';
-    document.getElementById('statusMsg').textContent='✅ Reenviado correctamente';
+    document.getElementById('statusMsg').textContent='✅ Reenviado (6 dígitos)';
   }
 }
 
 function closeOtp(){document.getElementById('otpOverlay').classList.remove('show');}
-function otpMove(el,nextId){if(el.value.length===1)document.getElementById(nextId).focus();}
+function otpMove(el,nextId){
+  if(el.value.length===1)document.getElementById(nextId).focus();
+}
 function otpDone(){}
 
 async function confirmOtp(){
-  let code=['o1','o2','o3','o4'].map(id=>document.getElementById(id).value).join('');
-  if(code.length<4){
+  let code=['o1','o2','o3','o4','o5','o6'].map(id=>document.getElementById(id).value).join('');
+  if(code.length<6){
     document.getElementById('statusMsg').style.color='#c0392b';
-    document.getElementById('statusMsg').textContent='Ingresa los 4 dígitos';
+    document.getElementById('statusMsg').textContent='Ingresa los 6 dígitos del código';
     return;
   }
   document.getElementById('statusMsg').style.color='#6b7280';
   document.getElementById('statusMsg').textContent='Verificando...';
   document.getElementById('btnConfirmOtp').disabled=true;
 
-  // verify-otp.js expects { to, code } — "to" must match exactly what was used to send
   let res=await apiPost('/api/verify-otp',{to:otpTo,code});
   document.getElementById('btnConfirmOtp').disabled=false;
 
