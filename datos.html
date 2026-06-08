@@ -38,18 +38,20 @@ body{background:#eef1f5;min-height:100vh}
 .btn-main{width:100%;padding:15px;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:4px}
 .btn-main.on{background:#c0392b;color:#fff}
 .btn-main.off{background:#dde1e7;color:#6b7280;cursor:not-allowed}
+/* Modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:flex-end;justify-content:center}
 .overlay.show{display:flex}
-.sheet{background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:480px}
-.sheet h3{text-align:center;color:#1b3a5c;margin-bottom:6px}
-.sheet p{text-align:center;font-size:.85rem;color:#6b7280;margin-bottom:18px}
-.otp-row{display:flex;gap:12px;justify-content:center;margin-bottom:20px}
-.otp-box{width:60px;height:68px;border:2px solid #dde1e7;border-radius:12px;font-size:1.8rem;text-align:center;color:#1b3a5c;font-weight:700}
-.otp-box:focus{outline:none;border-color:#c0392b}
-.btn-confirm{width:100%;padding:14px;background:#c0392b;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px}
+.sheet{background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px}
+.sheet h3{text-align:center;color:#1b3a5c;margin-bottom:6px;font-size:1.1rem}
+.sheet .dest{text-align:center;font-size:.85rem;color:#6b7280;margin-bottom:20px}
+.otp-single{width:100%;padding:18px;border:2px solid #dde1e7;border-radius:14px;font-size:2rem;text-align:center;color:#1b3a5c;font-weight:700;letter-spacing:12px;background:#f8f9fb}
+.otp-single:focus{outline:none;border-color:#c0392b;background:#fff}
+.otp-hint{text-align:center;font-size:.8rem;color:#6b7280;margin-top:8px;margin-bottom:16px}
+.status-msg{text-align:center;font-size:.85rem;margin-bottom:12px;min-height:22px;font-weight:600}
+.btn-confirm{width:100%;padding:15px;background:#c0392b;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:10px}
+.btn-confirm:disabled{background:#dde1e7;color:#6b7280;cursor:not-allowed}
 .btn-resend{width:100%;padding:12px;background:#fff;color:#1b3a5c;border:1.5px solid #1b3a5c;border-radius:12px;font-size:.9rem;cursor:pointer;margin-bottom:8px}
 .btn-cancel{width:100%;padding:11px;background:none;color:#6b7280;border:none;font-size:.9rem;cursor:pointer}
-.status-msg{text-align:center;font-size:.85rem;margin-bottom:10px;min-height:20px}
 </style>
 </head>
 <body>
@@ -100,18 +102,15 @@ body{background:#eef1f5;min-height:100vh}
   <button id="btnCont" class="btn-main off" onclick="continuar()">Continuar a Documentos</button>
 </div>
 
-<!-- OTP Modal: 4 cajas (ChispaGo Twilio envia codigos de 4 digitos) -->
+<!-- OTP Modal: campo unico para evitar problemas con teclado Android -->
 <div class="overlay" id="otpOverlay">
   <div class="sheet">
     <h3 id="otpTitle">C&#243;digo de Verificaci&#243;n</h3>
-    <p id="otpDesc">Enviando c&#243;digo...</p>
+    <div class="dest" id="otpDesc">Enviando c&#243;digo...</div>
+    <input id="otpInput" class="otp-single" type="tel" maxlength="4" placeholder="----"
+      oninput="this.value=this.value.replace(/\D/g,'');" autocomplete="one-time-code">
+    <div class="otp-hint">Ingresa el c&#243;digo de 4 d&#237;gitos recibido</div>
     <div class="status-msg" id="statusMsg"></div>
-    <div class="otp-row">
-      <input class="otp-box" id="o1" maxlength="1" oninput="otpMove(this,'o2')" type="tel">
-      <input class="otp-box" id="o2" maxlength="1" oninput="otpMove(this,'o3')" type="tel">
-      <input class="otp-box" id="o3" maxlength="1" oninput="otpMove(this,'o4')" type="tel">
-      <input class="otp-box" id="o4" maxlength="1" oninput="otpDone()" type="tel">
-    </div>
     <button class="btn-confirm" id="btnConfirmOtp" onclick="confirmOtp()">Confirmar C&#243;digo</button>
     <button class="btn-resend" onclick="resendOtp()">&#x21BB; Reenviar c&#243;digo</button>
     <button class="btn-cancel" onclick="closeOtp()">Cancelar</button>
@@ -177,7 +176,9 @@ async function openOtp(channel){
   document.getElementById('otpTitle').textContent=isPhone?'Verificar SMS':'Verificar Correo';
   document.getElementById('otpDesc').textContent='Enviando código a: '+otpTo+'...';
   document.getElementById('statusMsg').textContent='';
-  ['o1','o2','o3','o4'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('statusMsg').style.color='#6b7280';
+  document.getElementById('otpInput').value='';
+  document.getElementById('btnConfirmOtp').disabled=false;
   document.getElementById('otpOverlay').classList.add('show');
 
   let sendBody=isPhone
@@ -186,20 +187,21 @@ async function openOtp(channel){
 
   let res=await apiPost('/api/send-otp',sendBody);
   if(res._error||res.error){
-    document.getElementById('otpDesc').textContent='Error al enviar.';
+    document.getElementById('otpDesc').textContent='Error al enviar. Intenta de nuevo.';
     document.getElementById('statusMsg').style.color='#c0392b';
     document.getElementById('statusMsg').textContent=res.error||'Error desconocido';
   } else {
     document.getElementById('otpDesc').textContent='Código enviado a: '+otpTo;
     document.getElementById('statusMsg').style.color='#27ae60';
     document.getElementById('statusMsg').textContent='✅ Ingresa el código de 4 dígitos';
-    document.getElementById('o1').focus();
+    document.getElementById('otpInput').focus();
   }
 }
 
 async function resendOtp(){
-  document.getElementById('statusMsg').textContent='';
-  document.getElementById('otpDesc').textContent='Reenviando...';
+  document.getElementById('otpInput').value='';
+  document.getElementById('statusMsg').textContent='Reenviando...';
+  document.getElementById('statusMsg').style.color='#6b7280';
   let isPhone=otpChannel==='sms';
   let phoneVal=document.getElementById('phone').value;
   let emailVal=document.getElementById('email').value;
@@ -213,26 +215,24 @@ async function resendOtp(){
   } else {
     document.getElementById('otpDesc').textContent='Código reenviado a: '+otpTo;
     document.getElementById('statusMsg').style.color='#27ae60';
-    document.getElementById('statusMsg').textContent='✅ Reenviado correctamente';
+    document.getElementById('statusMsg').textContent='✅ Código reenviado';
   }
 }
 
 function closeOtp(){document.getElementById('otpOverlay').classList.remove('show');}
-function otpMove(el,nextId){if(el.value.length===1)document.getElementById(nextId).focus();}
-function otpDone(){}
 
 async function confirmOtp(){
-  let code=['o1','o2','o3','o4'].map(id=>document.getElementById(id).value).join('');
+  let code=document.getElementById('otpInput').value.trim();
   if(code.length<4){
     document.getElementById('statusMsg').style.color='#c0392b';
-    document.getElementById('statusMsg').textContent='Ingresa los 4 dígitos';
+    document.getElementById('statusMsg').textContent='Ingresa los 4 dígitos del código';
     return;
   }
   document.getElementById('statusMsg').style.color='#6b7280';
   document.getElementById('statusMsg').textContent='Verificando...';
   document.getElementById('btnConfirmOtp').disabled=true;
 
-  let res=await apiPost('/api/verify-otp',{to:otpTo,code});
+  let res=await apiPost('/api/verify-otp',{to:otpTo,code:code});
   document.getElementById('btnConfirmOtp').disabled=false;
 
   if(res.ok&&res.verified){
@@ -245,7 +245,8 @@ async function confirmOtp(){
       document.getElementById('btnEmail').style.display='none';
       document.getElementById('emailOk').style.display='inline';
     }
-    closeOtp();checkForm();
+    closeOtp();
+    checkForm();
   } else {
     document.getElementById('statusMsg').style.color='#c0392b';
     document.getElementById('statusMsg').textContent='❌ '+(res.error||'Código incorrecto o expirado.');
@@ -255,7 +256,8 @@ async function confirmOtp(){
 function continuar(){
   if(document.getElementById('btnCont').classList.contains('off'))return;
   let data={
-    docType,nDoc:document.getElementById('nDoc').value,
+    docType,
+    nDoc:document.getElementById('nDoc').value,
     nombre:document.getElementById('nombre').value,
     phone:document.getElementById('phone').value,
     email:document.getElementById('email').value,
